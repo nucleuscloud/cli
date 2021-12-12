@@ -16,9 +16,13 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
+	"github.com/mhelmich/haiku-api/pkg/api/pb"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 )
 
 // initCmd represents the init command
@@ -33,11 +37,42 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("init called")
+
+		projectName, err := cmd.Flags().GetString("project-name")
+
+		if err != nil {
+			panic(err)
+		}
+
+		if projectName == "" {
+			panic(errors.New("project name not provided"))
+		}
+
+		conn, err := grpc.Dial("2.tcp.ngrok.io:10459", grpc.WithInsecure())
+
+		if err != nil {
+			panic(err)
+		}
+
+		defer conn.Close()
+
+		client := pb.NewCliServiceClient(conn)
+		reply, err := client.Init(context.Background(), &pb.InitRequest{
+			ProjectName: projectName,
+		})
+
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println(reply.ID)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(initCmd)
+
+	// req := &pb.InitRequest{}
 
 	// Here you will define your flags and configuration settings.
 
@@ -48,4 +83,5 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	initCmd.Flags().StringP("project-name", "p", "", "-p my-project-name")
 }
