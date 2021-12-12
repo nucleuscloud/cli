@@ -20,7 +20,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mhelmich/haiku-api/pkg/api/pb"
+	"github.com/mhelmich/haiku-api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
