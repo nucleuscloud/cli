@@ -19,10 +19,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/mhelmich/haiku-api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 )
 
 // initCmd represents the init command
@@ -48,7 +51,12 @@ to quickly create a Cobra application.`,
 			panic(errors.New("project name not provided"))
 		}
 
-		conn, err := grpc.Dial("2.tcp.ngrok.io:10459", grpc.WithInsecure())
+		creds, err := credentials.NewClientTLSFromFile("service.pem", "")
+		if err != nil {
+			log.Fatalf("could not process the credentials: %v", err)
+		}
+
+		conn, err := grpc.Dial("127.0.0.1:50051", grpc.WithTransportCredentials(creds))
 
 		if err != nil {
 			panic(err)
@@ -57,15 +65,22 @@ to quickly create a Cobra application.`,
 		defer conn.Close()
 
 		client := pb.NewCliServiceClient(conn)
+		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
+		var trailer metadata.MD
 		reply, err := client.Init(context.Background(), &pb.InitRequest{
 			ProjectName: projectName,
-		})
+		},
+			grpc.Trailer(&trailer),
+		)
 
 		if err != nil {
 			panic(err)
 		}
 
 		fmt.Println(reply.ID)
+		if len(trailer["x-request-id"]) == 1 {
+			fmt.Println(trailer["x-request-id"][0])
+		}
 	},
 }
 

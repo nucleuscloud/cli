@@ -3,7 +3,7 @@ module github.com/nickzelei/haiku-cli
 go 1.17
 
 require (
-	github.com/mhelmich/haiku-api v0.0.0-20211212043750-c814522f39e4
+	github.com/mhelmich/haiku-api v0.0.0-20211212080305-dcc6bb9f4fa7
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.9.0
 	google.golang.org/grpc v1.42.0
