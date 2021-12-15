@@ -28,9 +28,9 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:   "init",
+// dockerCmd represents the docker command
+var dockerLoginCmd = &cobra.Command{
+	Use:   "login",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -39,14 +39,34 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		projectName, err := cmd.Flags().GetString("project-name")
+		url, err := cmd.Flags().GetString("url")
 
 		if err != nil {
 			return err
 		}
 
-		if projectName == "" {
-			return errors.New("project name not provided")
+		if url == "" {
+			return errors.New("url not provided")
+		}
+
+		username, err := cmd.Flags().GetString("username")
+
+		if err != nil {
+			return err
+		}
+
+		if username == "" {
+			return errors.New("username not provided")
+		}
+
+		password, err := cmd.Flags().GetString("password")
+
+		if err != nil {
+			return err
+		}
+
+		if password == "" {
+			return errors.New("password not provided")
 		}
 
 		creds, err := credentials.NewClientTLSFromFile("service.pem", "")
@@ -65,8 +85,10 @@ to quickly create a Cobra application.`,
 		client := pb.NewCliServiceClient(conn)
 		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 		var trailer metadata.MD
-		reply, err := client.Init(context.Background(), &pb.InitRequest{
-			ProjectName: projectName,
+		reply, err := client.DockerLogin(context.Background(), &pb.DockerLoginRequest{
+			URL:      url,
+			Username: username,
+			Password: password,
 		},
 			grpc.Trailer(&trailer),
 		)
@@ -84,18 +106,9 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
+	dockerCmd.AddCommand(dockerLoginCmd)
 
-	// req := &pb.InitRequest{}
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// initCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	initCmd.Flags().StringP("project-name", "p", "", "-p my-project-name")
+	dockerCmd.Flags().String("url", "", "URL to the docker registry")
+	dockerCmd.Flags().StringP("username", "u", "", "docker registry username")
+	dockerCmd.Flags().StringP("password", "p", "", "docker registry password")
 }

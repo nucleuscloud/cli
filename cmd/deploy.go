@@ -28,9 +28,9 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:   "init",
+// deployCmd represents the deploy command
+var deployCmd = &cobra.Command{
+	Use:   "deploy",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -46,7 +46,37 @@ to quickly create a Cobra application.`,
 		}
 
 		if projectName == "" {
-			return errors.New("project name not provided")
+			return errors.New("project-name not provided")
+		}
+
+		imageName, err := cmd.Flags().GetString("image")
+
+		if err != nil {
+			return err
+		}
+
+		if imageName == "" {
+			return errors.New("image not provided")
+		}
+
+		tag, err := cmd.Flags().GetString("tag")
+
+		if err != nil {
+			return err
+		}
+
+		if tag == "" {
+			return errors.New("tag not provided")
+		}
+
+		deployEnv, err := cmd.Flags().GetString("env")
+
+		if err != nil {
+			return err
+		}
+
+		if deployEnv == "" {
+			return errors.New("env not provided")
 		}
 
 		creds, err := credentials.NewClientTLSFromFile("service.pem", "")
@@ -65,8 +95,12 @@ to quickly create a Cobra application.`,
 		client := pb.NewCliServiceClient(conn)
 		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 		var trailer metadata.MD
-		reply, err := client.Init(context.Background(), &pb.InitRequest{
+		reply, err := client.Deploy(context.Background(), &pb.DeployRequest{
+			// ProjectName: projectName,
 			ProjectName: projectName,
+			ImageName:   imageName,
+			Tag:         tag,
+			Environment: deployEnv,
 		},
 			grpc.Trailer(&trailer),
 		)
@@ -84,18 +118,10 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(deployCmd)
 
-	// req := &pb.InitRequest{}
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// initCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	initCmd.Flags().StringP("project-name", "p", "", "-p my-project-name")
+	deployCmd.Flags().StringP("project-name", "p", "", "-p my-project-name")
+	deployCmd.Flags().StringP("image", "i", "", "-i https://example.com/link-to-docker-image")
+	deployCmd.Flags().StringP("tag", "t", "", "-t latest")
+	deployCmd.Flags().StringP("env", "e", "", "-e dev")
 }
