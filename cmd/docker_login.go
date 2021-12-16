@@ -39,14 +39,14 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		url, err := cmd.Flags().GetString("url")
+		server, err := cmd.Flags().GetString("server")
 
 		if err != nil {
 			return err
 		}
 
-		if url == "" {
-			return errors.New("url not provided")
+		if server == "" {
+			return errors.New("server url not provided")
 		}
 
 		username, err := cmd.Flags().GetString("username")
@@ -69,6 +69,16 @@ to quickly create a Cobra application.`,
 			return errors.New("password not provided")
 		}
 
+		email, err := cmd.Flags().GetString("email")
+
+		if err != nil {
+			return err
+		}
+
+		if email == "" {
+			return errors.New("email not provided")
+		}
+
 		creds, err := credentials.NewClientTLSFromFile("service.pem", "")
 		if err != nil {
 			log.Fatalf("could not process the credentials: %v", err)
@@ -86,9 +96,10 @@ to quickly create a Cobra application.`,
 		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 		var trailer metadata.MD
 		reply, err := client.DockerLogin(context.Background(), &pb.DockerLoginRequest{
-			URL:      url,
+			Server:   server,
 			Username: username,
 			Password: password,
+			Email:    email,
 		},
 			grpc.Trailer(&trailer),
 		)
@@ -108,7 +119,8 @@ to quickly create a Cobra application.`,
 func init() {
 	dockerCmd.AddCommand(dockerLoginCmd)
 
-	dockerCmd.Flags().String("url", "", "URL to the docker registry")
+	dockerCmd.Flags().String("server", "", "Server url to the docker registry")
 	dockerCmd.Flags().StringP("username", "u", "", "docker registry username")
 	dockerCmd.Flags().StringP("password", "p", "", "docker registry password")
+	dockerCmd.Flags().StringP("email", "e", "", "docker registry password")
 }
