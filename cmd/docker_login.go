@@ -122,5 +122,5 @@ func init() {
 	dockerCmd.Flags().String("server", "", "Server url to the docker registry")
 	dockerCmd.Flags().StringP("username", "u", "", "docker registry username")
 	dockerCmd.Flags().StringP("password", "p", "", "docker registry password")
-	dockerCmd.Flags().StringP("email", "e", "", "docker registry password")
+	dockerCmd.Flags().StringP("email", "e", "", "docker registry email")
 }
