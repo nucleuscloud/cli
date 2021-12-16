@@ -267,8 +267,6 @@ github.com/mattn/go-isatty v0.0.8/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hd
 github.com/mattn/go-isatty v0.0.10/go.mod h1:qgIWMr58cqv1PHHyhnkY9lrL7etaEgOFcMEpPG5Rm84=
 github.com/mattn/go-isatty v0.0.11/go.mod h1:PhnuNfih5lzO57/f3n+odYbM4JtupLOxQOAqxQCu2WE=
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
-github.com/mhelmich/haiku-api v0.0.0-20211212080305-dcc6bb9f4fa7 h1:e3rytPpmc/XTPDJYsf00XjhqmH1lVndCfP3QjsTgs/o=
-github.com/mhelmich/haiku-api v0.0.0-20211212080305-dcc6bb9f4fa7/go.mod h1:aldGpyjzsf0PynNNlSvTdw4gCRvd/UaL4PRoU/dlNtc=
 github.com/mhelmich/haiku-api v0.0.0-20211215235007-accf6953d448 h1:CR1hXSbKS9rV2zZQHTETDdmOlwxqhjYGFvVR6Gpheq8=
 github.com/mhelmich/haiku-api v0.0.0-20211215235007-accf6953d448/go.mod h1:aldGpyjzsf0PynNNlSvTdw4gCRvd/UaL4PRoU/dlNtc=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=

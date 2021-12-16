@@ -40,41 +40,33 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		server, err := cmd.Flags().GetString("server")
-
 		if err != nil {
 			return err
 		}
-
 		if server == "" {
 			return errors.New("server url not provided")
 		}
 
 		username, err := cmd.Flags().GetString("username")
-
 		if err != nil {
 			return err
 		}
-
 		if username == "" {
 			return errors.New("username not provided")
 		}
 
 		password, err := cmd.Flags().GetString("password")
-
 		if err != nil {
 			return err
 		}
-
 		if password == "" {
 			return errors.New("password not provided")
 		}
 
 		email, err := cmd.Flags().GetString("email")
-
 		if err != nil {
 			return err
 		}
-
 		if email == "" {
 			return errors.New("email not provided")
 		}
@@ -85,13 +77,11 @@ to quickly create a Cobra application.`,
 		}
 
 		conn, err := grpc.Dial("127.0.0.1:50051", grpc.WithTransportCredentials(creds))
-
 		if err != nil {
 			return err
 		}
 
 		defer conn.Close()
-
 		client := pb.NewCliServiceClient(conn)
 		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 		var trailer metadata.MD
@@ -103,7 +93,6 @@ to quickly create a Cobra application.`,
 		},
 			grpc.Trailer(&trailer),
 		)
-
 		if err != nil {
 			return err
 		}
@@ -118,9 +107,8 @@ to quickly create a Cobra application.`,
 
 func init() {
 	dockerCmd.AddCommand(dockerLoginCmd)
-
-	dockerCmd.Flags().String("server", "", "Server url to the docker registry")
-	dockerCmd.Flags().StringP("username", "u", "", "docker registry username")
-	dockerCmd.Flags().StringP("password", "p", "", "docker registry password")
-	dockerCmd.Flags().StringP("email", "e", "", "docker registry email")
+	dockerLoginCmd.Flags().StringP("server", "s", "", "Server url to the docker registry")
+	dockerLoginCmd.Flags().StringP("username", "u", "", "docker registry username")
+	dockerLoginCmd.Flags().StringP("password", "p", "", "docker registry password")
+	dockerLoginCmd.Flags().StringP("email", "e", "", "docker registry email")
 }
