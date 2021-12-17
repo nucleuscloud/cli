@@ -40,33 +40,27 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName, err := cmd.Flags().GetString("project-name")
-
 		if err != nil {
 			return err
 		}
-
 		if projectName == "" {
 			return errors.New("project-name not provided")
 		}
 
 		imageName, err := cmd.Flags().GetString("image")
-
 		if err != nil {
 			return err
 		}
-
 		if imageName == "" {
 			return errors.New("image not provided")
 		}
 
-		deployEnv, err := cmd.Flags().GetString("env")
-
+		serviceName, err := cmd.Flags().GetString("service-name")
 		if err != nil {
 			return err
 		}
-
-		if deployEnv == "" {
-			return errors.New("env not provided")
+		if serviceName == "" {
+			return errors.New("service name not provided")
 		}
 
 		creds, err := credentials.NewClientTLSFromFile("service.pem", "")
@@ -86,10 +80,9 @@ to quickly create a Cobra application.`,
 		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 		var trailer metadata.MD
 		reply, err := client.Deploy(context.Background(), &pb.DeployRequest{
-			// ProjectName: projectName,
 			ProjectName: projectName,
 			Image:       imageName,
-			Environment: deployEnv,
+			ServiceName: serviceName,
 		},
 			grpc.Trailer(&trailer),
 		)
@@ -111,5 +104,6 @@ func init() {
 
 	deployCmd.Flags().StringP("project-name", "p", "", "-p my-project-name")
 	deployCmd.Flags().StringP("image", "i", "", "-i https://example.com/link-to-docker-image:latest")
+	deployCmd.Flags().StringP("service-name", "s", "", "-s my-service")
 	deployCmd.Flags().StringP("env", "e", "", "-e dev")
 }
