@@ -59,16 +59,6 @@ to quickly create a Cobra application.`,
 			return errors.New("image not provided")
 		}
 
-		tag, err := cmd.Flags().GetString("tag")
-
-		if err != nil {
-			return err
-		}
-
-		if tag == "" {
-			return errors.New("tag not provided")
-		}
-
 		deployEnv, err := cmd.Flags().GetString("env")
 
 		if err != nil {
@@ -98,8 +88,7 @@ to quickly create a Cobra application.`,
 		reply, err := client.Deploy(context.Background(), &pb.DeployRequest{
 			// ProjectName: projectName,
 			ProjectName: projectName,
-			ImageName:   imageName,
-			Tag:         tag,
+			Image:       imageName,
 			Environment: deployEnv,
 		},
 			grpc.Trailer(&trailer),
@@ -121,7 +110,6 @@ func init() {
 	rootCmd.AddCommand(deployCmd)
 
 	deployCmd.Flags().StringP("project-name", "p", "", "-p my-project-name")
-	deployCmd.Flags().StringP("image", "i", "", "-i https://example.com/link-to-docker-image")
-	deployCmd.Flags().StringP("tag", "t", "", "-t latest")
+	deployCmd.Flags().StringP("image", "i", "", "-i https://example.com/link-to-docker-image:latest")
 	deployCmd.Flags().StringP("env", "e", "", "-e dev")
 }
