@@ -644,8 +644,8 @@ github.com/mattn/go-runewidth v0.0.2/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzp
 github.com/mattn/go-shellwords v1.0.3/go.mod h1:3xCvwCdWdlDJUrvuMn7Wuy9eWs4pE8vqg+NOMyg4B2o=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369/go.mod h1:BSXmuO+STAnVfrANrmjBb36TMTDstsz7MSK+HVaYKv4=
-github.com/mhelmich/haiku-api v0.0.0-20211217035325-40dc3d2dd395 h1:gaS8Uu0SQ9dQslsslte8EOkaYVTcKaqMwLe73d5YoUA=
-github.com/mhelmich/haiku-api v0.0.0-20211217035325-40dc3d2dd395/go.mod h1:qOd/mOh9fHxkMWEcQg4PY/EetcCIMmIN1tJ3YemVOdg=
+github.com/mhelmich/haiku-api v0.0.0-20211217213228-6a8fe55fce07 h1:rbhmzUkziUMGAbdmQsJ1SH/HnwU39d2DhMb6Mkf+Nzo=
+github.com/mhelmich/haiku-api v0.0.0-20211217213228-6a8fe55fce07/go.mod h1:OL4O6M09T5L6mnJlMGBq4HefrRO61Tnkbv9wlpgHz98=
 github.com/mhelmich/haiku-operator v0.0.0-20211217030215-54cee7d57904/go.mod h1:3nqamv0TEtZhxCdPSnbbJYUeE/MZeNmpISPLsJflx2k=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/miekg/dns v1.1.17/go.mod h1:WgzbA6oji13JREwiNsRDNfl7jYdPnmz+VEuLrA+/48M=

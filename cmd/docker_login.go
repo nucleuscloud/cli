@@ -97,9 +97,9 @@ to quickly create a Cobra application.`,
 			return err
 		}
 
-		fmt.Println(reply.ID)
+		fmt.Printf("k8s id: %s\n", reply.ID)
 		if len(trailer["x-request-id"]) == 1 {
-			fmt.Println(trailer["x-request-id"][0])
+			fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
 		}
 		return nil
 	},

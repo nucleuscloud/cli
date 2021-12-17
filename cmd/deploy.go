@@ -91,17 +91,18 @@ to quickly create a Cobra application.`,
 			return err
 		}
 
-		fmt.Println(reply.ID)
+		fmt.Printf("k8s id: %s\n", reply.ID)
 		if len(trailer["x-request-id"]) == 1 {
-			fmt.Println(trailer["x-request-id"][0])
+			fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
 		}
+
+		fmt.Printf("service url: %s\n", reply.URL)
 		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
-
 	deployCmd.Flags().StringP("project-name", "p", "", "-p my-project-name")
 	deployCmd.Flags().StringP("image", "i", "", "-i https://example.com/link-to-docker-image:latest")
 	deployCmd.Flags().StringP("service-name", "s", "", "-s my-service")
