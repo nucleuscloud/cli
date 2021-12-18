@@ -17,14 +17,11 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
 
 	"github.com/mhelmich/haiku-api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -39,44 +36,33 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		server, err := cmd.Flags().GetString("server")
+		getParamString(cmd, dockerServerFlag)
+		server, err := getParamString(cmd, dockerServerFlag)
 		if err != nil {
 			return err
 		}
-		if server == "" {
-			return errors.New("server url not provided")
-		}
 
-		username, err := cmd.Flags().GetString("username")
+		username, err := getParamString(cmd, dockerUsernameFlag)
 		if err != nil {
 			return err
 		}
-		if username == "" {
-			return errors.New("username not provided")
-		}
 
-		password, err := cmd.Flags().GetString("password")
+		password, err := getParamString(cmd, dockerPasswordFlag)
 		if err != nil {
 			return err
 		}
-		if password == "" {
-			return errors.New("password not provided")
-		}
 
-		email, err := cmd.Flags().GetString("email")
+		email, err := getParamString(cmd, dockerEmailFlag)
 		if err != nil {
 			return err
 		}
-		if email == "" {
-			return errors.New("email not provided")
-		}
 
-		creds, err := credentials.NewClientTLSFromFile("service.pem", "")
+		environmentName, err := getParamString(cmd, environmentFlag)
 		if err != nil {
-			log.Fatalf("could not process the credentials: %v", err)
+			return err
 		}
 
-		conn, err := grpc.Dial("127.0.0.1:50051", grpc.WithTransportCredentials(creds))
+		conn, err := newConnection()
 		if err != nil {
 			return err
 		}
@@ -86,10 +72,11 @@ to quickly create a Cobra application.`,
 		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 		var trailer metadata.MD
 		reply, err := client.DockerLogin(context.Background(), &pb.DockerLoginRequest{
-			Server:   server,
-			Username: username,
-			Password: password,
-			Email:    email,
+			Server:          server,
+			Username:        username,
+			Password:        password,
+			Email:           email,
+			EnvironmentName: environmentName,
 		},
 			grpc.Trailer(&trailer),
 		)
@@ -98,8 +85,10 @@ to quickly create a Cobra application.`,
 		}
 
 		fmt.Printf("k8s id: %s\n", reply.ID)
-		if len(trailer["x-request-id"]) == 1 {
-			fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
+		if verbose {
+			if len(trailer["x-request-id"]) == 1 {
+				fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
+			}
 		}
 		return nil
 	},
@@ -107,8 +96,9 @@ to quickly create a Cobra application.`,
 
 func init() {
 	dockerCmd.AddCommand(dockerLoginCmd)
-	dockerLoginCmd.Flags().StringP("server", "s", "", "Server url to the docker registry")
-	dockerLoginCmd.Flags().StringP("username", "u", "", "docker registry username")
-	dockerLoginCmd.Flags().StringP("password", "p", "", "docker registry password")
-	dockerLoginCmd.Flags().StringP("email", "e", "", "docker registry email")
+	stringP(dockerLoginCmd, dockerServerFlag)
+	stringP(dockerLoginCmd, dockerUsernameFlag)
+	stringP(dockerLoginCmd, dockerPasswordFlag)
+	stringP(dockerLoginCmd, dockerEmailFlag)
+	stringP(dockerLoginCmd, environmentFlag)
 }

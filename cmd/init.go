@@ -19,12 +19,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/mhelmich/haiku-api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -39,45 +37,36 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		projectName, err := cmd.Flags().GetString("project-name")
-
+		environmentName, err := cmd.Flags().GetString(environmentFlag[0])
 		if err != nil {
 			return err
-		}
-
-		if projectName == "" {
+		} else if environmentName == "" {
 			return errors.New("project name not provided")
 		}
 
-		creds, err := credentials.NewClientTLSFromFile("service.pem", "")
-		if err != nil {
-			log.Fatalf("could not process the credentials: %v", err)
-		}
-
-		conn, err := grpc.Dial("127.0.0.1:50051", grpc.WithTransportCredentials(creds))
-
+		conn, err := newConnection()
 		if err != nil {
 			return err
 		}
 
 		defer conn.Close()
-
 		client := pb.NewCliServiceClient(conn)
 		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 		var trailer metadata.MD
 		reply, err := client.Init(context.Background(), &pb.InitRequest{
-			ProjectName: projectName,
+			EnvironmentName: environmentName,
 		},
 			grpc.Trailer(&trailer),
 		)
-
 		if err != nil {
 			return err
 		}
 
 		fmt.Printf("k8s id: %s\n", reply.ID)
-		if len(trailer["x-request-id"]) == 1 {
-			fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
+		if verbose {
+			if len(trailer["x-request-id"]) == 1 {
+				fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
+			}
 		}
 		return nil
 	},
@@ -85,17 +74,5 @@ to quickly create a Cobra application.`,
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-
-	// req := &pb.InitRequest{}
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// initCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	initCmd.Flags().StringP("project-name", "p", "", "-p my-project-name")
+	stringP(initCmd, environmentFlag)
 }

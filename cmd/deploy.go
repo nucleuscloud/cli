@@ -19,12 +19,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/mhelmich/haiku-api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -39,23 +37,23 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		projectName, err := cmd.Flags().GetString("project-name")
+		environmentName, err := cmd.Flags().GetString(environmentFlag[0])
 		if err != nil {
 			return err
 		}
-		if projectName == "" {
+		if environmentName == "" {
 			return errors.New("project-name not provided")
 		}
 
-		imageName, err := cmd.Flags().GetString("image")
+		imageURL, err := cmd.Flags().GetString(imageFlag[0])
 		if err != nil {
 			return err
 		}
-		if imageName == "" {
+		if imageURL == "" {
 			return errors.New("image not provided")
 		}
 
-		serviceName, err := cmd.Flags().GetString("service-name")
+		serviceName, err := cmd.Flags().GetString(serviceFlag[0])
 		if err != nil {
 			return err
 		}
@@ -63,37 +61,31 @@ to quickly create a Cobra application.`,
 			return errors.New("service name not provided")
 		}
 
-		creds, err := credentials.NewClientTLSFromFile("service.pem", "")
-		if err != nil {
-			log.Fatalf("could not process the credentials: %v", err)
-		}
-
-		conn, err := grpc.Dial("127.0.0.1:50051", grpc.WithTransportCredentials(creds))
-
+		conn, err := newConnection()
 		if err != nil {
 			return err
 		}
 
 		defer conn.Close()
-
 		client := pb.NewCliServiceClient(conn)
 		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 		var trailer metadata.MD
 		reply, err := client.Deploy(context.Background(), &pb.DeployRequest{
-			ProjectName: projectName,
-			Image:       imageName,
-			ServiceName: serviceName,
+			EnvironmentName: environmentName,
+			Image:           imageURL,
+			ServiceName:     serviceName,
 		},
 			grpc.Trailer(&trailer),
 		)
-
 		if err != nil {
 			return err
 		}
 
 		fmt.Printf("k8s id: %s\n", reply.ID)
-		if len(trailer["x-request-id"]) == 1 {
-			fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
+		if verbose {
+			if len(trailer["x-request-id"]) == 1 {
+				fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
+			}
 		}
 
 		fmt.Printf("service url: %s\n", reply.URL)
@@ -103,8 +95,7 @@ to quickly create a Cobra application.`,
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
-	deployCmd.Flags().StringP("project-name", "p", "", "-p my-project-name")
-	deployCmd.Flags().StringP("image", "i", "", "-i https://example.com/link-to-docker-image:latest")
-	deployCmd.Flags().StringP("service-name", "s", "", "-s my-service")
-	deployCmd.Flags().StringP("env", "e", "", "-e dev")
+	stringP(deployCmd, environmentFlag)
+	stringP(deployCmd, imageFlag)
+	stringP(deployCmd, serviceFlag)
 }
