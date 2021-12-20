@@ -14,4 +14,5 @@ func newConnection() (*grpc.ClientConn, error) {
 	}
 
 	return grpc.Dial("127.0.0.1:50051", grpc.WithTransportCredentials(creds))
+	// return grpc.Dial("kn-haiku-api.haiku-api.knative.haiku.icu:80", grpc.WithTransportCredentials(creds))
 }
