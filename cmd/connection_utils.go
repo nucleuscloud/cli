@@ -1,18 +1,21 @@
 package cmd
 
 import (
-	"log"
+	"crypto/tls"
+	"crypto/x509"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
 func newConnection() (*grpc.ClientConn, error) {
-	creds, err := credentials.NewClientTLSFromFile("service.pem", "")
+	systemRoots, err := x509.SystemCertPool()
 	if err != nil {
-		log.Fatalf("could not process the credentials: %v", err)
+		return nil, err
 	}
+	creds := credentials.NewTLS(&tls.Config{
+		RootCAs: systemRoots,
+	})
 
-	return grpc.Dial("127.0.0.1:50051", grpc.WithTransportCredentials(creds))
-	// return grpc.Dial("kn-haiku-api.haiku-api.knative.haiku.icu:80", grpc.WithTransportCredentials(creds))
+	return grpc.Dial("haiku-api.haiku-api.apps.haiku.icu:443", grpc.WithTransportCredentials(creds))
 }
