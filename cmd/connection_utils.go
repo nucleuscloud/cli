@@ -13,9 +13,9 @@ func newConnection() (*grpc.ClientConn, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	creds := credentials.NewTLS(&tls.Config{
 		RootCAs: systemRoots,
 	})
-
 	return grpc.Dial("haiku-api.haiku-api.apps.haiku.icu:443", grpc.WithTransportCredentials(creds))
 }

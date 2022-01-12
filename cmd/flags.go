@@ -20,8 +20,12 @@ var (
 	dockerEmailFlag    = Param{"email", "m", "", "-m julie@haiku.io"}
 
 	// haiku deploy
-	imageFlag   = Param{"image", "i", "", "ghcr.io/andrea/my-service:latest"}
-	serviceFlag = Param{"service", "s", "", "-s my-service"}
+	imageFlag        = Param{"image", "i", "", "ghcr.io/andrea/my-service:latest"}
+	serviceNameFlag  = Param{"service-name", "s", "", "-s my-service"}
+	serviceTypeFlag  = Param{"service-type", "t", "", "-t service-type"}
+	folderUploadFlag = Param{"folder", "f", ".", "-f folder-to-upload"}
+
+	//haiku listEnv is environmentFlag & serviceFlag
 )
 
 func stringP(cmd *cobra.Command, param Param) {
