@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	ga "github.com/mhelmich/go-archiver"
@@ -65,7 +67,14 @@ func deploy(environmentName string, serviceName string, folderPath string) error
 	}
 
 	log.Printf("archiving...")
-	err = ga.GzipCompress(folderPath, fd, ga.ArchiveGitRepo())
+	gitignorePath := filepath.Join(folderPath, ".gitignore")
+	_, err = os.Stat(gitignorePath)
+	if errors.Is(err, os.ErrNotExist) {
+		err = ga.GzipCompress(folderPath, fd, ga.IgnoreDotGit())
+	} else {
+		err = ga.GzipCompress(folderPath, fd, ga.ArchiveGitRepo())
+	}
+
 	if err != nil {
 		return err
 	}
