@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
-	github.com/mhelmich/haiku-api v0.0.0-20220112014402-22ecac196c52
+	github.com/mhelmich/haiku-api v0.0.0-20220116181632-745d93b68e3d
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.9.0
 	google.golang.org/grpc v1.43.0
