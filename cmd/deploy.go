@@ -23,12 +23,7 @@ import (
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "deploys your service to Haiku and returns an endpoint to call your service",
-	Long: `A longer description that spans multiple lines and likely contains examples
-	and usage of using your command. For example:
-
-	Cobra is a CLI library for Go that empowers applications.
-	This application is a tool to generate the needed files
-	to quickly create a Cobra application.`,
+	Long:  `Creates an environment for your service with the given environmentName and a service with the given serviceName. Deploys your service and returns back a URL where your service is available. `,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -48,22 +43,48 @@ var deployCmd = &cobra.Command{
 			return errors.New("service name not provided")
 		}
 
-		folderName, err := cmd.Flags().GetString(folderUploadFlag[0])
+		directoryName, err := cmd.Flags().GetString(directoryFlag[0])
 		if err != nil {
 			return err
-		} else if folderName == "" {
-			return errors.New("folder name not provided")
+		} else if directoryName == "" {
+			return errors.New("directory name not provided")
 		}
 
-		return deploy(environmentName, serviceName, folderName)
+		return deploy(environmentName, serviceName, directoryName)
 	},
 }
 
 func deploy(environmentName string, serviceName string, folderPath string) error {
-	log.Printf("called deploy with: %s %s %s\n", environmentName, serviceName, folderPath)
+	log.Printf("Getting reeady to deploy service: -%s- in environment: -%s- from directory: -%s- \n", serviceName, environmentName, folderPath)
 	fd, err := ioutil.TempFile("", "haiku-cli-")
 	if err != nil {
 		return err
+	}
+
+	conn, err := newConnection()
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close()
+
+	cliClient := pb.NewCliServiceClient(conn)
+	// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
+	var trailer metadata.MD
+	reply, err := cliClient.CreateEnvironment(context.Background(), &pb.CreateEnvironmentRequest{
+		EnvironmentName: environmentName,
+	},
+		grpc.Trailer(&trailer),
+	)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("environment successfully created with k8s id: %s\n", reply.ID)
+	if verbose {
+		if len(trailer["x-request-id"]) == 1 {
+			fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
+		}
 	}
 
 	log.Printf("archiving...")
@@ -92,15 +113,8 @@ func deploy(environmentName string, serviceName string, folderPath string) error
 	}
 
 	log.Printf("getting upload url...")
-	conn, err := newConnection()
-	if err != nil {
-		return err
-	}
 
-	defer conn.Close()
-	cliClient := pb.NewCliServiceClient(conn)
 	ctx := context.Background()
-	var trailer metadata.MD
 	signedURL, err := cliClient.GetServiceUploadUrl(ctx, &pb.GetServiceUploadUrlRequest{
 		EnvironmentName: environmentName,
 		ServiceName:     serviceName,
@@ -118,7 +132,7 @@ func deploy(environmentName string, serviceName string, folderPath string) error
 	}
 
 	log.Printf("triggering pipeline...")
-	stream, err := cliClient.DeployUrl(ctx, &pb.DeployUrlRequest{
+	stream, err := cliClient.Deploy(ctx, &pb.DeployRequest{
 		EnvironmentName: environmentName,
 		ServiceName:     serviceName,
 		URL:             signedURL.UploadKey,
@@ -171,6 +185,6 @@ func uploadArchive(signedURL string, r io.Reader) error {
 func init() {
 	rootCmd.AddCommand(deployCmd)
 	stringP(deployCmd, serviceNameFlag)
-	stringP(deployCmd, folderUploadFlag)
+	stringP(deployCmd, directoryFlag)
 	stringP(deployCmd, environmentFlag)
 }

@@ -20,10 +20,10 @@ var (
 	dockerEmailFlag    = Param{"email", "m", "", "-m julie@haiku.io"}
 
 	// haiku deploy
-	imageFlag        = Param{"image", "i", "", "ghcr.io/andrea/my-service:latest"}
-	serviceNameFlag  = Param{"service-name", "s", "", "-s my-service"}
-	serviceTypeFlag  = Param{"service-type", "t", "", "-t service-type"}
-	folderUploadFlag = Param{"folder", "f", ".", "-f folder-to-upload"}
+	imageFlag       = Param{"image", "i", "", "ghcr.io/andrea/my-service:latest"}
+	serviceNameFlag = Param{"service-name", "s", "", "-s my-service"}
+	serviceTypeFlag = Param{"service-type", "t", "", "-t service-type"}
+	directoryFlag   = Param{"directory", "d", ".", "-d directory-to-upload"}
 
 	//haiku listEnv is environmentFlag & serviceFlag
 )
