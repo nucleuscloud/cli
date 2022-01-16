@@ -79,18 +79,25 @@ var createCmd = &cobra.Command{
 
 			dirName := serviceName + "_fastAPI"
 			os.Mkdir(dirName, 0755)
+			fmt.Println(dirName)
 
-			os.Chdir(serviceName)
+			os.Chdir(dirName)
+			cwd, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			fmt.Println("current working directory", cwd)
 
 			//TODO: check to see if fastAPI already exists in the system
 			//if not, install fastAPI into the working directory
+			//TODO: put the files in the folder
 
-			mainFile, err := os.Create("sample_python_file.py")
+			mainFile, err := os.Create("main.py")
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			mainFile.WriteString("from typing import Optional\n\nfrom fastapi import FastAPI\n\napp = fastapi()\n\n@app.get(\"/\")\ndef read_root():\n\treturn {\"Hello\":\"World\"}\n\n")
+			mainFile.WriteString("from typing import Optional\n\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get(\"/\")\ndef read_root():\n\treturn {\"Hello\":\"World\"}\n\n")
 			if err != nil {
 				fmt.Println(err)
 				mainFile.Close()
@@ -101,7 +108,7 @@ var createCmd = &cobra.Command{
 				fmt.Println("Error:", err)
 			}
 
-			reqtFile.WriteString("#Add project requirements below as a new line\n\npip install fastapi\n\n")
+			reqtFile.WriteString("#Add project requirements below as a new line\n\nfastapi\n\n")
 			if err != nil {
 				fmt.Println(err)
 				reqtFile.Close()
