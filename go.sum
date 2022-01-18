@@ -168,6 +168,8 @@ github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5m
 github.com/googleapis/gax-go/v2 v2.1.0/go.mod h1:Q3nei7sK6ybPYH7twZdmQpAd1MKb7pfu6SK+H1/DsU0=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/grpc-ecosystem/grpc-gateway v1.16.0/go.mod h1:BDjrQk3hbvj6Nolgz8mAMFbcEtjT1g+wF4CSlocrBnw=
+github.com/haikuapp/api v0.0.0-20220118053604-c9e79b882e22 h1:SznXUm6iL8Z/XiVYDXVBwGbjISlD1G/pHMfpMuwVNNY=
+github.com/haikuapp/api v0.0.0-20220118053604-c9e79b882e22/go.mod h1:dSUIVMebyEsTJT+4wWiL1AoN68CUzUlVtEfxwTCyvlQ=
 github.com/hashicorp/consul/api v1.1.0/go.mod h1:VmuI/Lkw1nC05EYQWNKwWGbkg+FbDBtguAZLlVdkD9Q=
 github.com/hashicorp/consul/api v1.10.1/go.mod h1:XjsvQN+RJGWI2TWy1/kqaE16HrR2J/FWgkYjdZQsX9M=
 github.com/hashicorp/consul/sdk v0.1.1/go.mod h1:VKf9jXwCTEY1QZP2MOLRhb5i/I/ssyNV1vwHyQBF0x8=
@@ -226,8 +228,6 @@ github.com/mattn/go-isatty v0.0.11/go.mod h1:PhnuNfih5lzO57/f3n+odYbM4JtupLOxQOA
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
 github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39 h1:vBHSysGJm+0IKEFMhrfFTfAhrpCFHa46RpFqVzYJKI0=
 github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39/go.mod h1:15HmXa+Tp2AfAwHc4aR3UPdEzfnMIkshxEYMOXdLS5Y=
-github.com/mhelmich/haiku-api v0.0.0-20220116181632-745d93b68e3d h1:T6XTSXVzM6bSd6Lb/2NsaaGzcPRTE56tx2MVEGwpFes=
-github.com/mhelmich/haiku-api v0.0.0-20220116181632-745d93b68e3d/go.mod h1:ND6QStUjGcKGEsNOOa74+QOxi9EHFEw2g8zAo4xU3A8=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/miekg/dns v1.1.26/go.mod h1:bPDLeHnStXmXAq1m/Ch/hvfNHr14JKNPMBo3VZKjuso=
 github.com/mitchellh/cli v1.0.0/go.mod h1:hNIlj7HEI86fIcpObd7a0FcrxTWetlwJDGcceTlRvqc=
