@@ -3,7 +3,7 @@ module github.com/haikuapp/cli
 go 1.17
 
 require (
-	github.com/haikuapp/api v0.0.0-20220118053604-c9e79b882e22
+	github.com/haikuapp/api v0.0.0-20220118060602-323e027745a9
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.9.0
