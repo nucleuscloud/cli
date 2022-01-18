@@ -1,4 +1,4 @@
-module github.com/nickzelei/haiku-cli
+module github.com/haikuapp/cli
 
 go 1.17
 

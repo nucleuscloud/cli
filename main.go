@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/nickzelei/haiku-cli/cmd"
+import "github.com/haikuapp/cli/cmd"
 
 func main() {
 	cmd.Execute()
