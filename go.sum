@@ -168,8 +168,8 @@ github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5m
 github.com/googleapis/gax-go/v2 v2.1.0/go.mod h1:Q3nei7sK6ybPYH7twZdmQpAd1MKb7pfu6SK+H1/DsU0=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/grpc-ecosystem/grpc-gateway v1.16.0/go.mod h1:BDjrQk3hbvj6Nolgz8mAMFbcEtjT1g+wF4CSlocrBnw=
-github.com/haikuapp/api v0.0.0-20220118053604-c9e79b882e22 h1:SznXUm6iL8Z/XiVYDXVBwGbjISlD1G/pHMfpMuwVNNY=
-github.com/haikuapp/api v0.0.0-20220118053604-c9e79b882e22/go.mod h1:dSUIVMebyEsTJT+4wWiL1AoN68CUzUlVtEfxwTCyvlQ=
+github.com/haikuapp/api v0.0.0-20220118060602-323e027745a9 h1:cgAAF9nodEwfZx5LIvBQerjGdTbp5RtdiLij10SziGI=
+github.com/haikuapp/api v0.0.0-20220118060602-323e027745a9/go.mod h1:dSUIVMebyEsTJT+4wWiL1AoN68CUzUlVtEfxwTCyvlQ=
 github.com/hashicorp/consul/api v1.1.0/go.mod h1:VmuI/Lkw1nC05EYQWNKwWGbkg+FbDBtguAZLlVdkD9Q=
 github.com/hashicorp/consul/api v1.10.1/go.mod h1:XjsvQN+RJGWI2TWy1/kqaE16HrR2J/FWgkYjdZQsX9M=
 github.com/hashicorp/consul/sdk v0.1.1/go.mod h1:VKf9jXwCTEY1QZP2MOLRhb5i/I/ssyNV1vwHyQBF0x8=

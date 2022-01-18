@@ -43,6 +43,14 @@ var deployCmd = &cobra.Command{
 			return errors.New("service name not provided")
 		}
 
+		serviceType, err := cmd.Flags().GetString(serviceTypeFlag[0])
+		if err != nil {
+			return err
+		}
+		if serviceType == "" {
+			return errors.New("service type not provided")
+		}
+
 		directoryName, err := cmd.Flags().GetString(directoryFlag[0])
 		if err != nil {
 			return err
@@ -50,11 +58,11 @@ var deployCmd = &cobra.Command{
 			return errors.New("directory name not provided")
 		}
 
-		return deploy(environmentName, serviceName, directoryName)
+		return deploy(environmentName, serviceName, serviceType, directoryName)
 	},
 }
 
-func deploy(environmentName string, serviceName string, folderPath string) error {
+func deploy(environmentName string, serviceName string, serviceType string, folderPath string) error {
 	log.Printf("Getting reeady to deploy service: -%s- in environment: -%s- from directory: -%s- \n", serviceName, environmentName, folderPath)
 	fd, err := ioutil.TempFile("", "haiku-cli-")
 	if err != nil {
@@ -136,6 +144,7 @@ func deploy(environmentName string, serviceName string, folderPath string) error
 		EnvironmentName: environmentName,
 		ServiceName:     serviceName,
 		URL:             signedURL.UploadKey,
+		ServiceType:     serviceType,
 	})
 	if err != nil {
 		return err
@@ -185,6 +194,7 @@ func uploadArchive(signedURL string, r io.Reader) error {
 func init() {
 	rootCmd.AddCommand(deployCmd)
 	stringP(deployCmd, serviceNameFlag)
+	stringP(deployCmd, serviceTypeFlag)
 	stringP(deployCmd, directoryFlag)
 	stringP(deployCmd, environmentFlag)
 }
