@@ -2,14 +2,29 @@ package cmd
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/goombaio/namegenerator"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
+
+type SpecStruct struct {
+	EnvironmentName string `yaml:"environmentName"`
+	ServiceName     string `yaml:"serviceName"`
+	ServiceRunTime  string `yaml:"serviceRuntime"`
+}
+
+type ConfigYaml struct {
+	CliVersion string     `yaml:"cliVersion"`
+	Spec       SpecStruct `yaml:"spec"`
+}
 
 var createServiceCmd = &cobra.Command{
 	Use:   "create",
@@ -19,60 +34,55 @@ var createServiceCmd = &cobra.Command{
 
 		fmt.Println("This utility will walk you through creating a Haiku service.\n\nIt creates a declarative configuration file that you can apply using Haiku deploy once you're ready to deploy your service.\n\nSee `haiku create help` for definitive documentation on these fields and exactly what they do.\n\nPress ^C at any time to quit.\n\n")
 
-		envName := cliPrompt("Environment name: ")
-		servName := cliPrompt("Service name: ")
-		dirName := cliPrompt("Folder name: ")
-		serType := cliPrompt("Service runtime: ")
+		//there are limited number of unique environment names that we can create here something like 3,700
+		seed := time.Now().UTC().UnixNano()
+		nameGenerator := namegenerator.NewNameGenerator(seed)
+		defaultEnv := nameGenerator.Generate()
+		fmt.Println(defaultEnv)
 
-		configfileName := envName + "_" + servName + "_" + "config.yaml"
-		yamlData, err := createYamlConfig("create", envName, servName, dirName, serType)
+		wd, err := os.Getwd()
 		if err != nil {
-			panic("Unable to write data into the file")
+			return err
+		}
+		defaultDir := filepath.Base(wd)
+		defaultServType := ""
+
+		envName := cliPrompt("Environment name: "+"("+defaultEnv+")", defaultEnv)
+		servName := cliPrompt("Service name: "+"("+defaultDir+")", defaultDir)
+		serType := cliPrompt("Service runtime:", defaultServType)
+
+		configfileName := "haiku.yaml"
+		yamlData, err := createYamlConfig(envName, servName, serType)
+		if err != nil {
+			return errors.New("Unable to write data into the file")
 		}
 		err = ioutil.WriteFile(configfileName, yamlData, 0644)
 		if err != nil {
-			panic("Unable to write data into the file")
+			return errors.New("Unable to write data into the file")
 		}
 
 		return nil
 	},
 }
 
-func cliPrompt(label string) string {
+func cliPrompt(label string, defaultEnv string) string {
 	var s string
 	r := bufio.NewReader(os.Stdin)
-	for {
-		fmt.Fprint(os.Stderr, label+" ")
-		s, _ = r.ReadString('\n')
-		if s != "" {
-			break
-		}
+	fmt.Fprint(os.Stderr, label+" ")
+	s, _ = r.ReadString('\n')
+	if s == "\n" {
+		s = defaultEnv
 	}
 	return strings.TrimSpace(s)
 }
 
-func createYamlConfig(action string, envName string, servName string, dirPath string, runtime string) ([]byte, error) {
-
-	type SpecStruct struct {
-		EnvironmentName string `yaml:"environmentName"`
-		ServiceName     string `yaml:"serviceName"`
-		DirectoryPath   string `yaml:"directoryPath"`
-		ServiceRunTime  string `yaml:"serviceRuntime"`
-	}
-
-	type ConfigYaml struct {
-		CliVersion string     `yaml:"cliVersion"`
-		Action     string     `yaml:"action"`
-		Spec       SpecStruct `yaml:"spec"`
-	}
+func createYamlConfig(envName string, servName string, runtime string) ([]byte, error) {
 
 	y := ConfigYaml{
 		CliVersion: "haiku-cli/v1",
-		Action:     action,
 		Spec: SpecStruct{
 			EnvironmentName: envName,
 			ServiceName:     servName,
-			DirectoryPath:   dirPath,
 			ServiceRunTime:  runtime,
 		},
 	}
