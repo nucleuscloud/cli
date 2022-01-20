@@ -44,6 +44,10 @@ var createServiceCmd = &cobra.Command{
 		servName := cliPrompt("Service name: "+"("+defaultSpec.ServiceName+")", defaultSpec.ServiceName)
 		serType := cliPrompt("Service runtime:", "fastapi,nodejs")
 
+		if serType != "fastapi" && serType != "nodejs" {
+			return errors.New("unsupported service type")
+		}
+
 		configfileName := "haiku.yaml"
 		yamlData, err := createYamlConfig(envName, servName, serType)
 		if err != nil {
