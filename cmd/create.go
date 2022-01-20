@@ -34,35 +34,59 @@ var createServiceCmd = &cobra.Command{
 
 		fmt.Println("This utility will walk you through creating a Haiku service.\n\nIt creates a declarative configuration file that you can apply using Haiku deploy once you're ready to deploy your service.\n\nSee `haiku create help` for definitive documentation on these fields and exactly what they do.\n\nPress ^C at any time to quit.\n\n")
 
-		//there are limited number of unique environment names that we can create here something like 3,700
-		seed := time.Now().UTC().UnixNano()
-		nameGenerator := namegenerator.NewNameGenerator(seed)
-		defaultEnv := nameGenerator.Generate()
-		fmt.Println(defaultEnv)
+		defaultSpec, err := getDefaultSpec()
 
-		wd, err := os.Getwd()
 		if err != nil {
 			return err
 		}
-		defaultDir := filepath.Base(wd)
-		defaultServType := ""
 
-		envName := cliPrompt("Environment name: "+"("+defaultEnv+")", defaultEnv)
-		servName := cliPrompt("Service name: "+"("+defaultDir+")", defaultDir)
-		serType := cliPrompt("Service runtime:", defaultServType)
+		envName := cliPrompt("Environment name: "+"("+defaultSpec.EnvironmentName+")", defaultSpec.EnvironmentName)
+		servName := cliPrompt("Service name: "+"("+defaultSpec.ServiceName+")", defaultSpec.ServiceName)
+		serType := cliPrompt("Service runtime:", "fastapi,nodejs")
 
 		configfileName := "haiku.yaml"
 		yamlData, err := createYamlConfig(envName, servName, serType)
 		if err != nil {
-			return errors.New("Unable to write data into the file")
+			return errors.New("unable to write data into the file")
 		}
 		err = ioutil.WriteFile(configfileName, yamlData, 0644)
 		if err != nil {
-			return errors.New("Unable to write data into the file")
+			return errors.New("unable to write data into the file")
 		}
 
 		return nil
 	},
+}
+
+func getDefaultSpec() (*SpecStruct, error) {
+	spec := SpecStruct{}
+	spec.EnvironmentName = getDefaultEnvironmentName()
+
+	defaultServiceName, err := getDefaultServiceName()
+
+	if err != nil {
+		return nil, err
+	}
+
+	spec.ServiceName = defaultServiceName
+
+	return &spec, nil
+}
+
+func getDefaultEnvironmentName() string {
+	//there are limited number of unique environment names that we can create here something like 3,700
+	seed := time.Now().UTC().UnixNano()
+	nameGenerator := namegenerator.NewNameGenerator(seed)
+	return nameGenerator.Generate()
+}
+
+func getDefaultServiceName() (string, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	defaultDir := filepath.Base(wd)
+	return defaultDir, nil
 }
 
 func cliPrompt(label string, defaultEnv string) string {
