@@ -6,9 +6,11 @@ To release a new version of the CLI for consumption, a new git tag must be creat
 ```
 $ ./hack/tag.sh v1.0.0
 ```
-
 This will create a git tag and push it to the origin.
-Upon this push, a github action will start, which will build the project across multiple targets, and upload them to a github release.
+This will kick off a Github Action, which will do the following:
+1. Build the project across multiple targets (linux, mac) and multiple architectures (64bit, ARM)
+2. Create a new Github Release based off of the new tag
+  2.1 Upload the built files to the newly created release
 
 # Installing Haiku CLI
 
