@@ -12,11 +12,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/haikuapp/api/pkg/api/v1/pb"
 	ga "github.com/mhelmich/go-archiver"
-	"github.com/mhelmich/haiku-api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"gopkg.in/yaml.v2"
 )
 
 // deployCmd represents the deploy command
@@ -27,30 +28,34 @@ var deployCmd = &cobra.Command{
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		environmentName, err := cmd.Flags().GetString(environmentFlag[0])
+		deployConfig, err := getHaikuConfig()
+
 		if err != nil {
 			return err
 		}
+
+		environmentName := deployConfig.Spec.EnvironmentName
 		if environmentName == "" {
 			return errors.New("environment name not provided")
 		}
 
-		serviceName, err := cmd.Flags().GetString(serviceNameFlag[0])
-		if err != nil {
-			return err
-		}
+		serviceName := deployConfig.Spec.ServiceName
 		if serviceName == "" {
 			return errors.New("service name not provided")
 		}
 
-		directoryName, err := cmd.Flags().GetString(directoryFlag[0])
-		if err != nil {
-			return err
-		} else if directoryName == "" {
-			return errors.New("directory name not provided")
+		serviceType := deployConfig.Spec.ServiceRunTime
+		if serviceType == "" {
+			return errors.New("service type not provided")
 		}
 
-		return deploy(environmentName, serviceName, directoryName)
+		directoryName, err := os.Getwd()
+
+		if err != nil {
+			return err
+		}
+
+		return deploy(environmentName, serviceName, serviceType, directoryName)
 	},
 }
 
@@ -136,6 +141,7 @@ func deploy(environmentName string, serviceName string, folderPath string) error
 		EnvironmentName: environmentName,
 		ServiceName:     serviceName,
 		URL:             signedURL.UploadKey,
+		ServiceType:     serviceType,
 	})
 	if err != nil {
 		return err
@@ -182,9 +188,22 @@ func uploadArchive(signedURL string, r io.Reader) error {
 	return nil
 }
 
+func getHaikuConfig() (*ConfigYaml, error) {
+	yamlFile, err := ioutil.ReadFile("./haiku.yaml")
+	if err != nil {
+		return nil, err
+	}
+
+	yamlData := ConfigYaml{}
+	err = yaml.Unmarshal(yamlFile, &yamlData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &yamlData, nil
+}
+
 func init() {
 	rootCmd.AddCommand(deployCmd)
-	stringP(deployCmd, serviceNameFlag)
-	stringP(deployCmd, directoryFlag)
-	stringP(deployCmd, environmentFlag)
 }

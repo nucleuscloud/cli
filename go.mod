@@ -1,14 +1,16 @@
-module github.com/nickzelei/haiku-cli
+module github.com/haikuapp/cli
 
 go 1.17
 
 require (
+	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
+	github.com/haikuapp/api v0.0.0-20220118060602-323e027745a9
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
-	github.com/mhelmich/haiku-api v0.0.0-20220116181632-745d93b68e3d
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
 	google.golang.org/grpc v1.43.0
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 replace github.com/mhelmich/haiku-api => /Users/marco/playground/haiku-api
