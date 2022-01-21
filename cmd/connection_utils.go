@@ -18,5 +18,4 @@ func newConnection() (*grpc.ClientConn, error) {
 		RootCAs: systemRoots,
 	})
 	return grpc.Dial("haiku-api.haiku-api.apps.haiku.icu:443", grpc.WithTransportCredentials(creds))
-	// return grpc.Dial("127.0.0.1:50051", grpc.WithInsecure())
 }
