@@ -32,7 +32,7 @@ This will kick off a Github Action, which will do the following:
 ## Download from releases page
 1. Go to the [Releases Page](https://github.com/haikuapp/cli/releases).
 2. Download the binary for your operating system.
-3. rename the downloaded file to `haiku`.
+3. Rename the downloaded file to `haiku`.
 4. Add execute permissions to the binary. E.g., on linux and mac: `chmod u+x haiku`.
 5. Put the binary somewhere on your `PATH`. E.g., on linux and mac: `mv haiku /usr/local/bin/haiku`.
 
