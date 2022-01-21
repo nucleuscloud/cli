@@ -16,11 +16,8 @@ build:
 build-release:
 	env GOOS=darwin GOARCH=amd64 $(GO) build -o bin/haiku_darwin_amd64
 	env GOOS=darwin GOARCH=arm64 $(GO) build -o bin/haiku_darwin_arm64
-	env GOOS=linux GOARCH=386 $(GO) build -o bin/haiku_linux_386
 	env GOOS=linux GOARCH=amd64 $(GO) build -o bin/haiku_linux_amd64
 	env GOOS=linux GOARCH=arm64 $(GO) build -o bin/haiku_linux_arm64
-	env GOOS=windows GOARCH=386 $(GO) build -o bin/haiku_windows_386
-	env GOOS=windows GOARCH=amd64 $(GO) build -o bin/haiku_windows_amd64
 .PHONY: build-release
 
 test:
