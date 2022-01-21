@@ -53,8 +53,7 @@ func tailLoop(environmentName string, serviceName string) error {
 		if err != nil && err != io.EOF {
 			return err
 		}
-		// log.Printf("EOF ts: %s", ts)
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 }
 
