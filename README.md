@@ -9,8 +9,7 @@ $ ./hack/tag.sh v1.0.0
 This will create a git tag and push it to the origin.
 This will kick off a Github Action, which will do the following:
 1. Build the project across multiple targets (linux, mac) and multiple architectures (64bit, ARM)
-2. Create a new Github Release based off of the new tag
-  2.1 Upload the built files to the newly created release
+2. Create a new Github Release based off of the new tag and attach the binaries to the release.
 
 # Installing Haiku CLI
 
