@@ -1,4 +1,4 @@
-Haiku CLI
+# Haiku CLI
 
 # Building
 All of the build scripts are encapsulated within the [Makefile](./Makefile)
