@@ -89,8 +89,6 @@ func tailLogs(environmentName string, serviceName string, timestamp string) (str
 		newTimestamp = msg.Timestamp
 		if msg.LogLine != "" {
 			log.Printf("%s\n", msg.LogLine)
-			// } else {
-			// 	fmt.Print(".")
 		}
 	}
 }
