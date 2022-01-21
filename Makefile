@@ -18,6 +18,7 @@ build-release:
 	env GOOS=darwin GOARCH=arm64 $(GO) build -o bin/haiku_darwin_arm64
 	env GOOS=linux GOARCH=amd64 $(GO) build -o bin/haiku_linux_amd64
 	env GOOS=linux GOARCH=arm64 $(GO) build -o bin/haiku_linux_arm64
+	sha256sum bin/* >> bin/SHA256SUMS
 .PHONY: build-release
 
 test:

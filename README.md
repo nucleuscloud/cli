@@ -11,6 +11,9 @@ This will kick off a Github Action, which will do the following:
 1. Build the project across multiple targets (linux, mac) and multiple architectures (64bit, ARM)
 2. Create a new Github Release based off of the new tag and attach the binaries to the release.
 
+If running `make build-release` on a Mac, `sha256sum` must be installed.
+This can be done with `brew install coreutils`.
+
 # Installing Haiku CLI
 
 ## Download from releases page
