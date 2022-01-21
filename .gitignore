@@ -1,4 +1,4 @@
 vendor
 
-haiku-cli
-haiku
+.DS_Store
+bin
