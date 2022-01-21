@@ -15,7 +15,7 @@ import (
 )
 
 var tailLogsCommand = &cobra.Command{
-	Use:   "tailService",
+	Use:   "tail",
 	Short: "Tails logs for a given service.",
 	Long:  `Tails logs for a given service.`,
 
