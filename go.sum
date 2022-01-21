@@ -226,8 +226,6 @@ github.com/mattn/go-isatty v0.0.11/go.mod h1:PhnuNfih5lzO57/f3n+odYbM4JtupLOxQOA
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
 github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39 h1:vBHSysGJm+0IKEFMhrfFTfAhrpCFHa46RpFqVzYJKI0=
 github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39/go.mod h1:15HmXa+Tp2AfAwHc4aR3UPdEzfnMIkshxEYMOXdLS5Y=
-github.com/mhelmich/haiku-api v0.0.0-20220116181632-745d93b68e3d h1:T6XTSXVzM6bSd6Lb/2NsaaGzcPRTE56tx2MVEGwpFes=
-github.com/mhelmich/haiku-api v0.0.0-20220116181632-745d93b68e3d/go.mod h1:ND6QStUjGcKGEsNOOa74+QOxi9EHFEw2g8zAo4xU3A8=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/miekg/dns v1.1.26/go.mod h1:bPDLeHnStXmXAq1m/Ch/hvfNHr14JKNPMBo3VZKjuso=
 github.com/mitchellh/cli v1.0.0/go.mod h1:hNIlj7HEI86fIcpObd7a0FcrxTWetlwJDGcceTlRvqc=
