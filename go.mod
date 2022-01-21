@@ -13,7 +13,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-replace github.com/mhelmich/haiku-api => /Users/marco/playground/haiku-api
+replace github.com/haikuapp/api => /Users/marco/playground/haiku-api
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -40,6 +40,5 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/ini.v1 v1.63.2 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mhelmich/haiku-api/pkg/api/v1/pb"
+	"github.com/haikuapp/api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -16,22 +16,21 @@ import (
 
 var tailLogsCommand = &cobra.Command{
 	Use:   "tailService",
-	Short: "",
-	Long:  ``,
+	Short: "Tails logs for a given service.",
+	Long:  `Tails logs for a given service.`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		environmentName, err := cmd.Flags().GetString(environmentFlag[0])
+		deployConfig, err := getHaikuConfig()
 		if err != nil {
 			return err
 		}
+
+		environmentName := deployConfig.Spec.EnvironmentName
 		if environmentName == "" {
 			return errors.New("environment name not provided")
 		}
 
-		serviceName, err := cmd.Flags().GetString(serviceNameFlag[0])
-		if err != nil {
-			return err
-		}
+		serviceName := deployConfig.Spec.ServiceName
 		if serviceName == "" {
 			return errors.New("service name not provided")
 		}
@@ -95,6 +94,4 @@ func tailLogs(environmentName string, serviceName string, timestamp string) (str
 
 func init() {
 	rootCmd.AddCommand(tailLogsCommand)
-	stringP(tailLogsCommand, serviceNameFlag)
-	stringP(tailLogsCommand, environmentFlag)
 }

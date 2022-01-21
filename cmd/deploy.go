@@ -59,7 +59,7 @@ var deployCmd = &cobra.Command{
 	},
 }
 
-func deploy(environmentName string, serviceName string, folderPath string) error {
+func deploy(environmentName string, serviceName string, serviceType string, folderPath string) error {
 	log.Printf("Getting ready to deploy service: -%s- in environment: -%s- from directory: -%s- \n", serviceName, environmentName, folderPath)
 	fd, err := ioutil.TempFile("", "haiku-cli-")
 	if err != nil {
@@ -100,7 +100,6 @@ func deploy(environmentName string, serviceName string, folderPath string) error
 	} else {
 		err = ga.GzipCompress(folderPath, fd, ga.ArchiveGitRepo())
 	}
-
 	if err != nil {
 		return err
 	}

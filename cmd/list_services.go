@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/mhelmich/haiku-api/pkg/api/v1/pb"
+	"github.com/haikuapp/api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -14,14 +14,16 @@ import (
 
 var listServicesCommand = &cobra.Command{
 	Use:   "listServices",
-	Short: "",
-	Long:  ``,
+	Short: "Lists all services in a given namespace.",
+	Long:  `Lists all services in a given namespace`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		environmentName, err := cmd.Flags().GetString(environmentFlag[0])
+		deployConfig, err := getHaikuConfig()
 		if err != nil {
 			return err
 		}
+
+		environmentName := deployConfig.Spec.EnvironmentName
 		if environmentName == "" {
 			return errors.New("environment name not provided")
 		}
@@ -60,5 +62,4 @@ func listServices(environmentName string) error {
 
 func init() {
 	rootCmd.AddCommand(listServicesCommand)
-	stringP(listServicesCommand, environmentFlag)
 }
