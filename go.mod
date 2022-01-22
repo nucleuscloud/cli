@@ -13,6 +13,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
+replace github.com/haikuapp/api => /Users/marco/playground/haiku-api
+
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect

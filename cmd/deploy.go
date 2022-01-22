@@ -17,7 +17,6 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"gopkg.in/yaml.v2"
 )
 
 // deployCmd represents the deploy command
@@ -27,9 +26,7 @@ var deployCmd = &cobra.Command{
 	Long:  `Creates an environment for your service with the given environmentName and a service with the given serviceName. Deploys your service and returns back a URL where your service is available. `,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		deployConfig, err := getHaikuConfig()
-
 		if err != nil {
 			return err
 		}
@@ -50,20 +47,23 @@ var deployCmd = &cobra.Command{
 		}
 
 		directoryName, err := os.Getwd()
-
 		if err != nil {
 			return err
 		}
 
-		return deploy(environmentName, serviceName, serviceType, directoryName)
+		return deploy(environmentName, serviceName, serviceType, directoryName, deployConfig.Spec.IsPrivate)
 	},
 }
 
-func deploy(environmentName string, serviceName string, serviceType string, folderPath string) error {
+func deploy(environmentName string, serviceName string, serviceType string, folderPath string, isPrivateService bool) error {
 	log.Printf("Getting ready to deploy service: -%s- in environment: -%s- from directory: -%s- \n", serviceName, environmentName, folderPath)
 	fd, err := ioutil.TempFile("", "haiku-cli-")
 	if err != nil {
 		return err
+	}
+
+	if verbose {
+		log.Printf("archiving directory into temp file: %s", fd.Name())
 	}
 
 	conn, err := newConnection()
@@ -117,7 +117,6 @@ func deploy(environmentName string, serviceName string, serviceType string, fold
 	}
 
 	log.Printf("getting upload url...")
-
 	ctx := context.Background()
 	signedURL, err := cliClient.GetServiceUploadUrl(ctx, &pb.GetServiceUploadUrlRequest{
 		EnvironmentName: environmentName,
@@ -141,6 +140,7 @@ func deploy(environmentName string, serviceName string, serviceType string, fold
 		ServiceName:     serviceName,
 		URL:             signedURL.UploadKey,
 		ServiceType:     serviceType,
+		IsPrivate:       isPrivateService,
 	})
 	if err != nil {
 		return err
@@ -185,22 +185,6 @@ func uploadArchive(signedURL string, r io.Reader) error {
 	}
 
 	return nil
-}
-
-func getHaikuConfig() (*ConfigYaml, error) {
-	yamlFile, err := ioutil.ReadFile("./haiku.yaml")
-	if err != nil {
-		return nil, err
-	}
-
-	yamlData := ConfigYaml{}
-	err = yaml.Unmarshal(yamlFile, &yamlData)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &yamlData, nil
 }
 
 func init() {

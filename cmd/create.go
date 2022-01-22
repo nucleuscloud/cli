@@ -15,17 +15,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type SpecStruct struct {
-	EnvironmentName string `yaml:"environmentName"`
-	ServiceName     string `yaml:"serviceName"`
-	ServiceRunTime  string `yaml:"serviceRuntime"`
-}
-
-type ConfigYaml struct {
-	CliVersion string     `yaml:"cliVersion"`
-	Spec       SpecStruct `yaml:"spec"`
-}
-
 var createServiceCmd = &cobra.Command{
 	Use:   "create",
 	Short: "creates a yaml file that describes the service",
