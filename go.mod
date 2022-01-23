@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
-	github.com/haikuapp/api v0.0.0-20220121034504-c1fbaf7a5537
+	github.com/haikuapp/api v0.0.0-20220123032518-ab995ec2c524
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
@@ -12,8 +12,6 @@ require (
 	google.golang.org/grpc v1.43.0
 	gopkg.in/yaml.v2 v2.4.0
 )
-
-replace github.com/haikuapp/api => /Users/marco/playground/haiku-api
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
