@@ -31,18 +31,14 @@ var createServiceCmd = &cobra.Command{
 		envName := cliPrompt("Environment name: "+"("+defaultSpec.EnvironmentName+")", defaultSpec.EnvironmentName)
 		servName := cliPrompt("Service name: "+"("+defaultSpec.ServiceName+")", defaultSpec.ServiceName)
 		serType := cliPrompt("Service runtime (fastapi,nodejs):", "")
-		isPrivate := cliPrompt("Is this a private service?: (no)", "")
-
-		if isPrivate == "yes" { //TODO: do something if it's a private service
-
-		}
+		isPrivate := cliPrompt("Is this a private service?: (yes/no)", "no")
 
 		if serType != "fastapi" && serType != "nodejs" {
 			return errors.New("unsupported service type")
 		}
 
 		configfileName := "haiku.yaml"
-		yamlData, err := createYamlConfig(envName, servName, serType)
+		yamlData, err := createYamlConfig(envName, servName, serType, isPrivate == "yes")
 		if err != nil {
 			return errors.New("unable to write data into the file")
 		}
@@ -102,7 +98,7 @@ func cliPrompt(label string, defaultEnv string) string {
 	return strings.TrimSpace(s)
 }
 
-func createYamlConfig(envName string, servName string, runtime string) ([]byte, error) {
+func createYamlConfig(envName string, servName string, runtime string, isPrivate bool) ([]byte, error) {
 
 	y := ConfigYaml{
 		CliVersion: "haiku-cli/v1",
@@ -110,6 +106,7 @@ func createYamlConfig(envName string, servName string, runtime string) ([]byte, 
 			EnvironmentName: envName,
 			ServiceName:     servName,
 			ServiceRunTime:  runtime,
+			IsPrivate:       isPrivate,
 		},
 	}
 
