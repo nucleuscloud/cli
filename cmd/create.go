@@ -21,14 +21,13 @@ var createServiceCmd = &cobra.Command{
 	Long:  `creates a yaml file that describes the service.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		fmt.Println("This utility will walk you through creating a Haiku service.\n\nIt creates a declarative configuration file that you can apply using Haiku deploy once you're ready to deploy your service.\n\nSee `haiku create help` for definitive documentation on these fields and exactly what they do.\n\nPress ^C at any time to quit.\n\n")
+		fmt.Println("\nThis utility will walk you through creating a Haiku service.\n\nIt creates a declarative configuration file that you can apply using Haiku deploy once you're ready to deploy your service.\n\nSee `haiku create help` for definitive documentation on these fields and exactly what they do.\n\nPress ^C at any time to quit.\n\n")
 
 		defaultSpec, err := getDefaultSpec()
 
 		if err != nil {
 			return err
 		}
-
 		envName := cliPrompt("Environment name: "+"("+defaultSpec.EnvironmentName+")", defaultSpec.EnvironmentName)
 		servName := cliPrompt("Service name: "+"("+defaultSpec.ServiceName+")", defaultSpec.ServiceName)
 		serType := cliPrompt("Service runtime (fastapi,nodejs):", "")
@@ -45,6 +44,11 @@ var createServiceCmd = &cobra.Command{
 		err = ioutil.WriteFile(configfileName, yamlData, 0644)
 		if err != nil {
 			return errors.New("unable to write data into the file")
+		}
+
+		servConfirm := cliPrompt("\n\nIs this correct?: (yes)", "")
+		if servConfirm == "no" {
+			os.Remove("haiku.yaml")
 		}
 
 		return nil
