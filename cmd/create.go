@@ -38,7 +38,7 @@ var createServiceCmd = &cobra.Command{
 		}
 
 		configfileName := "haiku.yaml"
-		yamlData, err := createYamlConfig(envName, servName, serType, isPrivate == "yes")
+		yamlData, err := createYamlConfig(envName, servName, serType, isPrivate == "yes" || isPrivate == "y")
 		if err != nil {
 			return errors.New("unable to write data into the file")
 		}
