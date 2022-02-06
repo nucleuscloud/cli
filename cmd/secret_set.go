@@ -70,6 +70,8 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
+		fmt.Println("Successfully retrieved publis key!")
+
 		publicKey := string(publicKeyReply.PublicKey)
 
 		secret, err := getSecretValue()
@@ -77,15 +79,14 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println(secret)
-
 		// todo: maybe make this configurable
+		fmt.Println("Encrypting and storing secret...")
 		err = storeSecret("./haiku-secrets.yaml", publicKey, secretKey, secret)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("Secret successfully encrypted")
+		fmt.Println("Secret successfully encrypted and stored!")
 		return nil
 	},
 }
