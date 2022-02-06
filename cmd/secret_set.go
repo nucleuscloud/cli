@@ -53,57 +53,52 @@ var setCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
 		fmt.Println("Attempting to retrieve public key")
+
 		publicKeyReply, err := haikuClient.GetPublicSecretKey(context.Background(), &pb.GetPublicSecretKeyRequest{
 			EnvironmentName: deployConfig.Spec.EnvironmentName,
 			ServiceName:     deployConfig.Spec.ServiceName,
 		}, getGrpcTrailer())
-
 		if err != nil {
 			return err
 		}
 
 		publicKey := string(publicKeyReply.PublicKey)
 
-		fmt.Println(publicKey)
-
 		secret, err := getSecretValue()
-
 		if err != nil {
 			return err
 		}
 
 		fmt.Println(secret)
 
-		store, err := keycloak.GetStoreForFile("./.env.haikusecrets")
-
+		// todo: maybe make this configurable
+		err = storeSecret("./haiku-secrets.yaml", publicKey, secretKey, secret)
 		if err != nil {
 			return err
 		}
 
-		store.EncryptSubtree(publicKey, secretKey, secret)
-		store.ToFile("./.env.haikusecrets")
-
-		// var encryptedBuff bytes.Buffer
-		// writer := bufio.NewWriter(&encryptedBuff)
-
-		// recipient, err := age.NewScryptRecipient(secret)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// writeCloser, err := age.Encrypt(writer, recipient)
-
-		// if err != nil {
-		// 	return err
-		// }
-
-		// writeCloser.Close()
-
-		// fmt.Println(encryptedBuff)
-
+		fmt.Println("Secret successfully encrypted")
 		return nil
 	},
+}
+
+func storeSecret(fileName string, publicKey string, secretKey string, secretValue string) error {
+	store, err := keycloak.GetStoreForFile(fileName)
+	if err != nil {
+		return err
+	}
+
+	err = store.EncryptSubtree(publicKey, secretKey, secretValue)
+	if err != nil {
+		return err
+	}
+	err = store.ToFile(fileName)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func getSecretValue() (string, error) {
