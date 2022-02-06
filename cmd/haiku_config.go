@@ -9,12 +9,10 @@ import (
 )
 
 type SpecStruct struct {
-	EnvironmentName string              `yaml:"environmentName"`
-	ServiceName     string              `yaml:"serviceName"`
-	ServiceRunTime  string              `yaml:"serviceRuntime"`
-	IsPrivate       bool                `yaml:"isPrivate"`
-	Env             map[string][]string `yaml:"env"`
-	Secrets         map[string][]string `yaml:"secrets"`
+	EnvironmentName string `yaml:"environmentName"`
+	ServiceName     string `yaml:"serviceName"`
+	ServiceRunTime  string `yaml:"serviceRuntime"`
+	IsPrivate       bool   `yaml:"isPrivate"`
 }
 
 type ConfigYaml struct {
