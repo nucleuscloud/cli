@@ -38,7 +38,18 @@ var setCmd = &cobra.Command{
 			return errors.New("must provide secret-name to set secret")
 		}
 
+		// todo: probably need to validate this key
 		secretKey := args[0]
+
+		deployConfig, err := getHaikuConfig()
+		if err != nil {
+			return err
+		}
+
+		err = upsertHaikuSecrets()
+		if err != nil {
+			return err
+		}
 
 		conn, err := newConnection()
 		if err != nil {
@@ -48,11 +59,6 @@ var setCmd = &cobra.Command{
 		defer conn.Close()
 
 		haikuClient := pb.NewCliServiceClient(conn)
-
-		deployConfig, err := getHaikuConfig()
-		if err != nil {
-			return err
-		}
 
 		fmt.Println("Attempting to retrieve public key")
 

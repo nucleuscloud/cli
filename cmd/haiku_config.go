@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"errors"
 	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -35,4 +37,23 @@ func getHaikuConfig() (*ConfigYaml, error) {
 	}
 
 	return &yamlData, nil
+}
+
+func upsertHaikuSecrets() error {
+	_, err := ioutil.ReadFile("./haiku-secrets.yaml")
+
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+
+	if !errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
+	// File doesn't exist yet, let's create it
+	err = ioutil.WriteFile("./haiku-secrets.yaml", []byte{}, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
