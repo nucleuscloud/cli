@@ -70,7 +70,7 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println("Successfully retrieved publis key!")
+		fmt.Println("Successfully retrieved public key!")
 
 		publicKey := string(publicKeyReply.PublicKey)
 
@@ -97,10 +97,11 @@ func storeSecret(fileName string, publicKey string, secretKey string, secretValu
 		return err
 	}
 
-	err = store.EncryptSubtree(publicKey, secretKey, secretValue)
+	err = store.EncryptSubtree(publicKey, "secrets")
 	if err != nil {
 		return err
 	}
+	fmt.Println("successfully encrypted secret")
 	err = store.ToFile(fileName)
 	if err != nil {
 		return err
