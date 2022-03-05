@@ -64,6 +64,7 @@ var setCmd = &cobra.Command{
 
 		fmt.Println("Retrieving public key...")
 
+		// todo: cache this key
 		publicKeyReply, err := haikuClient.GetPublicSecretKey(context.Background(), &pb.GetPublicSecretKeyRequest{
 			EnvironmentName: deployConfig.Spec.EnvironmentName,
 			ServiceName:     deployConfig.Spec.ServiceName,
