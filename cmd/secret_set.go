@@ -62,7 +62,7 @@ var setCmd = &cobra.Command{
 
 		haikuClient := pb.NewCliServiceClient(conn)
 
-		fmt.Println("Attempting to retrieve public key")
+		fmt.Println("Retrieving public key...")
 
 		publicKeyReply, err := haikuClient.GetPublicSecretKey(context.Background(), &pb.GetPublicSecretKeyRequest{
 			EnvironmentName: deployConfig.Spec.EnvironmentName,
@@ -72,7 +72,7 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println("Successfully retrieved public key!")
+		fmt.Println("Retrieved public key!")
 
 		publicKey := string(publicKeyReply.PublicKey)
 
@@ -82,15 +82,19 @@ var setCmd = &cobra.Command{
 		}
 
 		// todo: maybe make this configurable
-		fmt.Println("Encrypting and storing secret...")
-		err = storeSecret("./haiku-secrets.yaml", publicKey, secretKey, secret)
+		fmt.Println("Encrypting secret...")
+		err = storeSecret("./nucleus-secrets.yaml", publicKey, secretKey, secret)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("Secret successfully encrypted and stored!")
+		fmt.Println("Secret encrypted successfully!")
 		return nil
 	},
+}
+
+type NucleusSecrets struct {
+	Secrets map[string]string `yaml:"secrets,omitempty" json:"secrets,omitempty"`
 }
 
 func storeSecret(fileName string, publicKey string, secretKey string, secretValue string) error {
@@ -98,12 +102,21 @@ func storeSecret(fileName string, publicKey string, secretKey string, secretValu
 	if err != nil {
 		return err
 	}
-	root := make(map[string]interface{})
+	root := NucleusSecrets{}
 	yaml.Unmarshal(file, &root)
-	// TODO: Add properties to file if they don't exist.
-	// Also add secretKey to file if it doesn't exist, or overwrite the existing value with the new secret before we encrypt it.
 
-	store, err := keycloak.GetStoreFromBytes(file, keycloak.YAML)
+	if root.Secrets == nil {
+		root.Secrets = make(map[string]string)
+	}
+
+	root.Secrets[secretKey] = secretValue
+
+	newBlob, err := yaml.Marshal(root)
+	if err != nil {
+		return err
+	}
+
+	store, err := keycloak.GetStoreFromBytes(newBlob, keycloak.YAML)
 	if err != nil {
 		return err
 	}
@@ -112,11 +125,13 @@ func storeSecret(fileName string, publicKey string, secretKey string, secretValu
 	if err != nil {
 		return err
 	}
+
 	fmt.Println("successfully encrypted secret")
 	err = store.ToFile(fileName)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
