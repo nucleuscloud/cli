@@ -38,7 +38,7 @@ func getHaikuConfig() (*ConfigYaml, error) {
 }
 
 func upsertHaikuSecrets() error {
-	_, err := ioutil.ReadFile("./haiku-secrets.yaml")
+	_, err := ioutil.ReadFile("/nucleus-secrets.yaml")
 
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
@@ -49,7 +49,7 @@ func upsertHaikuSecrets() error {
 	}
 
 	// File doesn't exist yet, let's create it
-	err = ioutil.WriteFile("./haiku-secrets.yaml", []byte{}, 0644)
+	err = ioutil.WriteFile("./nucleus-secrets.yaml", []byte{}, 0644)
 	if err != nil {
 		return err
 	}
