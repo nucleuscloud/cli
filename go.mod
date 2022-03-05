@@ -3,11 +3,10 @@ module github.com/haikuapp/cli
 go 1.17
 
 require (
-	filippo.io/age v1.0.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/haikuapp/api v0.0.0-20220204231012-56fd48dff459
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
-	github.com/mhelmich/keycloak v0.1.0
+	github.com/mhelmich/keycloak v0.3.6
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
@@ -16,6 +15,7 @@ require (
 )
 
 require (
+	filippo.io/age v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

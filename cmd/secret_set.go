@@ -20,12 +20,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 
 	"github.com/haikuapp/api/pkg/api/v1/pb"
 	"github.com/mhelmich/keycloak"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 // setCmd represents the set command
@@ -92,7 +94,16 @@ var setCmd = &cobra.Command{
 }
 
 func storeSecret(fileName string, publicKey string, secretKey string, secretValue string) error {
-	store, err := keycloak.GetStoreForFile(fileName)
+	file, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return err
+	}
+	root := make(map[string]interface{})
+	yaml.Unmarshal(file, &root)
+	// TODO: Add properties to file if they don't exist.
+	// Also add secretKey to file if it doesn't exist, or overwrite the existing value with the new secret before we encrypt it.
+
+	store, err := keycloak.GetStoreFromBytes(file, keycloak.YAML)
 	if err != nil {
 		return err
 	}
