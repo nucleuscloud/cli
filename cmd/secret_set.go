@@ -127,7 +127,6 @@ func storeSecret(fileName string, publicKey string, secretKey string, secretValu
 		return err
 	}
 
-	fmt.Println("successfully encrypted secret")
 	err = store.ToFile(fileName)
 	if err != nil {
 		return err
@@ -147,17 +146,13 @@ func getSecretValue() (string, error) {
 
 	var secret string
 
-	if isPiped {
-		secret, err = reader.ReadString('\n')
-		if err != nil {
-			return "", err
-		}
-	} else {
+	if !isPiped {
 		fmt.Print("> ")
-		secret, err = reader.ReadString('\n')
-		if err != nil {
-			return "", err
-		}
+	}
+
+	secret, err = reader.ReadString('\n')
+	if err != nil {
+		return "", err
 	}
 
 	trimmedSecret := strings.TrimSpace(secret)
