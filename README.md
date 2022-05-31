@@ -1,4 +1,4 @@
-# Haiku CLI
+# Nucleus CLI
 
 # Building
 All of the build scripts are encapsulated within the [Makefile](./Makefile)
@@ -7,7 +7,7 @@ To build the project in a standard way for your OS, simply run:
 ```
 make build
 ```
-This will output to `bin/haiku`
+This will output to `bin/nucleus`
 
 To build under multiple targets and architectures:
 ```
@@ -27,14 +27,14 @@ This will kick off a Github Action, which will do the following:
 1. Build the project across multiple targets (linux, mac) and multiple architectures (64bit, ARM)
 2. Create a new Github Release based off of the new tag and attach the binaries to the release.
 
-# Installing Haiku CLI
+# Installing Nucleus CLI
 
 ## Download from releases page
-1. Go to the [Releases Page](https://github.com/haikuapp/cli/releases).
+1. Go to the [Releases Page](https://github.com/nucleuscloud/cli/releases).
 2. Download the binary for your operating system.
-3. Rename the downloaded file to `haiku`.
-4. Add execute permissions to the binary. E.g., on linux and mac: `chmod u+x haiku`.
-5. Put the binary somewhere on your `PATH`. E.g., on linux and mac: `mv haiku /usr/local/bin/haiku`.
+3. Rename the downloaded file to `nucleus`.
+4. Add execute permissions to the binary. E.g., on linux and mac: `chmod u+x nucleus`.
+5. Put the binary somewhere on your `PATH`. E.g., on linux and mac: `mv nucleus /usr/local/bin/nucleus`.
 
 ## Install via a package manager
 TODO

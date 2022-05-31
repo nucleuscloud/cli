@@ -24,8 +24,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/haikuapp/api/pkg/api/v1/pb"
 	"github.com/mhelmich/keycloak"
+	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -43,12 +43,12 @@ var setCmd = &cobra.Command{
 		// todo: probably need to validate this key
 		secretKey := args[0]
 
-		deployConfig, err := getHaikuConfig()
+		deployConfig, err := getNucleusConfig()
 		if err != nil {
 			return err
 		}
 
-		err = upsertHaikuSecrets()
+		err = upsertNucleusSecrets()
 		if err != nil {
 			return err
 		}
@@ -60,12 +60,12 @@ var setCmd = &cobra.Command{
 
 		defer conn.Close()
 
-		haikuClient := pb.NewCliServiceClient(conn)
+		nucleusClient := pb.NewCliServiceClient(conn)
 
 		fmt.Println("Retrieving public key...")
 
 		// todo: cache this key
-		publicKeyReply, err := haikuClient.GetPublicSecretKey(context.Background(), &pb.GetPublicSecretKeyRequest{
+		publicKeyReply, err := nucleusClient.GetPublicSecretKey(context.Background(), &pb.GetPublicSecretKeyRequest{
 			EnvironmentName: deployConfig.Spec.EnvironmentName,
 			ServiceName:     deployConfig.Spec.ServiceName,
 		}, getGrpcTrailer())

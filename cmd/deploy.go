@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/haikuapp/api/pkg/api/v1/pb"
 	ga "github.com/mhelmich/go-archiver"
+	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -22,11 +22,11 @@ import (
 // deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
-	Short: "deploys your service to Haiku and returns an endpoint to call your service",
+	Short: "deploys your service to Nucleus and returns an endpoint to call your service",
 	Long:  `Creates an environment for your service with the given environmentName and a service with the given serviceName. Deploys your service and returns back a URL where your service is available. `,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		deployConfig, err := getHaikuConfig()
+		deployConfig, err := getNucleusConfig()
 		if err != nil {
 			return err
 		}
@@ -57,7 +57,7 @@ var deployCmd = &cobra.Command{
 
 func deploy(environmentName string, serviceName string, serviceType string, folderPath string, isPrivateService bool) error {
 	log.Printf("Getting ready to deploy service: -%s- in environment: -%s- from directory: -%s- \n", serviceName, environmentName, folderPath)
-	fd, err := ioutil.TempFile("", "haiku-cli-")
+	fd, err := ioutil.TempFile("", "nucleus-cli-")
 	if err != nil {
 		return err
 	}
