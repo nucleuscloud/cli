@@ -1,17 +1,18 @@
-module github.com/haikuapp/cli
+module github.com/nucleuscloud/cli
 
-go 1.17
+go 1.18
 
 require (
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
-	github.com/haikuapp/api v0.0.0-20220204231012-56fd48dff459
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
 	github.com/mhelmich/keycloak v0.3.6
+	github.com/nucleuscloud/api v0.0.0-20220531214735-1b5fa088add9
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
 	google.golang.org/grpc v1.43.0
 	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
 require (
@@ -41,6 +42,5 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/haikuapp/api/pkg/api/v1/pb"
+	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -20,7 +20,7 @@ var tailLogsCommand = &cobra.Command{
 	Long:  `Tails logs for a given service.`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		deployConfig, err := getHaikuConfig()
+		deployConfig, err := getNucleusConfig()
 		if err != nil {
 			return err
 		}

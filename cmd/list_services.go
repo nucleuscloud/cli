@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/haikuapp/api/pkg/api/v1/pb"
+	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -18,7 +18,7 @@ var listServicesCommand = &cobra.Command{
 	Long:  `Lists all services in a given namespace`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		deployConfig, err := getHaikuConfig()
+		deployConfig, err := getNucleusConfig()
 		if err != nil {
 			return err
 		}
