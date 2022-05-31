@@ -6,7 +6,7 @@ all: build test
 .PHONY: all
 
 vendor:
-	$(GO) mod tidy && $(GO) mod vendor
+	$(GO) mod tidy -compat=1.17 && $(GO) mod vendor
 .PHONY: vendor
 
 build:
