@@ -4,7 +4,7 @@ on:
   push:
     # branches: [main]
     tags:
-      - "v*.*.*"
+      - 'v*.*.*'
 
 jobs:
   build:
@@ -16,11 +16,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.18
 
       - name: Granting private modules access
         run: |
-          git config --global url."https://${{ secrets.REPO_PAT }}:x-oauth-basic@github.com/haikuapp".insteadOf "https://github.com/haikuapp"
+          git config --global url."https://${{ secrets.REPO_PAT }}:x-oauth-basic@github.com/nucleuscloud".insteadOf "https://github.com/nucleuscloud"
 
       - name: Build
         run: make build
@@ -35,8 +35,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            bin/haiku_darwin_amd64
-            bin/haiku_darwin_arm64
-            bin/haiku_linux_amd64
-            bin/haiku_linux_arm64
+            bin/nucleus_darwin_amd64
+            bin/nucleus_darwin_arm64
+            bin/nucleus_linux_amd64
+            bin/nucleus_linux_arm64
             bin/SHA256SUMS

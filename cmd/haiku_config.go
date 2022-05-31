@@ -20,9 +20,9 @@ type ConfigYaml struct {
 	Spec       SpecStruct `yaml:"spec"`
 }
 
-func getHaikuConfig() (*ConfigYaml, error) {
+func getNucleusConfig() (*ConfigYaml, error) {
 	// TODO(marco): make it so that parent dirs are recursively searched
-	yamlFile, err := ioutil.ReadFile("./haiku.yaml")
+	yamlFile, err := ioutil.ReadFile("./nucleus.yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func getHaikuConfig() (*ConfigYaml, error) {
 	return &yamlData, nil
 }
 
-func upsertHaikuSecrets() error {
+func upsertNucleusSecrets() error {
 	_, err := ioutil.ReadFile("/nucleus-secrets.yaml")
 
 	if err != nil && !errors.Is(err, os.ErrNotExist) {

@@ -21,7 +21,7 @@ var createServiceCmd = &cobra.Command{
 	Long:  `creates a yaml file that describes the service.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		fmt.Println("This utility will walk you through creating a Haiku service.\n\nIt creates a declarative configuration file that you can apply using Haiku deploy once you're ready to deploy your service.\n\nSee `haiku create help` for definitive documentation on these fields and exactly what they do.\n\nPress ^C at any time to quit.\n\n")
+		fmt.Println("This utility will walk you through creating a Nucleus service.\n\nIt creates a declarative configuration file that you can apply using Nucleus deploy once you're ready to deploy your service.\n\nSee `nucleus create help` for definitive documentation on these fields and exactly what they do.\n\nPress ^C at any time to quit.\n\n")
 
 		defaultSpec, err := getDefaultSpec()
 
@@ -37,7 +37,7 @@ var createServiceCmd = &cobra.Command{
 			return errors.New("unsupported service type")
 		}
 
-		configfileName := "haiku.yaml"
+		configfileName := "nucleus.yaml"
 		yamlData, err := createYamlConfig(envName, servName, serType)
 		if err != nil {
 			return errors.New("unable to write data into the file")
@@ -96,7 +96,7 @@ func cliPrompt(label string, defaultEnv string) string {
 func createYamlConfig(envName string, servName string, runtime string) ([]byte, error) {
 
 	y := ConfigYaml{
-		CliVersion: "haiku-cli/v1",
+		CliVersion: "nucleus-cli/v1",
 		Spec: SpecStruct{
 			EnvironmentName: envName,
 			ServiceName:     servName,
