@@ -24,8 +24,8 @@ var secretCmd = &cobra.Command{
 	Use:   "secret",
 	Short: "",
 	Long:  "",
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Help()
 	},
 }
 
