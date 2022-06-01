@@ -104,7 +104,11 @@ func storeSecret(fileName string, publicKey string, secretKey string, secretValu
 		return err
 	}
 	root := NucleusSecrets{}
-	yaml.Unmarshal(file, &root)
+	err = yaml.Unmarshal(file, &root)
+
+	if err != nil {
+		return err
+	}
 
 	if root.Secrets == nil {
 		root.Secrets = make(map[string]string)
