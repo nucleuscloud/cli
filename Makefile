@@ -10,6 +10,7 @@ vendor:
 .PHONY: vendor
 
 build:
+	golangci-lint run
 	$(GO) build -o bin/nucleus
 .PHONY: build
 

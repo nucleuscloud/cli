@@ -58,8 +58,10 @@ var loginCmd = &cobra.Command{
 
 			cliPrompt("\nThen press [Enter] to continue in the web browser...", "")
 
-			webbrowser.Open(gitAuth.VerificationURI)
-
+			err = webbrowser.Open(gitAuth.VerificationURI)
+			if err != nil {
+				fmt.Printf("Error opening the browser")
+			}
 			access_token, err := PollToken(c, gitAuth) //returns a valid oauth token
 			if err != nil {
 				fmt.Printf("Error getting the oauth access token")
@@ -222,7 +224,10 @@ func getUserEmail(c *http.Client, token *api.AccessToken) (*UserEmail, error) {
 
 	var userEmail UserEmail
 
-	json.Unmarshal(body, &userEmail)
+	err = json.Unmarshal(body, &userEmail)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	fmt.Println("this is the user email", userEmail)
 
@@ -255,7 +260,10 @@ func getUserOrg(c *http.Client, token *api.AccessToken) (*UserOrg, error) {
 
 	var userOrg UserOrg
 
-	json.Unmarshal(body, &userOrg)
+	err = json.Unmarshal(body, &userOrg)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	fmt.Println("this is the user orgs", userOrg)
 
@@ -295,7 +303,10 @@ func getUserInfo(c *http.Client, token *api.AccessToken, url string) (*UserInfo,
 
 	var userInfo UserInfo
 
-	json.Unmarshal(body, &userInfo)
+	err = json.Unmarshal(body, &userInfo)
+	if err != nil{
+		fmt.Println(err)
+	}
 
 	return &UserInfo{
 		Login:   userInfo.Login,
