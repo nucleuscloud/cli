@@ -17,6 +17,8 @@ import (
 	"github.com/toqueteos/webbrowser"
 )
 
+var clientID string = "4fecd90b045067eac7e6"
+
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
 	Use:   "login",
@@ -100,7 +102,6 @@ type UserInfo struct {
 	Id      int    `json:"id"`
 	Profile string `json:"html_url"`
 	Email   UserEmail
-	Org     UserOrg
 }
 
 type UserEmail []struct {
@@ -116,9 +117,8 @@ func httpClient() *http.Client {
 	return client
 }
 
-func githubAuth(c *http.Client, scope []string) (*GithubResponse, error) {
+func githubAuth(c *http.Client, scope []string ) (*GithubResponse, error) {
 
-	clientID := "4fecd90b045067eac7e6"
 	baseUrl := "https://github.com/login/device/code"
 
 	fmt.Println(strings.Join(scope, ","))
@@ -153,8 +153,6 @@ func githubAuth(c *http.Client, scope []string) (*GithubResponse, error) {
 func PollToken(c *http.Client, code *GithubResponse) (*api.AccessToken, error) {
 
 	pollUrl := "https://github.com/login/oauth/access_token"
-
-	clientID := "4fecd90b045067eac7e6"
 
 	const grantType = "urn:ietf:params:oauth:grant-type:device_code"
 
@@ -235,41 +233,6 @@ func getUserEmail(c *http.Client, token *api.AccessToken) (*UserEmail, error) {
 
 }
 
-func getUserOrg(c *http.Client, token *api.AccessToken) (*UserOrg, error) {
-	//attempt to get the organizations that the user belongs to
-	url := "https://api.github.com/user/orgs"
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Println(err)
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", "Bearer "+token.Token)
-
-	resp, err := c.Do(req)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(string(body))
-
-	var userOrg UserOrg
-
-	err = json.Unmarshal(body, &userOrg)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println("this is the user orgs", userOrg)
-
-	return &userOrg, err
-}
-
 func getUserInfo(c *http.Client, token *api.AccessToken, url string) (*UserInfo, error) {
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -296,11 +259,6 @@ func getUserInfo(c *http.Client, token *api.AccessToken, url string) (*UserInfo,
 		fmt.Println(err)
 	}
 
-	org, err := getUserOrg(c, token)
-	if err != nil {
-		fmt.Println(err)
-	}
-
 	var userInfo UserInfo
 
 	err = json.Unmarshal(body, &userInfo)
@@ -313,7 +271,6 @@ func getUserInfo(c *http.Client, token *api.AccessToken, url string) (*UserInfo,
 		Profile: userInfo.Profile,
 		Id:      userInfo.Id,
 		Email:   *email,
-		Org:     *org,
 	}, err
 }
 
