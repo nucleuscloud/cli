@@ -96,7 +96,7 @@ func cliPrompt(label string, defaultEnv string) string {
 func createYamlConfig(envName string, servName string, runtime string) ([]byte, error) {
 
 	y := ConfigYaml{
-		CliVersion: "nucleus-cli/v1",
+		CliVersion: "nucleus-cli/v1alpha1",
 		Spec: SpecStruct{
 			EnvironmentName: envName,
 			ServiceName:     servName,
