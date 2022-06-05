@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	ga "github.com/mhelmich/go-archiver"
@@ -128,7 +130,10 @@ func deploy(environmentName string, serviceName string, serviceType string, fold
 		return err
 	}
 
+	log.Printf("Upload Url: %s\n", signedURL)
+
 	log.Printf("uploading archive...")
+	log.Println(signedURL)
 	err = uploadArchive(signedURL.URL, fd)
 	if err != nil {
 		return err
@@ -171,16 +176,28 @@ func uploadArchive(signedURL string, r io.Reader) error {
 		Timeout: 10 * time.Second,
 	}
 
-	req, err := http.NewRequest(http.MethodPut, signedURL, r)
+	// TODO: Figure out how to send this as a stream instead of reading into memory.
+	// S3 seems to not like when we send this as a stream
+	// https://stackoverflow.com/questions/67896779/streaming-uploading-to-s3-using-presigned-url
+	// https://github.com/aws/aws-sdk-js/issues/1603
+	buf := &bytes.Buffer{}
+	nRead, err := io.Copy(buf, r)
 	if err != nil {
 		return err
 	}
 
-	req.Header.Set("Content-Type", "application/zip")
+	req, err := http.NewRequest(http.MethodPut, signedURL, buf)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("content-type", "application/gzip")
+	req.Header.Set("content-length", strconv.FormatInt(nRead, 10))
 	rsp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	} else if rsp.StatusCode != http.StatusOK {
+		fmt.Print(rsp)
 		return fmt.Errorf("upload didn't work: %s", rsp.Status)
 	}
 
