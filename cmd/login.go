@@ -70,9 +70,9 @@ var loginCmd = &cobra.Command{
 			}
 
 			//use oauth token to be able to call github APIs and get info about the user
-			orgURL := "https://api.github.com/user"
+			userUrl := "https://api.github.com/user"
 
-			resp, err := getUserInfo(c, access_token, orgURL)
+			resp, err := getUserInfo(c, access_token, userUrl)
 			if err != nil {
 				fmt.Printf("there is an error with the struct encoding")
 			}
@@ -183,7 +183,7 @@ func PollToken(c *http.Client, code *GithubResponse) (*api.AccessToken, error) {
 		token, err := resp.AccessToken()
 
 		if err == nil {
-			return nil
+			return token, nil
 		} else if !(errors.As(err, &apiError) && apiError.Code == "authorization_pending") {
 			return nil, err
 		}
@@ -215,7 +215,6 @@ func getUserEmail(c *http.Client, token *api.AccessToken) (*UserEmail, error) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(string(body))
 
 	var userEmail UserEmail
 
@@ -223,8 +222,6 @@ func getUserEmail(c *http.Client, token *api.AccessToken) (*UserEmail, error) {
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	fmt.Println("this is the user email", userEmail)
 
 	return &userEmail, err
 
@@ -250,11 +247,6 @@ func getUserInfo(c *http.Client, token *api.AccessToken, url string) (*UserInfo,
 		fmt.Println(err)
 	}
 
-	email, err := getUserEmail(c, token)
-	if err != nil {
-		fmt.Println(err)
-	}
-
 	var userInfo UserInfo
 
 	err = json.Unmarshal(body, &userInfo)
@@ -262,11 +254,22 @@ func getUserInfo(c *http.Client, token *api.AccessToken, url string) (*UserInfo,
 		fmt.Println(err)
 	}
 
+	var userEmail *UserEmail
+
+	if userInfo.Email == nil {
+		userEmail, err = getUserEmail(c, token)
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		userEmail = &userInfo.Email
+	}
+
 	return &UserInfo{
 		Login:   userInfo.Login,
 		Profile: userInfo.Profile,
 		Id:      userInfo.Id,
-		Email:   *email,
+		Email:   *userEmail,
 	}, err
 }
 
