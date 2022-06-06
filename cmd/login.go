@@ -49,7 +49,7 @@ var loginCmd = &cobra.Command{
 		if result == 0 {
 			//this is the first index in the Items object from the loginSelect variable
 
-			scope := []string{"repo:status", "user", "read:org"} //define the scopes that we want to access, link to scopes: https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps, user will return all public user information
+			scope := []string{"repo:status", "user"} //define the scopes that we want to access, link to scopes: https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps, user will return all public user information
 
 			gitAuth, err := githubAuth(c, scope) //kicks off the github oauth procss
 			if err != nil {
@@ -117,11 +117,9 @@ func httpClient() *http.Client {
 	return client
 }
 
-func githubAuth(c *http.Client, scope []string ) (*GithubResponse, error) {
+func githubAuth(c *http.Client, scope []string) (*GithubResponse, error) {
 
 	baseUrl := "https://github.com/login/device/code"
-
-	fmt.Println(strings.Join(scope, ","))
 
 	resp, err := api.PostForm(c, baseUrl, url.Values{
 		"client_id": {clientID},
@@ -185,8 +183,7 @@ func PollToken(c *http.Client, code *GithubResponse) (*api.AccessToken, error) {
 		token, err := resp.AccessToken()
 
 		if err == nil {
-			fmt.Println("this is the access token: ", token)
-			return token, nil
+			return nil
 		} else if !(errors.As(err, &apiError) && apiError.Code == "authorization_pending") {
 			return nil, err
 		}
@@ -252,7 +249,6 @@ func getUserInfo(c *http.Client, token *api.AccessToken, url string) (*UserInfo,
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(string(body))
 
 	email, err := getUserEmail(c, token)
 	if err != nil {
@@ -262,7 +258,7 @@ func getUserInfo(c *http.Client, token *api.AccessToken, url string) (*UserInfo,
 	var userInfo UserInfo
 
 	err = json.Unmarshal(body, &userInfo)
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 	}
 
