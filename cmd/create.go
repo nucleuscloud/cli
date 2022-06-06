@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/goombaio/namegenerator"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 var createServiceCmd = &cobra.Command{
@@ -37,12 +35,16 @@ var createServiceCmd = &cobra.Command{
 			return errors.New("unsupported service type")
 		}
 
-		configfileName := "nucleus.yaml"
-		yamlData, err := createYamlConfig(envName, servName, serType)
-		if err != nil {
-			return errors.New("unable to write data into the file")
+		nucleusConfig := ConfigYaml{
+			CliVersion: "nucleus-cli/v1alpha1",
+			Spec: SpecStruct{
+				EnvironmentName: envName,
+				ServiceName:     servName,
+				ServiceRunTime:  serType,
+			},
 		}
-		err = ioutil.WriteFile(configfileName, yamlData, 0644)
+		err = setNucleusConfig(&nucleusConfig)
+
 		if err != nil {
 			return errors.New("unable to write data into the file")
 		}
@@ -91,26 +93,6 @@ func cliPrompt(label string, defaultEnv string) string {
 		s = defaultEnv
 	}
 	return strings.TrimSpace(s)
-}
-
-func createYamlConfig(envName string, servName string, runtime string) ([]byte, error) {
-
-	y := ConfigYaml{
-		CliVersion: "nucleus-cli/v1alpha1",
-		Spec: SpecStruct{
-			EnvironmentName: envName,
-			ServiceName:     servName,
-			ServiceRunTime:  runtime,
-		},
-	}
-
-	yamlData, err := yaml.Marshal(&y)
-
-	if err != nil {
-		fmt.Printf("Error while Marshaling. %v", err)
-	}
-
-	return yamlData, err
 }
 
 func init() {

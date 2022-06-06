@@ -17,11 +17,9 @@ package cmd
 
 import (
 	"errors"
-	"io/ioutil"
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 // setCmd represents the set command
@@ -34,7 +32,7 @@ var varSetCmd = &cobra.Command{
 			return errors.New("must provide at least one environment variable key-value pair")
 		}
 
-		err := storeVars("./nucleus.yaml", args)
+		err := storeVars(args)
 		if err != nil {
 			return err
 		}
@@ -43,37 +41,26 @@ var varSetCmd = &cobra.Command{
 	},
 }
 
-func storeVars(fileName string, args []string) error {
-	file, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return err
-	}
-	root := SpecStruct{}
-	err = yaml.Unmarshal(file, &root)
-
+func storeVars(args []string) error {
+	nucleusConfig, err := getNucleusConfig()
 	if err != nil {
 		return err
 	}
 
-	if root.Vars == nil {
-		root.Vars = make(map[string]string)
+	if nucleusConfig.Spec.Vars == nil {
+		nucleusConfig.Spec.Vars = make(map[string]string)
 	}
 
 	for i := 0; i < len(args); i++ {
 		s := strings.Split(args[i], "=")
-		root.Vars[s[0]] = s[1]
+		nucleusConfig.Spec.Vars[s[0]] = s[1]
 	}
 
-	newBlob, err := yaml.Marshal(root)
+	err = setNucleusConfig(nucleusConfig)
+
 	if err != nil {
 		return err
 	}
-
-	err = ioutil.WriteFile(fileName, newBlob, 0644)
-	if err != nil {
-		return errors.New("unable to write data into the file")
-	}
-
 	return nil
 }
 

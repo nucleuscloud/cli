@@ -38,6 +38,19 @@ func getNucleusConfig() (*ConfigYaml, error) {
 	return &yamlData, nil
 }
 
+func setNucleusConfig(config *ConfigYaml) error {
+	yamlData, err := yaml.Marshal(&config)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile("./nucleus.yaml", yamlData, 0644)
+	if err != nil {
+		return errors.New("Unable to write data into the config file")
+	}
+	return nil
+}
+
 func upsertNucleusSecrets() error {
 	_, err := ioutil.ReadFile("/nucleus-secrets.yaml")
 
