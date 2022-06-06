@@ -4,14 +4,17 @@ go 1.18
 
 require (
 	github.com/aws/aws-sdk-go v1.44.27
+	github.com/cli/oauth v0.9.0
 	github.com/google/uuid v1.3.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
+	github.com/manifoldco/promptui v0.9.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
 	github.com/mhelmich/keycloak v0.3.6
 	github.com/nucleuscloud/api v0.0.0-20220606183141-5d7c3a73832d
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
+	github.com/toqueteos/webbrowser v1.2.0
 	google.golang.org/grpc v1.43.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
@@ -19,6 +22,7 @@ require (
 
 require (
 	filippo.io/age v1.0.0 // indirect
+	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
