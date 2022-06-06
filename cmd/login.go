@@ -17,7 +17,7 @@ import (
 	"github.com/toqueteos/webbrowser"
 )
 
-var clientID string = "4fecd90b045067eac7e6"
+var clientID string = "cbe115b3361fa6cbb494"
 
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
@@ -49,7 +49,7 @@ var loginCmd = &cobra.Command{
 		if result == 0 {
 			//this is the first index in the Items object from the loginSelect variable
 
-			scope := []string{"repo:status", "user"} //define the scopes that we want to access, link to scopes: https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps, user will return all public user information
+			scope := []string{"read:user, user:email"} //define the scopes that we want to access, link to scopes: https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps, user will return all public user information
 
 			gitAuth, err := githubAuth(c, scope) //kicks off the github oauth procss
 			if err != nil {
