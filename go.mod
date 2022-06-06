@@ -8,7 +8,7 @@ require (
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
 	github.com/mhelmich/keycloak v0.3.6
-	github.com/nucleuscloud/api v0.0.0-20220531232512-1cd549897cb6
+	github.com/nucleuscloud/api v0.0.0-20220606183141-5d7c3a73832d
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
