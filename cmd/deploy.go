@@ -53,11 +53,11 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
-		return deploy(environmentName, serviceName, serviceType, directoryName, deployConfig.Spec.IsPrivate)
+		return deploy(environmentName, serviceName, serviceType, directoryName, deployConfig.Spec.IsPrivate, deployConfig.Spec.Vars)
 	},
 }
 
-func deploy(environmentName string, serviceName string, serviceType string, folderPath string, isPrivateService bool) error {
+func deploy(environmentName string, serviceName string, serviceType string, folderPath string, isPrivateService bool, envVars map[string]string) error {
 	log.Printf("Getting ready to deploy service: -%s- in environment: -%s- from directory: -%s- \n", serviceName, environmentName, folderPath)
 	fd, err := ioutil.TempFile("", "nucleus-cli-")
 	if err != nil {
@@ -130,10 +130,7 @@ func deploy(environmentName string, serviceName string, serviceType string, fold
 		return err
 	}
 
-	log.Printf("Upload Url: %s\n", signedURL)
-
 	log.Printf("uploading archive...")
-	log.Println(signedURL)
 	err = uploadArchive(signedURL.URL, fd)
 	if err != nil {
 		return err
@@ -146,6 +143,7 @@ func deploy(environmentName string, serviceName string, serviceType string, fold
 		URL:             signedURL.UploadKey,
 		ServiceType:     serviceType,
 		IsPrivate:       isPrivateService,
+		Vars:            envVars,
 	})
 	if err != nil {
 		return err
