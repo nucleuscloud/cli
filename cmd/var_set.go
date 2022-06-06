@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -53,7 +54,11 @@ func storeVars(args []string) error {
 
 	for i := 0; i < len(args); i++ {
 		s := strings.Split(args[i], "=")
-		nucleusConfig.Spec.Vars[s[0]] = s[1]
+		if len(s) == 2 {
+			nucleusConfig.Spec.Vars[s[0]] = s[1]
+		} else {
+			fmt.Printf("Skipping var because not in right format: %s\n", args[i])
+		}
 	}
 
 	err = setNucleusConfig(nucleusConfig)
