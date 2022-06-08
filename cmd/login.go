@@ -29,6 +29,16 @@ var (
 	accessDeniedError = errors.New("access denied")
 	expiredTokenError = errors.New("expired token")
 	unknownTokenError = errors.New("unable to authenticate")
+
+	scopes []string = []string{
+		"openid",
+		"profile",
+		"offline_access",
+
+		// custom
+		"deploy:service",
+		"read:service",
+	}
 )
 
 // loginCmd represents the login command
@@ -88,7 +98,7 @@ type Auth0DeviceResponse struct {
 }
 
 func getDeviceCodeResponse() (*Auth0DeviceResponse, error) {
-	payload := strings.NewReader(fmt.Sprintf("client_id=%s&scope=openid offline_access&audience=%s", auth0ClientId, apiAudience))
+	payload := strings.NewReader(fmt.Sprintf("client_id=%s&scope=%s&audience=%s", auth0ClientId, strings.Join(scopes, " "), apiAudience))
 	req, err := http.NewRequest("POST", auth0LoginUrl, payload)
 
 	if err != nil {

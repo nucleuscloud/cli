@@ -55,7 +55,7 @@ type loginCreds struct {
 
 func (c *loginCreds) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
 	return map[string]string{
-		"accessToken": c.AccessToken,
+		"authorization": fmt.Sprintf("bearer %s", c.AccessToken),
 	}, nil
 }
 
