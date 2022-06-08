@@ -38,7 +38,7 @@ var listServicesCommand = &cobra.Command{
 }
 
 func listServices(environmentName string) error {
-	conn, err := newConnection()
+	conn, err := newAuthenticatedConnection()
 	if err != nil {
 		return err
 	}

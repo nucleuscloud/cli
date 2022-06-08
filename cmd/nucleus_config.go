@@ -150,3 +150,14 @@ func setNucleusAuthFile(authConfig NucleusAuth) error {
 	}
 	return nil
 }
+
+/**
+ * Retrieves the access token from the config and validates it.
+ */
+func getValidAccessTokenFromConfig() (string, error) {
+	config, err := getNucleusAuthConfig()
+	if err != nil {
+		return "", err
+	}
+	return config.AccessToken, ensureValidToken(config.AccessToken)
+}

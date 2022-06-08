@@ -236,42 +236,42 @@ func getTokenResponse(deviceCode string) (*Auth0TokenResponse, error) {
 	}, nil
 }
 
-func getRefreshdTokenResponse(refreshToken string) (*Auth0RefreshTokenResponse, error) {
-	payload := strings.NewReader(fmt.Sprintf("grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s", auth0ClientId, "TODO", refreshToken))
-	req, err := http.NewRequest("POST", auth0TokenUrl, payload)
+// func getRefreshTokenResponse(refreshToken string) (*Auth0RefreshTokenResponse, error) {
+// 	payload := strings.NewReader(fmt.Sprintf("grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s", auth0ClientId, "TODO", refreshToken))
+// 	req, err := http.NewRequest("POST", auth0TokenUrl, payload)
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	req.Header.Add("content-type", "application/x-www-form-urlencoded")
+// 	req.Header.Add("content-type", "application/x-www-form-urlencoded")
 
-	res, err := getHttpClient().Do(req)
+// 	res, err := getHttpClient().Do(req)
 
-	if err != nil {
-		fmt.Println("Hit this error block")
-		return nil, err
-	}
+// 	if err != nil {
+// 		fmt.Println("Hit this error block")
+// 		return nil, err
+// 	}
 
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+// 	defer res.Body.Close()
+// 	body, err := ioutil.ReadAll(res.Body)
 
-	if err != nil {
-		// handle errors here
-		fmt.Println("Received this error: ", err)
-		fmt.Println("Got this response: ", body)
-		return nil, err
-	}
+// 	if err != nil {
+// 		// handle errors here
+// 		fmt.Println("Received this error: ", err)
+// 		fmt.Println("Got this response: ", body)
+// 		return nil, err
+// 	}
 
-	var tokenResponse *Auth0RefreshTokenResponse
-	err = json.Unmarshal(body, &tokenResponse)
+// 	var tokenResponse *Auth0RefreshTokenResponse
+// 	err = json.Unmarshal(body, &tokenResponse)
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return tokenResponse, nil
-}
+// 	return tokenResponse, nil
+// }
 
 func getHttpClient() *http.Client {
 	client := &http.Client{Timeout: 10 * time.Second}

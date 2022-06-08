@@ -68,7 +68,7 @@ func deploy(environmentName string, serviceName string, serviceType string, fold
 		log.Printf("archiving directory into temp file: %s", fd.Name())
 	}
 
-	conn, err := newConnection()
+	conn, err := newAuthenticatedConnection()
 	if err != nil {
 		return err
 	}

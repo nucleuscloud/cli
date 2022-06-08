@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 
@@ -8,7 +9,23 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-func newConnection() (*grpc.ClientConn, error) {
+var (
+	nucleusApiUrl = "nucleus-api.nucleus-api.svcs.stage.usenucleus.cloud:443"
+)
+
+// func newConnection() (*grpc.ClientConn, error) {
+// 	systemRoots, err := x509.SystemCertPool()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	creds := credentials.NewTLS(&tls.Config{
+// 		RootCAs: systemRoots,
+// 	})
+// 	return grpc.Dial(nucleusApiUrl, grpc.WithTransportCredentials(creds))
+// }
+
+func newAuthenticatedConnection() (*grpc.ClientConn, error) {
 	systemRoots, err := x509.SystemCertPool()
 	if err != nil {
 		return nil, err
@@ -17,5 +34,31 @@ func newConnection() (*grpc.ClientConn, error) {
 	creds := credentials.NewTLS(&tls.Config{
 		RootCAs: systemRoots,
 	})
-	return grpc.Dial("nucleus-api.nucleus-api.svcs.stage.usenucleus.cloud:443", grpc.WithTransportCredentials(creds))
+
+	accessToken, err := getValidAccessTokenFromConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return grpc.Dial(
+		nucleusApiUrl,
+		grpc.WithTransportCredentials(creds),
+		grpc.WithPerRPCCredentials(&loginCreds{
+			AccessToken: accessToken,
+		}),
+	)
+}
+
+type loginCreds struct {
+	AccessToken string
+}
+
+func (c *loginCreds) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
+	return map[string]string{
+		"accessToken": c.AccessToken,
+	}, nil
+}
+
+func (c *loginCreds) RequireTransportSecurity() bool {
+	return true
 }
