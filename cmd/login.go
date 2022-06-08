@@ -33,7 +33,7 @@ var (
 
 // loginCmd represents the login command
 var auth0Cmd = &cobra.Command{
-	Use:   "auth0",
+	Use:   "login",
 	Short: "Logs a user into their Nucleus account.",
 	Long:  `Logs a user into their Nucleus account. `,
 
