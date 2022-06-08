@@ -1,14 +1,19 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
+	"github.com/auth0/go-jwt-middleware/v2/jwks"
+	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/spf13/cobra"
 	"github.com/toqueteos/webbrowser"
 )
@@ -27,7 +32,7 @@ var (
 
 // loginCmd represents the login command
 var auth0Cmd = &cobra.Command{
-	Use:   "auth0 login",
+	Use:   "auth0",
 	Short: "Logs a user into their Nucleus account.",
 	Long:  `Logs a user into their Nucleus account. `,
 
@@ -39,6 +44,7 @@ var auth0Cmd = &cobra.Command{
 		}
 
 		// fmt.Println("Visit the following URL to login: ", deviceResponse.VerificationURIComplete)
+		fmt.Println("Your activation code is: ", deviceResponse.UserCode)
 		cliPrompt("Press [Enter] to continue in the web browser...", "")
 
 		err = webbrowser.Open(deviceResponse.VerificationURIComplete)
@@ -53,11 +59,17 @@ var auth0Cmd = &cobra.Command{
 			fmt.Println("There was an error. Please try logging in again")
 			return err
 		}
-		// todo: store token and refresh token
-		fmt.Println(tokenResponse.Result.AccessToken)
+		err = setNucleusAuthFile(NucleusAuth{
+			AccessToken:  tokenResponse.AccessToken,
+			RefreshToken: tokenResponse.RefreshToken,
+			IdToken:      tokenResponse.IdToken,
+		})
+
+		if err != nil {
+			return err
+		}
 
 		return nil
-
 	},
 }
 
@@ -75,7 +87,7 @@ type Auth0DeviceResponse struct {
 }
 
 func getDeviceCodeResponse() (*Auth0DeviceResponse, error) {
-	payload := strings.NewReader(fmt.Sprintf("client_id=%s&scope=SCOPE&audience=%s", auth0ClientId, apiAudience))
+	payload := strings.NewReader(fmt.Sprintf("client_id=%s&scope=openid offline_access&audience=%s", auth0ClientId, apiAudience))
 	req, err := http.NewRequest("POST", auth0LoginUrl, payload)
 
 	if err != nil {
@@ -126,7 +138,7 @@ type Auth0TokenErrorData struct {
 	ErrorDescription string `json:"error_description"`
 }
 
-func pollToken(deviceResponse *Auth0DeviceResponse) (*Auth0TokenResponse, error) {
+func pollToken(deviceResponse *Auth0DeviceResponse) (*Auth0TokenResponseData, error) {
 
 	checkInterval := time.Duration(deviceResponse.Interval) * time.Second
 	expiresAt := time.Now().Add(time.Duration(deviceResponse.ExpiresIn) * time.Second)
@@ -159,7 +171,7 @@ func pollToken(deviceResponse *Auth0DeviceResponse) (*Auth0TokenResponse, error)
 				return nil, unknownTokenError
 			}
 		} else {
-			return resp, nil
+			return resp.Result, nil
 		}
 	}
 }
@@ -219,4 +231,43 @@ func getTokenResponse(deviceCode string) (*Auth0TokenResponse, error) {
 func getHttpClient() *http.Client {
 	client := &http.Client{Timeout: 10 * time.Second}
 	return client
+}
+
+type CustomClaims struct {
+	Scope string `json:"scope"`
+}
+
+// Validate does nothing for this example, but we need
+// it to satisfy validator.CustomClaims interface.
+func (c CustomClaims) Validate(ctx context.Context) error {
+	return nil
+}
+
+func ensureValidToken(accessToken string) error {
+	issuerURL, err := url.Parse(baseUrl + "/")
+	if err != nil {
+		log.Fatalf("Failed to parse the issuer url: %v", err)
+		return err
+	}
+	provider := jwks.NewCachingProvider(issuerURL, 5*time.Minute)
+
+	jwtValidator, err := validator.New(
+		provider.KeyFunc,
+		validator.RS256,
+		issuerURL.String(),
+		[]string{apiAudience},
+		validator.WithCustomClaims(
+			func() validator.CustomClaims {
+				return &CustomClaims{}
+			},
+		),
+		validator.WithAllowedClockSkew(time.Minute),
+	)
+	if err != nil {
+		log.Fatalf("Failed to set up the jwt validator")
+		return err
+	}
+	ctx := context.TODO()
+	_, err = jwtValidator.ValidateToken(ctx, accessToken)
+	return err
 }

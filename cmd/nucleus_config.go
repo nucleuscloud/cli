@@ -69,3 +69,84 @@ func upsertNucleusSecrets() error {
 	}
 	return nil
 }
+
+func upsertNucleusFolder() (string, error) {
+	dirname, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	fullName := dirname + "/.nucleus"
+
+	_, err = os.Stat(fullName)
+	if os.IsNotExist(err) {
+		err = os.Mkdir(fullName, 0755)
+		if err != nil {
+			if os.IsExist(err) {
+				return fullName, nil
+			}
+			return "", err
+		}
+	} else if err != nil {
+		return "", err
+	}
+	return fullName, nil
+}
+
+type NucleusAuth struct {
+	AccessToken  string `yaml:"accessToken"`
+	RefreshToken string `yaml:"refreshToken,omitempty"`
+	IdToken      string `yaml:"idToken,omitempty"`
+}
+
+func getNucleusAuthConfig() (*NucleusAuth, error) {
+	dirPath, err := upsertNucleusFolder()
+	if err != nil {
+		return nil, err
+	}
+
+	fileName := dirPath + "/auth.yaml"
+
+	file, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	var auth *NucleusAuth
+	err = yaml.Unmarshal(file, &auth)
+	if err != nil {
+		return nil, err
+	}
+	return auth, nil
+}
+
+func setNucleusAuthFile(authConfig NucleusAuth) error {
+	dirPath, err := upsertNucleusFolder()
+	if err != nil {
+		return err
+	}
+
+	if dirPath == "" {
+		return errors.New("Could not find the correct nucleus dir to store configs")
+	}
+
+	fileName := dirPath + "/auth.yaml"
+
+	file, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	dataToWrite, err := yaml.Marshal(authConfig)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(dataToWrite)
+	if err != nil {
+		return err
+	}
+	return nil
+}
