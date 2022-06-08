@@ -138,6 +138,14 @@ type Auth0TokenErrorData struct {
 	ErrorDescription string `json:"error_description"`
 }
 
+type Auth0RefreshTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
+	Scope       string `json:"scope"`
+	IdToken     string `json:"id_token,omitempty"`
+	TokenType   string `json:"token_type"`
+}
+
 func pollToken(deviceResponse *Auth0DeviceResponse) (*Auth0TokenResponseData, error) {
 
 	checkInterval := time.Duration(deviceResponse.Interval) * time.Second
@@ -228,6 +236,43 @@ func getTokenResponse(deviceCode string) (*Auth0TokenResponse, error) {
 	}, nil
 }
 
+func getRefreshdTokenResponse(refreshToken string) (*Auth0RefreshTokenResponse, error) {
+	payload := strings.NewReader(fmt.Sprintf("grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s", auth0ClientId, "TODO", refreshToken))
+	req, err := http.NewRequest("POST", auth0TokenUrl, payload)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("content-type", "application/x-www-form-urlencoded")
+
+	res, err := getHttpClient().Do(req)
+
+	if err != nil {
+		fmt.Println("Hit this error block")
+		return nil, err
+	}
+
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		// handle errors here
+		fmt.Println("Received this error: ", err)
+		fmt.Println("Got this response: ", body)
+		return nil, err
+	}
+
+	var tokenResponse *Auth0RefreshTokenResponse
+	err = json.Unmarshal(body, &tokenResponse)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return tokenResponse, nil
+}
+
 func getHttpClient() *http.Client {
 	client := &http.Client{Timeout: 10 * time.Second}
 	return client
@@ -267,7 +312,7 @@ func ensureValidToken(accessToken string) error {
 		log.Fatalf("Failed to set up the jwt validator")
 		return err
 	}
-	ctx := context.TODO()
+	ctx := context.Background()
 	_, err = jwtValidator.ValidateToken(ctx, accessToken)
 	return err
 }
