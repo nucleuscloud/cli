@@ -1,278 +1,329 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/cli/oauth/api"
-	"github.com/manifoldco/promptui"
+	"github.com/auth0/go-jwt-middleware/v2/jwks"
+	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/spf13/cobra"
 	"github.com/toqueteos/webbrowser"
 )
 
-var clientID string = "cbe115b3361fa6cbb494"
+var (
+	auth0ClientId     string = "pJTegL4TmzS3RqWdcDlEg2bMpU8LlqnX"
+	auth0ClientSecret string = "SCYMY6DjjsFGdadfH6pVfzdwUG_b4Bc5ETIeW0JMIhx4asu1DEE22Qq6IvuQq2Ua" // how do we propery store this?
+	baseUrl           string = "https://dev-idh20w22.us.auth0.com"
+	auth0LoginUrl     string = fmt.Sprintf("%s/oauth/device/code", baseUrl)
+	auth0TokenUrl     string = fmt.Sprintf("%s/oauth/token", baseUrl)
+	apiAudience       string = "https://api.usenucleus.cloud"
+
+	accessDeniedError = errors.New("access denied")
+	expiredTokenError = errors.New("expired token")
+	unknownTokenError = errors.New("unable to authenticate")
+
+	scopes []string = []string{
+		"openid",
+		"profile",
+		"offline_access",
+
+		// custom
+		"deploy:service",
+		"read:service",
+	}
+)
 
 // loginCmd represents the login command
-var loginCmd = &cobra.Command{
+var auth0Cmd = &cobra.Command{
 	Use:   "login",
 	Short: "Logs a user into their Nucleus account.",
 	Long:  `Logs a user into their Nucleus account. `,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-
-		template := &promptui.SelectTemplates{
-			Label: "{{ . }}:",
-			Help:  " ",
-		}
-
-		loginSelect := promptui.Select{
-			Label:     "Use the arrow keys to select the provider you want to login with below",
-			Templates: template,
-			Items:     []string{"Github"}, //add to the object to add in new providers
-		}
-
-		result, _, err := loginSelect.Run()
+		deviceResponse, err := getDeviceCodeResponse()
 
 		if err != nil {
-			fmt.Printf("The select prompt failed")
+			return err
 		}
 
-		c := httpClient()
+		// fmt.Println("Visit the following URL to login: ", deviceResponse.VerificationURIComplete)
+		fmt.Println("Your activation code is: ", deviceResponse.UserCode)
+		cliPrompt("Press [Enter] to continue in the web browser...", "")
 
-		if result == 0 {
-			//this is the first index in the Items object from the loginSelect variable
+		err = webbrowser.Open(deviceResponse.VerificationURIComplete)
+		if err != nil {
+			fmt.Println("There was an issue opening the web browser, proceed to the following URL to continue logging in: ", deviceResponse.VerificationURIComplete)
+		}
 
-			scope := []string{"read:user, user:email"} //define the scopes that we want to access, link to scopes: https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps, user will return all public user information
+		tokenResponse, err := pollToken(deviceResponse)
 
-			gitAuth, err := githubAuth(c, scope) //kicks off the github oauth procss
-			if err != nil {
-				fmt.Printf("Error in calling the github authentication endpoint")
-			}
+		if err != nil {
+			// handle expired token error by re-prompting
+			fmt.Println("There was an error. Please try logging in again")
+			return err
+		}
+		err = setNucleusAuthFile(NucleusAuth{
+			AccessToken:  tokenResponse.AccessToken,
+			RefreshToken: tokenResponse.RefreshToken,
+			IdToken:      tokenResponse.IdToken,
+		})
 
-			fmt.Println("First, copy your one-time code: ", gitAuth.UserCode)
-
-			cliPrompt("\nThen press [Enter] to continue in the web browser...", "")
-
-			err = webbrowser.Open(gitAuth.VerificationURI)
-			if err != nil {
-				fmt.Printf("Error opening the browser")
-			}
-			access_token, err := PollToken(c, gitAuth) //returns a valid oauth token
-			if err != nil {
-				fmt.Printf("Error getting the oauth access token")
-			}
-
-			//use oauth token to be able to call github APIs and get info about the user
-			userUrl := "https://api.github.com/user"
-
-			resp, err := getUserInfo(c, access_token, userUrl)
-			if err != nil {
-				fmt.Printf("there is an error with the struct encoding")
-			}
-
-			fmt.Println("final user object", resp.Email, resp.Id, resp.Login, resp.Profile)
-
+		if err != nil {
+			return err
 		}
 
 		return nil
-
 	},
 }
 
-type GithubResponse struct {
-	DeviceCode      string `json:"device_code"`
-	UserCode        string `json:"user_code"`
-	VerificationURI string `json:"verification_uri"`
-	ExpiresIn       int    `json:"expires_in"`
-	Interval        int    `json:"interval"`
-
-	timeNow   func() time.Time
-	timeSleep func(time.Duration)
+func init() {
+	rootCmd.AddCommand(auth0Cmd)
 }
 
-type UserInfo struct {
-	Login   string `json:"login"`
-	Id      int    `json:"id"`
-	Profile string `json:"html_url"`
-	Email   UserEmail
+type Auth0DeviceResponse struct {
+	DeviceCode              string `json:"device_code"`
+	UserCode                string `json:"user_code"`
+	VerificationURI         string `json:"verification_uri"`
+	VerificationURIComplete string `json:"verification_uri_complete"`
+	ExpiresIn               int    `json:"expires_in"`
+	Interval                int    `json:"interval"`
 }
 
-type UserEmail []struct {
-	Email string `json:"email"`
-}
+func getDeviceCodeResponse() (*Auth0DeviceResponse, error) {
+	payload := strings.NewReader(fmt.Sprintf("client_id=%s&scope=%s&audience=%s", auth0ClientId, strings.Join(scopes, " "), apiAudience))
+	req, err := http.NewRequest("POST", auth0LoginUrl, payload)
 
-type UserOrg []struct {
-	Org string `json:"login"`
-}
-
-func httpClient() *http.Client {
-	client := &http.Client{Timeout: 10 * time.Second}
-	return client
-}
-
-func githubAuth(c *http.Client, scope []string) (*GithubResponse, error) {
-
-	baseUrl := "https://github.com/login/device/code"
-
-	resp, err := api.PostForm(c, baseUrl, url.Values{
-		"client_id": {clientID},
-		"scope":     {strings.Join(scope, " ")},
-	})
 	if err != nil {
 		return nil, err
 	}
 
-	interval, err := strconv.Atoi(resp.Get("interval"))
+	req.Header.Add("content-type", "application/x-www-form-urlencoded")
+
+	res, err := getHttpClient().Do(req)
+
 	if err != nil {
-		fmt.Printf("There was an error in parsing the string")
+		return nil, err
 	}
 
-	expires_in, err := strconv.Atoi(resp.Get("expires_in"))
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+
 	if err != nil {
-		fmt.Printf("There was an error in parsing the string")
+		return nil, err
 	}
 
-	return &GithubResponse{
-		DeviceCode:      resp.Get("device_code"),
-		UserCode:        resp.Get("user_code"),
-		VerificationURI: resp.Get("verification_uri"),
-		Interval:        interval,
-		ExpiresIn:       expires_in,
-	}, err
+	var deviceResponse Auth0DeviceResponse
+
+	err = json.Unmarshal(body, &deviceResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &deviceResponse, nil
 }
 
-func PollToken(c *http.Client, code *GithubResponse) (*api.AccessToken, error) {
+type Auth0TokenResponse struct {
+	Result *Auth0TokenResponseData
+	Error  *Auth0TokenErrorData
+}
 
-	pollUrl := "https://github.com/login/oauth/access_token"
+type Auth0TokenResponseData struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+	IdToken      string `json:"id_token,omitempty"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int    `json:"expires_in"`
+}
 
-	const grantType = "urn:ietf:params:oauth:grant-type:device_code"
+type Auth0TokenErrorData struct {
+	Error            string `json:"error"`
+	ErrorDescription string `json:"error_description"`
+}
 
-	timeNow := code.timeNow
-	if timeNow == nil {
-		timeNow = time.Now
-	}
-	timeSleep := code.timeSleep
-	if timeSleep == nil {
-		timeSleep = time.Sleep
-	}
+type Auth0RefreshTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
+	Scope       string `json:"scope"`
+	IdToken     string `json:"id_token,omitempty"`
+	TokenType   string `json:"token_type"`
+}
 
-	checkInterval := time.Duration(code.Interval) * time.Second
-	expiresAt := timeNow().Add(time.Duration(code.ExpiresIn) * time.Second)
-	ErrTimeout := errors.New("authentication timed out")
+func pollToken(deviceResponse *Auth0DeviceResponse) (*Auth0TokenResponseData, error) {
+
+	checkInterval := time.Duration(deviceResponse.Interval) * time.Second
+	expiresAt := time.Now().Add(time.Duration(deviceResponse.ExpiresIn) * time.Second)
 
 	for {
-		timeSleep(checkInterval)
+		time.Sleep(checkInterval)
 
-		resp, err := api.PostForm(c, pollUrl, url.Values{
-			"client_id":   {clientID},
-			"device_code": {code.DeviceCode},
-			"grant_type":  {grantType},
-		})
+		if time.Now().After(expiresAt) {
+			return nil, errors.New("authenticated timed out")
+		}
+
+		resp, err := getTokenResponse(deviceResponse.DeviceCode)
+
+		if err != nil {
+			return nil, err
+		} else if resp.Error != nil {
+			if resp.Error.Error == "authorization_pending" {
+				continue
+			} else if resp.Error.Error == "slow_down" {
+				// We can do better here.
+				// Their docs say this:
+				// To avoid receiving this error due to network latency, you should start counting each interval after receipt of the last polling request's response.
+				time.Sleep(checkInterval)
+			} else if resp.Error.Error == "expired_token" {
+				return nil, expiredTokenError
+			} else if resp.Error.Error == "access_denied" {
+				return nil, accessDeniedError
+			} else {
+				// unknown error
+				return nil, unknownTokenError
+			}
+		} else {
+			return resp.Result, nil
+		}
+	}
+}
+
+func getTokenResponse(deviceCode string) (*Auth0TokenResponse, error) {
+	payload := strings.NewReader(fmt.Sprintf("grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=%s&client_id=%s", deviceCode, auth0ClientId))
+	req, err := http.NewRequest("POST", auth0TokenUrl, payload)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("content-type", "application/x-www-form-urlencoded")
+
+	res, err := getHttpClient().Do(req)
+
+	if err != nil {
+		fmt.Println("Hit this error block")
+		return nil, err
+	}
+
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		// handle errors here
+		fmt.Println("Received this error: ", err)
+		fmt.Println("Got this response: ", body)
+		return nil, err
+	}
+
+	var tokenResponse Auth0TokenResponseData
+	err = json.Unmarshal(body, &tokenResponse)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if tokenResponse.AccessToken == "" {
+		var errorResponse Auth0TokenErrorData
+		err = json.Unmarshal(body, &errorResponse)
 		if err != nil {
 			return nil, err
 		}
-
-		var apiError *api.Error
-		token, err := resp.AccessToken()
-
-		if err == nil {
-			return token, nil
-		} else if !(errors.As(err, &apiError) && apiError.Code == "authorization_pending") {
-			return nil, err
-		}
-
-		if timeNow().After(expiresAt) {
-			return nil, ErrTimeout
-		}
+		return &Auth0TokenResponse{
+			Result: nil,
+			Error:  &errorResponse,
+		}, nil
 	}
+
+	return &Auth0TokenResponse{
+		Result: &tokenResponse,
+		Error:  nil,
+	}, nil
 }
 
-func getUserEmail(c *http.Client, token *api.AccessToken) (*UserEmail, error) {
-	//have to call the email API directly since some users don't make their emails public, this will always return an email even if set to private
-	url := "https://api.github.com/user/emails"
+func getRefreshTokenResponse(refreshToken string) (*Auth0RefreshTokenResponse, error) {
+	payload := strings.NewReader(fmt.Sprintf("grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s", auth0ClientId, auth0ClientSecret, refreshToken))
+	req, err := http.NewRequest("POST", auth0TokenUrl, payload)
 
-	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Println(err)
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", "Bearer "+token.Token)
-
-	resp, err := c.Do(req)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
 
-	var userEmail UserEmail
+	req.Header.Add("content-type", "application/x-www-form-urlencoded")
 
-	err = json.Unmarshal(body, &userEmail)
+	res, err := getHttpClient().Do(req)
+
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Hit this error block")
+		return nil, err
 	}
 
-	return &userEmail, err
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
 
+	if err != nil {
+		// handle errors here
+		fmt.Println("Received this error: ", err)
+		fmt.Println("Got this response: ", body)
+		return nil, err
+	}
+
+	var tokenResponse *Auth0RefreshTokenResponse
+	err = json.Unmarshal(body, &tokenResponse)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return tokenResponse, nil
 }
 
-func getUserInfo(c *http.Client, token *api.AccessToken, url string) (*UserInfo, error) {
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Println(err)
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", "Bearer "+token.Token)
-
-	resp, err := c.Do(req)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	var userInfo UserInfo
-
-	err = json.Unmarshal(body, &userInfo)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	var userEmail *UserEmail
-
-	if userInfo.Email == nil {
-		userEmail, err = getUserEmail(c, token)
-		if err != nil {
-			fmt.Println(err)
-		}
-	} else {
-		userEmail = &userInfo.Email
-	}
-
-	return &UserInfo{
-		Login:   userInfo.Login,
-		Profile: userInfo.Profile,
-		Id:      userInfo.Id,
-		Email:   *userEmail,
-	}, err
+func getHttpClient() *http.Client {
+	client := &http.Client{Timeout: 10 * time.Second}
+	return client
 }
 
-func init() {
-	rootCmd.AddCommand(loginCmd)
+type CustomClaims struct {
+	Scope string `json:"scope"`
+}
+
+// Validate does nothing for this example, but we need
+// it to satisfy validator.CustomClaims interface.
+func (c CustomClaims) Validate(ctx context.Context) error {
+	return nil
+}
+
+func ensureValidToken(accessToken string) error {
+	issuerURL, err := url.Parse(baseUrl + "/")
+	if err != nil {
+		log.Fatalf("Failed to parse the issuer url: %v", err)
+		return err
+	}
+	provider := jwks.NewCachingProvider(issuerURL, 5*time.Minute)
+
+	jwtValidator, err := validator.New(
+		provider.KeyFunc,
+		validator.RS256,
+		issuerURL.String(),
+		[]string{apiAudience},
+		validator.WithCustomClaims(
+			func() validator.CustomClaims {
+				return &CustomClaims{}
+			},
+		),
+		validator.WithAllowedClockSkew(time.Minute),
+	)
+	if err != nil {
+		log.Fatalf("Failed to set up the jwt validator")
+		return err
+	}
+	ctx := context.Background()
+	_, err = jwtValidator.ValidateToken(ctx, accessToken)
+	return err
 }

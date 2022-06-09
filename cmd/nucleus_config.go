@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -68,4 +69,134 @@ func upsertNucleusSecrets() error {
 		return err
 	}
 	return nil
+}
+
+func upsertNucleusFolder() (string, error) {
+	dirname, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	fullName := dirname + "/.nucleus"
+
+	_, err = os.Stat(fullName)
+	if os.IsNotExist(err) {
+		err = os.Mkdir(fullName, 0755)
+		if err != nil {
+			if os.IsExist(err) {
+				return fullName, nil
+			}
+			return "", err
+		}
+	} else if err != nil {
+		return "", err
+	}
+	return fullName, nil
+}
+
+type NucleusAuth struct {
+	AccessToken  string `yaml:"accessToken"`
+	RefreshToken string `yaml:"refreshToken,omitempty"`
+	IdToken      string `yaml:"idToken,omitempty"`
+}
+
+func getNucleusAuthConfig() (*NucleusAuth, error) {
+	dirPath, err := upsertNucleusFolder()
+	if err != nil {
+		return nil, err
+	}
+
+	fileName := dirPath + "/auth.yaml"
+
+	file, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	var auth *NucleusAuth
+	err = yaml.Unmarshal(file, &auth)
+	if err != nil {
+		return nil, err
+	}
+	return auth, nil
+}
+
+func setNucleusAuthFile(authConfig NucleusAuth) error {
+	dirPath, err := upsertNucleusFolder()
+	if err != nil {
+		return err
+	}
+
+	if dirPath == "" {
+		return errors.New("Could not find the correct nucleus dir to store configs")
+	}
+
+	fileName := dirPath + "/auth.yaml"
+
+	file, err := os.Create(fileName)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	dataToWrite, err := yaml.Marshal(authConfig)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(dataToWrite)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func clearNucleusAuthFile() error {
+	dirPath, err := upsertNucleusFolder()
+	if err != nil {
+		return err
+	}
+
+	if dirPath == "" {
+		return errors.New("Could not find the correct nucleus dir to store configs")
+	}
+	fileName := dirPath + "/auth.yaml"
+	return os.Remove(fileName)
+}
+
+/**
+ * Retrieves the access token from the config and validates it.
+ */
+func getValidAccessTokenFromConfig() (string, error) {
+	config, err := getNucleusAuthConfig()
+	if err != nil {
+		return "", err
+	}
+
+	err = ensureValidToken(config.AccessToken)
+	if err != nil {
+		log.Println("Access token is no longer valid. Attempting to refresh...")
+		if config.RefreshToken != "" {
+			refreshResponse, err := getRefreshTokenResponse(config.RefreshToken)
+			if err != nil {
+				err = clearNucleusAuthFile()
+				if err != nil {
+					return "", err
+				}
+				return "", errors.New("unable to refresh token, please try logging in again.")
+			}
+			err = setNucleusAuthFile(NucleusAuth{
+				AccessToken:  refreshResponse.AccessToken,
+				RefreshToken: config.RefreshToken,
+				IdToken:      refreshResponse.IdToken,
+			})
+			if err != nil {
+				log.Println("Successfully refreshed token, but was unable to update nucleus auth file")
+				return "", err
+			}
+			return refreshResponse.AccessToken, ensureValidToken(refreshResponse.AccessToken)
+		}
+	}
+	return config.AccessToken, ensureValidToken(config.AccessToken)
 }

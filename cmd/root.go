@@ -29,14 +29,10 @@ var verbose bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "nucleus-cli",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:   "nucleus",
+	Short: "Terminal UI that interfaces with the Nucleus system.",
+	Long: `Terminal UI that allows authenticated access to the Nucleus system.
+	This CLI allows you to deploy and manage all of the environments and services within your Nucleus account or accounts.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },

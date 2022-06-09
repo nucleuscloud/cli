@@ -58,7 +58,7 @@ func tailLoop(environmentName string, serviceName string) error {
 }
 
 func tailLogs(environmentName string, serviceName string, timestamp string) (string, error) {
-	conn, err := newConnection()
+	conn, err := newAuthenticatedConnection()
 	if err != nil {
 		return "", err
 	}

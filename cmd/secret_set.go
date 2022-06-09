@@ -53,7 +53,7 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
-		conn, err := newConnection()
+		conn, err := newAuthenticatedConnection()
 		if err != nil {
 			return err
 		}
