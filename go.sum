@@ -302,6 +302,8 @@ github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLA
 github.com/nsf/jsondiff v0.0.0-20210926074059-1e845ec5d249 h1:NHrXEjTNQY7P0Zfx1aMrNhpgxHmow66XQtm0aQLY0AE=
 github.com/nucleuscloud/api v0.0.0-20220606183141-5d7c3a73832d h1:2nHTza08PBvMmPAIRq45nRZjSw14/a7htKG/Nk0SNiM=
 github.com/nucleuscloud/api v0.0.0-20220606183141-5d7c3a73832d/go.mod h1:3c2Bwb16YRh6w/uEuYnVLcrCVCEZsqzGWLU+A2upuSg=
+github.com/nucleuscloud/api v0.0.0-20220610232926-37c4e0e59511 h1:KR9Bna0QOFRsJo0sICYYf03gup2uOkazDwdazFlKZgA=
+github.com/nucleuscloud/api v0.0.0-20220610232926-37c4e0e59511/go.mod h1:4ihWBL5tlMuMkBMp6VBS4yzSJ+BatV6sRn2+pgTnCWs=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pelletier/go-toml v1.9.4 h1:tjENF6MfZAg8e4ZmZTeWaWiT2vXtsoO6+iuOjFhECwM=
