@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 
+	"github.com/nucleuscloud/cli/pkg/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -26,7 +27,7 @@ var (
 // 	return grpc.Dial(nucleusApiUrl, grpc.WithTransportCredentials(creds))
 // }
 
-func newAuthenticatedConnection() (*grpc.ClientConn, error) {
+func newAuthenticatedConnection(authClient auth.AuthClientInterface) (*grpc.ClientConn, error) {
 	systemRoots, err := x509.SystemCertPool()
 	if err != nil {
 		return nil, err
@@ -36,7 +37,7 @@ func newAuthenticatedConnection() (*grpc.ClientConn, error) {
 		RootCAs: systemRoots,
 	})
 
-	accessToken, err := getValidAccessTokenFromConfig()
+	accessToken, err := getValidAccessTokenFromConfig(authClient)
 	if err != nil {
 		return nil, err
 	}

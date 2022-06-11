@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
+	"github.com/nucleuscloud/cli/pkg/auth"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -58,7 +59,11 @@ func tailLoop(environmentName string, serviceName string) error {
 }
 
 func tailLogs(environmentName string, serviceName string, timestamp string) (string, error) {
-	conn, err := newAuthenticatedConnection()
+	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, auth0ClientSecret, apiAudience)
+	if err != nil {
+		return "", err
+	}
+	conn, err := newAuthenticatedConnection(authClient)
 	if err != nil {
 		return "", err
 	}

@@ -26,6 +26,7 @@ import (
 
 	"github.com/mhelmich/keycloak"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
+	"github.com/nucleuscloud/cli/pkg/auth"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -53,7 +54,12 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
-		conn, err := newAuthenticatedConnection()
+		authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, auth0ClientSecret, apiAudience)
+		if err != nil {
+			return err
+		}
+
+		conn, err := newAuthenticatedConnection(authClient)
 		if err != nil {
 			return err
 		}
