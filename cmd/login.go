@@ -14,6 +14,7 @@ import (
 
 	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
+	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/spf13/cobra"
 	"github.com/toqueteos/webbrowser"
 )
@@ -80,6 +81,22 @@ var auth0Cmd = &cobra.Command{
 			return err
 		}
 
+		conn, err := newAuthenticatedConnection()
+		if err != nil {
+			return err
+		}
+
+		defer conn.Close()
+
+		nucleusClient := pb.NewCliServiceClient(conn)
+
+		fmt.Println("Attempting to register user in Nucleus system...")
+
+		_, err = nucleusClient.ResolveUser(context.Background(), &pb.ResolveUserRequest{}, getGrpcTrailer())
+		if err != nil {
+			return err
+		}
+		fmt.Println("User successfully resolved in Nucleus system!")
 		return nil
 	},
 }
