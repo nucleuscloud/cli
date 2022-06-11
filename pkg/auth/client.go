@@ -17,26 +17,9 @@ import (
 )
 
 var (
-	// auth0ClientId     string = "pJTegL4TmzS3RqWdcDlEg2bMpU8LlqnX"
-	// auth0ClientSecret string = "SCYMY6DjjsFGdadfH6pVfzdwUG_b4Bc5ETIeW0JMIhx4asu1DEE22Qq6IvuQq2Ua" // how do we propery store this?
-	// baseUrl           string = "https://dev-idh20w22.us.auth0.com"
-	// auth0LoginUrl     string = fmt.Sprintf("%s/oauth/device/code", baseUrl)
-	// auth0TokenUrl     string = fmt.Sprintf("%s/oauth/token", baseUrl)
-	// apiAudience       string = "https://api.usenucleus.cloud"
-
 	ErrAccessDenied = errors.New("access denied")
 	ErrExpiredToken = errors.New("expired token")
 	ErrUnknownToken = errors.New("unable to authenticate")
-
-	// scopes []string = []string{
-	// 	"openid",
-	// 	"profile",
-	// 	"offline_access",
-
-	// 	// custom
-	// 	"deploy:service",
-	// 	"read:service",
-	// }
 )
 
 type AuthClientInterface interface {
