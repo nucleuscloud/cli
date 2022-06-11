@@ -16,6 +16,7 @@ import (
 
 	ga "github.com/mhelmich/go-archiver"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
+	"github.com/nucleuscloud/cli/pkg/auth"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -68,7 +69,12 @@ func deploy(environmentName string, serviceName string, serviceType string, fold
 		log.Printf("archiving directory into temp file: %s", fd.Name())
 	}
 
-	conn, err := newAuthenticatedConnection()
+	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, auth0ClientSecret, apiAudience)
+	if err != nil {
+		return err
+	}
+
+	conn, err := newAuthenticatedConnection(authClient)
 	if err != nil {
 		return err
 	}

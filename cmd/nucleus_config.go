@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"log"
 	"os"
 
+	"github.com/nucleuscloud/cli/pkg/auth"
 	"gopkg.in/yaml.v2"
 )
 
@@ -168,17 +170,17 @@ func clearNucleusAuthFile() error {
 /**
  * Retrieves the access token from the config and validates it.
  */
-func getValidAccessTokenFromConfig() (string, error) {
+func getValidAccessTokenFromConfig(authClient auth.AuthClientInterface) (string, error) {
 	config, err := getNucleusAuthConfig()
 	if err != nil {
 		return "", err
 	}
-
-	err = ensureValidToken(config.AccessToken)
+	ctx := context.Background()
+	err = authClient.ValidateToken(ctx, config.AccessToken)
 	if err != nil {
 		log.Println("Access token is no longer valid. Attempting to refresh...")
 		if config.RefreshToken != "" {
-			refreshResponse, err := getRefreshTokenResponse(config.RefreshToken)
+			refreshResponse, err := authClient.GetRefreshedAccessToken(config.RefreshToken)
 			if err != nil {
 				err = clearNucleusAuthFile()
 				if err != nil {
@@ -195,8 +197,8 @@ func getValidAccessTokenFromConfig() (string, error) {
 				log.Println("Successfully refreshed token, but was unable to update nucleus auth file")
 				return "", err
 			}
-			return refreshResponse.AccessToken, ensureValidToken(refreshResponse.AccessToken)
+			return refreshResponse.AccessToken, authClient.ValidateToken(ctx, refreshResponse.AccessToken)
 		}
 	}
-	return config.AccessToken, ensureValidToken(config.AccessToken)
+	return config.AccessToken, authClient.ValidateToken(ctx, config.AccessToken)
 }
