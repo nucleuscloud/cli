@@ -34,9 +34,26 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
-		environmentName := deployConfig.Spec.EnvironmentName
-		if environmentName == "" {
-			return errors.New("environment name not provided")
+		environmentType, err := cmd.Flags().GetString("env")
+		if err != nil {
+			return err
+		}
+
+		if environmentType != "dev" && environmentType != "stage" && environmentType != "prod" {
+			return errors.New("invalid value for environment")
+		}
+
+		if environmentType == "prod" {
+			yesPrompt, err := cmd.Flags().GetBool("yes")
+			if err != nil {
+				return err
+			}
+			if !yesPrompt {
+				shouldDeploy := cliPrompt("are you sure you want to deploy to production? (y/n)", "n")
+				if shouldDeploy != "y" {
+					return errors.New("exiting as received non yes answer for production deploy")
+				}
+			}
 		}
 
 		serviceName := deployConfig.Spec.ServiceName
@@ -54,12 +71,12 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
-		return deploy(environmentName, serviceName, serviceType, directoryName, deployConfig.Spec.IsPrivate, deployConfig.Spec.Vars)
+		return deploy(environmentType, serviceName, serviceType, directoryName, deployConfig.Spec.IsPrivate, deployConfig.Spec.Vars)
 	},
 }
 
-func deploy(environmentName string, serviceName string, serviceType string, folderPath string, isPrivateService bool, envVars map[string]string) error {
-	log.Printf("Getting ready to deploy service: -%s- in environment: -%s- from directory: -%s- \n", serviceName, environmentName, folderPath)
+func deploy(environmentType string, serviceName string, serviceType string, folderPath string, isPrivateService bool, envVars map[string]string) error {
+	log.Printf("Getting ready to deploy service: -%s- in environment: -%s- from directory: -%s- \n", serviceName, environmentType, folderPath)
 	fd, err := ioutil.TempFile("", "nucleus-cli-")
 	if err != nil {
 		return err
@@ -85,7 +102,7 @@ func deploy(environmentName string, serviceName string, serviceType string, fold
 	// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 	var trailer metadata.MD
 	reply, err := cliClient.CreateEnvironment(context.Background(), &pb.CreateEnvironmentRequest{
-		EnvironmentName: environmentName,
+		EnvironmentType: environmentType,
 	},
 		grpc.Trailer(&trailer),
 	)
@@ -127,7 +144,7 @@ func deploy(environmentName string, serviceName string, serviceType string, fold
 	log.Printf("getting upload url...")
 	ctx := context.Background()
 	signedURL, err := cliClient.GetServiceUploadUrl(ctx, &pb.GetServiceUploadUrlRequest{
-		EnvironmentName: environmentName,
+		EnvironmentType: environmentType,
 		ServiceName:     serviceName,
 	},
 		grpc.Trailer(&trailer),
@@ -144,7 +161,7 @@ func deploy(environmentName string, serviceName string, serviceType string, fold
 
 	log.Printf("triggering pipeline...")
 	stream, err := cliClient.Deploy(ctx, &pb.DeployRequest{
-		EnvironmentName: environmentName,
+		EnvironmentType: environmentType,
 		ServiceName:     serviceName,
 		URL:             signedURL.UploadKey,
 		ServiceType:     serviceType,
@@ -210,4 +227,7 @@ func uploadArchive(signedURL string, r io.Reader) error {
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
+
+	deployCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
+	deployCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
 }

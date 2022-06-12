@@ -7,9 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/goombaio/namegenerator"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +25,7 @@ var createServiceCmd = &cobra.Command{
 			return err
 		}
 
-		envName := cliPrompt("Environment name: "+"("+defaultSpec.EnvironmentName+")", defaultSpec.EnvironmentName)
+		// envName := cliPrompt("Environment name: "+"("+defaultSpec.EnvironmentName+")", defaultSpec.EnvironmentName)
 		servName := cliPrompt("Service name: "+"("+defaultSpec.ServiceName+")", defaultSpec.ServiceName)
 		serType := cliPrompt("Service runtime (fastapi,nodejs):", "")
 
@@ -38,9 +36,8 @@ var createServiceCmd = &cobra.Command{
 		nucleusConfig := ConfigYaml{
 			CliVersion: "nucleus-cli/v1alpha1",
 			Spec: SpecStruct{
-				EnvironmentName: envName,
-				ServiceName:     servName,
-				ServiceRunTime:  serType,
+				ServiceName:    servName,
+				ServiceRunTime: serType,
 			},
 		}
 		err = setNucleusConfig(&nucleusConfig)
@@ -55,8 +52,6 @@ var createServiceCmd = &cobra.Command{
 
 func getDefaultSpec() (*SpecStruct, error) {
 	spec := SpecStruct{}
-	spec.EnvironmentName = getDefaultEnvironmentName()
-
 	defaultServiceName, err := getDefaultServiceName()
 
 	if err != nil {
@@ -66,13 +61,6 @@ func getDefaultSpec() (*SpecStruct, error) {
 	spec.ServiceName = defaultServiceName
 
 	return &spec, nil
-}
-
-func getDefaultEnvironmentName() string {
-	//there are limited number of unique environment names that we can create here something like 3,700
-	seed := time.Now().UTC().UnixNano()
-	nameGenerator := namegenerator.NewNameGenerator(seed)
-	return nameGenerator.Generate()
 }
 
 func getDefaultServiceName() (string, error) {

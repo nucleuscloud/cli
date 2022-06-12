@@ -26,9 +26,26 @@ var tailLogsCommand = &cobra.Command{
 			return err
 		}
 
-		environmentName := deployConfig.Spec.EnvironmentName
-		if environmentName == "" {
-			return errors.New("environment name not provided")
+		environmentType, err := cmd.Flags().GetString("env")
+		if err != nil {
+			return err
+		}
+
+		if environmentType != "dev" && environmentType != "stage" && environmentType != "prod" {
+			return errors.New("invalid value for environment")
+		}
+
+		if environmentType == "prod" {
+			yesPrompt, err := cmd.Flags().GetBool("yes")
+			if err != nil {
+				return err
+			}
+			if !yesPrompt {
+				shouldDeploy := cliPrompt("are you sure you want to deploy to production? (y/n)", "n")
+				if shouldDeploy != "y" {
+					return errors.New("exiting as received non yes answer for production deploy")
+				}
+			}
 		}
 
 		serviceName := deployConfig.Spec.ServiceName
@@ -36,21 +53,20 @@ var tailLogsCommand = &cobra.Command{
 			return errors.New("service name not provided")
 		}
 
-		environmentName = strings.TrimSpace(environmentName)
 		serviceName = strings.TrimSpace(serviceName)
-		if !isValidName(environmentName) || !isValidName(serviceName) {
+		if !isValidName(serviceName) {
 			return ErrInvalidName
 		}
 
-		return tailLoop(environmentName, serviceName)
+		return tailLoop(environmentType, serviceName)
 	},
 }
 
-func tailLoop(environmentName string, serviceName string) error {
+func tailLoop(environmentType string, serviceName string) error {
 	var ts string
 	var err error
 	for {
-		ts, err = tailLogs(environmentName, serviceName, ts)
+		ts, err = tailLogs(environmentType, serviceName, ts)
 		if err != nil && err != io.EOF {
 			return err
 		}
@@ -58,7 +74,7 @@ func tailLoop(environmentName string, serviceName string) error {
 	}
 }
 
-func tailLogs(environmentName string, serviceName string, timestamp string) (string, error) {
+func tailLogs(environmentType string, serviceName string, timestamp string) (string, error) {
 	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, auth0ClientSecret, apiAudience)
 	if err != nil {
 		return "", err
@@ -72,7 +88,7 @@ func tailLogs(environmentName string, serviceName string, timestamp string) (str
 	cliClient := pb.NewCliServiceClient(conn)
 	var trailer metadata.MD
 	stream, err := cliClient.TailLogs(context.Background(), &pb.TailLogsRequest{
-		EnvironmentName: environmentName,
+		EnvironmentType: environmentType,
 		ServiceName:     serviceName,
 		Timestamp:       timestamp,
 	}, grpc.Trailer(&trailer))
@@ -98,4 +114,8 @@ func tailLogs(environmentName string, serviceName string, timestamp string) (str
 
 func init() {
 	rootCmd.AddCommand(tailLogsCommand)
+
+	tailLogsCommand.Flags().StringP("env", "e", "prod", "set the nucleus environment")
+	tailLogsCommand.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
+
 }

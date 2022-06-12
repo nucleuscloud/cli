@@ -6,10 +6,9 @@ require (
 	github.com/auth0/go-jwt-middleware/v2 v2.0.1
 	github.com/aws/aws-sdk-go v1.44.27
 	github.com/google/uuid v1.3.0
-	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
 	github.com/mhelmich/keycloak v0.3.6
-	github.com/nucleuscloud/api v0.0.0-20220610232926-37c4e0e59511
+	github.com/nucleuscloud/api v0.0.0-20220612001816-c38aae45b5cd
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.1
@@ -42,7 +41,7 @@ require (
 	github.com/subosito/gotenv v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20211223182754-3ac035c7e7cb // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
