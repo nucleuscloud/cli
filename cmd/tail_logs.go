@@ -31,20 +31,14 @@ var tailLogsCommand = &cobra.Command{
 			return err
 		}
 
-		if environmentType != "dev" && environmentType != "stage" && environmentType != "prod" {
+		if isValidEnvironmentType(environmentType) {
 			return errors.New("invalid value for environment")
 		}
 
 		if environmentType == "prod" {
-			yesPrompt, err := cmd.Flags().GetBool("yes")
+			err := checkProdOk(cmd, environmentType, "yes")
 			if err != nil {
 				return err
-			}
-			if !yesPrompt {
-				shouldDeploy := cliPrompt("are you sure you want to deploy to production? (y/n)", "n")
-				if shouldDeploy != "y" {
-					return errors.New("exiting as received non yes answer for production deploy")
-				}
 			}
 		}
 
