@@ -25,7 +25,6 @@ var createServiceCmd = &cobra.Command{
 			return err
 		}
 
-		// envName := cliPrompt("Environment name: "+"("+defaultSpec.EnvironmentName+")", defaultSpec.EnvironmentName)
 		servName := cliPrompt("Service name: "+"("+defaultSpec.ServiceName+")", defaultSpec.ServiceName)
 		serType := cliPrompt("Service runtime (fastapi,nodejs):", "")
 
