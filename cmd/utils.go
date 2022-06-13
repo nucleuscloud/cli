@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 
+	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -40,4 +42,22 @@ func getGrpcTrailer() grpc.CallOption {
 	// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 	var trailer metadata.MD
 	return grpc.Trailer(&trailer)
+}
+
+func isValidEnvironmentType(environmentType string) bool {
+	return environmentType != "dev" && environmentType != "stage" && environmentType != "prod"
+}
+
+func checkProdOk(cmd *cobra.Command, environmentType string, yesPromptFlagName string) error {
+	yesPrompt, err := cmd.Flags().GetBool(yesPromptFlagName)
+	if err != nil {
+		return err
+	}
+	if !yesPrompt {
+		shouldProceed := cliPrompt("are you sure you want to issue this in production? (y/n)", "n")
+		if shouldProceed != "y" {
+			return errors.New("exiting as received non yes answer for production invocation")
+		}
+	}
+	return nil
 }

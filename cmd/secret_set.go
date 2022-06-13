@@ -54,6 +54,22 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
+		environmentType, err := cmd.Flags().GetString("env")
+		if err != nil {
+			return err
+		}
+
+		if isValidEnvironmentType(environmentType) {
+			return errors.New("invalid value for environment")
+		}
+
+		if environmentType == "prod" {
+			err := checkProdOk(cmd, environmentType, "yes")
+			if err != nil {
+				return err
+			}
+		}
+
 		authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, auth0ClientSecret, apiAudience)
 		if err != nil {
 			return err
@@ -72,7 +88,7 @@ var setCmd = &cobra.Command{
 
 		// todo: cache this key
 		publicKeyReply, err := nucleusClient.GetPublicSecretKey(context.Background(), &pb.GetPublicSecretKeyRequest{
-			EnvironmentName: deployConfig.Spec.EnvironmentName,
+			EnvironmentType: environmentType,
 			ServiceName:     deployConfig.Spec.ServiceName,
 		}, getGrpcTrailer())
 		if err != nil {
@@ -185,6 +201,9 @@ func isPipedInput() (bool, error) {
 
 func init() {
 	secretCmd.AddCommand(setCmd)
+
+	setCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
+	setCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
 
 	// Here you will define your flags and configuration settings.
 

@@ -19,26 +19,32 @@ var listServicesCommand = &cobra.Command{
 	Long:  `Lists all services in a given namespace`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		deployConfig, err := getNucleusConfig()
+		_, err := getNucleusConfig()
 		if err != nil {
 			return err
 		}
 
-		environmentName := deployConfig.Spec.EnvironmentName
-		if environmentName == "" {
-			return errors.New("environment name not provided")
+		environmentType, err := cmd.Flags().GetString("env")
+		if err != nil {
+			return err
 		}
 
-		environmentName = strings.TrimSpace(environmentName)
-		if !isValidName(environmentName) {
-			return ErrInvalidName
+		if isValidEnvironmentType(environmentType) {
+			return errors.New("invalid value for environment")
 		}
 
-		return listServices(environmentName)
+		if environmentType == "prod" {
+			err := checkProdOk(cmd, environmentType, "yes")
+			if err != nil {
+				return err
+			}
+		}
+
+		return listServices(environmentType)
 	},
 }
 
-func listServices(environmentName string) error {
+func listServices(environmentType string) error {
 	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, auth0ClientSecret, apiAudience)
 	if err != nil {
 		return err
@@ -52,13 +58,13 @@ func listServices(environmentName string) error {
 	cliClient := pb.NewCliServiceClient(conn)
 	var trailer metadata.MD
 	serviceList, err := cliClient.ListServices(context.Background(), &pb.ListServicesRequest{
-		EnvironmentName: strings.TrimSpace(environmentName),
+		EnvironmentType: strings.TrimSpace(environmentType),
 	}, grpc.Trailer(&trailer))
 	if err != nil {
 		return err
 	}
 
-	log.Printf("services in %s:", environmentName)
+	log.Printf("services in %s:", environmentType)
 	for _, svcName := range serviceList.ServiceNames {
 		log.Printf("%s", svcName)
 	}
@@ -67,4 +73,8 @@ func listServices(environmentName string) error {
 
 func init() {
 	rootCmd.AddCommand(listServicesCommand)
+
+	listServicesCommand.Flags().StringP("env", "e", "prod", "set the nucleus environment")
+	listServicesCommand.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
+
 }
