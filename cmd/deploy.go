@@ -80,12 +80,22 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 		log.Printf("archiving directory into temp file: %s", fd.Name())
 	}
 
-	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, auth0ClientSecret, apiAudience)
+	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
+	if err != nil {
+		return err
+	}
+	unAuthConn, err := newConnection()
+	if err != nil {
+		return err
+	}
+	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
+	accessToken, err := getValidAccessTokenFromConfig(authClient, unAuthCliClient)
+	unAuthConn.Close()
 	if err != nil {
 		return err
 	}
 
-	conn, err := newAuthenticatedConnection(authClient)
+	conn, err := newAuthenticatedConnection(accessToken)
 	if err != nil {
 		return err
 	}

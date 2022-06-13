@@ -6,28 +6,16 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	"github.com/nucleuscloud/cli/pkg/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var (
-	nucleusApiUrl = "nucleus-api.nucleus-api.svcs.stage.usenucleus.cloud:443"
+	nucleusApiUrl = "localhost:50051"
 )
 
-// func newConnection() (*grpc.ClientConn, error) {
-// 	systemRoots, err := x509.SystemCertPool()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	creds := credentials.NewTLS(&tls.Config{
-// 		RootCAs: systemRoots,
-// 	})
-// 	return grpc.Dial(nucleusApiUrl, grpc.WithTransportCredentials(creds))
-// }
-
-func newAuthenticatedConnection(authClient auth.AuthClientInterface) (*grpc.ClientConn, error) {
+func newConnection() (*grpc.ClientConn, error) {
 	systemRoots, err := x509.SystemCertPool()
 	if err != nil {
 		return nil, err
@@ -36,15 +24,27 @@ func newAuthenticatedConnection(authClient auth.AuthClientInterface) (*grpc.Clie
 	creds := credentials.NewTLS(&tls.Config{
 		RootCAs: systemRoots,
 	})
+	return grpc.Dial(nucleusApiUrl, grpc.WithTransportCredentials(creds))
+}
 
-	accessToken, err := getValidAccessTokenFromConfig(authClient)
-	if err != nil {
-		return nil, err
-	}
+func newAuthenticatedConnection(accessToken string) (*grpc.ClientConn, error) {
+	// systemRoots, err := x509.SystemCertPool()
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// creds := credentials.NewTLS(&tls.Config{
+	// 	RootCAs: systemRoots,
+	// })
+
+	// accessToken, err := getValidAccessTokenFromConfig(authClient, nucleusClient)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return grpc.Dial(
 		nucleusApiUrl,
-		grpc.WithTransportCredentials(creds),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithPerRPCCredentials(&loginCreds{
 			AccessToken: accessToken,
 		}),
@@ -62,5 +62,5 @@ func (c *loginCreds) GetRequestMetadata(context.Context, ...string) (map[string]
 }
 
 func (c *loginCreds) RequireTransportSecurity() bool {
-	return true
+	return false
 }

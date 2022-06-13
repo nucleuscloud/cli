@@ -18,10 +18,9 @@ var (
 
 // Auth Vars
 var (
-	auth0ClientId     string = "pJTegL4TmzS3RqWdcDlEg2bMpU8LlqnX"
-	auth0ClientSecret string = "SCYMY6DjjsFGdadfH6pVfzdwUG_b4Bc5ETIeW0JMIhx4asu1DEE22Qq6IvuQq2Ua" // how do we propery store this?
-	auth0BaseUrl      string = "https://dev-idh20w22.us.auth0.com"
-	apiAudience       string = "https://api.usenucleus.cloud"
+	auth0ClientId string = "pJTegL4TmzS3RqWdcDlEg2bMpU8LlqnX"
+	auth0BaseUrl  string = "https://dev-idh20w22.us.auth0.com"
+	apiAudience   string = "https://api.usenucleus.cloud"
 
 	scopes []string = []string{
 		"openid",
