@@ -6,14 +6,36 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+var (
+	nucleusDebugEnvKey = "NUCLEUS_DEBUG_ENV"
+	allowedDebugVals   = []string{
+		"dev",
+	}
+)
+
 func getEnv() string {
-	return os.Getenv("ENV")
+	val := os.Getenv(nucleusDebugEnvKey)
+	if val == "" {
+		return val
+	}
+	var isValid bool = false
+	for _, allowedVal := range allowedDebugVals {
+		if allowedVal == val {
+			isValid = true
+		}
+	}
+	if !isValid {
+		panic(fmt.Sprintf("%s can only be one of %s", nucleusDebugEnvKey, strings.Join(allowedDebugVals, ",")))
+	}
+	fmt.Printf("%s=%s\n", nucleusDebugEnvKey, val)
+	return val
 }
 
 func getApiUrl() string {
@@ -55,7 +77,6 @@ func newAuthenticatedConnection(accessToken string) (*grpc.ClientConn, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return grpc.Dial(
 		getApiUrl(),
 		grpc.WithTransportCredentials(creds),
