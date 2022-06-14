@@ -5,29 +5,32 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"os"
 
-	"github.com/nucleuscloud/cli/pkg/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
-var (
-	nucleusApiUrl = "nucleus-api.nucleus-api.svcs.stage.usenucleus.cloud:443"
-)
+func getEnv() string {
+	return os.Getenv("ENV")
+}
 
-// func newConnection() (*grpc.ClientConn, error) {
-// 	systemRoots, err := x509.SystemCertPool()
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func getApiUrl() string {
+	if isDevEnv() {
+		return "localhost:50051"
+	}
+	return "nucleus-api.nucleus-api.svcs.stage.usenucleus.cloud:443"
+}
 
-// 	creds := credentials.NewTLS(&tls.Config{
-// 		RootCAs: systemRoots,
-// 	})
-// 	return grpc.Dial(nucleusApiUrl, grpc.WithTransportCredentials(creds))
-// }
+func isDevEnv() bool {
+	return getEnv() == "dev"
+}
 
-func newAuthenticatedConnection(authClient auth.AuthClientInterface) (*grpc.ClientConn, error) {
+func getTransportCreds() (credentials.TransportCredentials, error) {
+	if isDevEnv() {
+		return insecure.NewCredentials(), nil
+	}
 	systemRoots, err := x509.SystemCertPool()
 	if err != nil {
 		return nil, err
@@ -36,14 +39,25 @@ func newAuthenticatedConnection(authClient auth.AuthClientInterface) (*grpc.Clie
 	creds := credentials.NewTLS(&tls.Config{
 		RootCAs: systemRoots,
 	})
+	return creds, nil
+}
 
-	accessToken, err := getValidAccessTokenFromConfig(authClient)
+func newConnection() (*grpc.ClientConn, error) {
+	creds, err := getTransportCreds()
+	if err != nil {
+		return nil, err
+	}
+	return grpc.Dial(getApiUrl(), grpc.WithTransportCredentials(creds))
+}
+
+func newAuthenticatedConnection(accessToken string) (*grpc.ClientConn, error) {
+	creds, err := getTransportCreds()
 	if err != nil {
 		return nil, err
 	}
 
 	return grpc.Dial(
-		nucleusApiUrl,
+		getApiUrl(),
 		grpc.WithTransportCredentials(creds),
 		grpc.WithPerRPCCredentials(&loginCreds{
 			AccessToken: accessToken,
@@ -62,5 +76,5 @@ func (c *loginCreds) GetRequestMetadata(context.Context, ...string) (map[string]
 }
 
 func (c *loginCreds) RequireTransportSecurity() bool {
-	return true
+	return !isDevEnv()
 }

@@ -45,11 +45,22 @@ var listServicesCommand = &cobra.Command{
 }
 
 func listServices(environmentType string) error {
-	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, auth0ClientSecret, apiAudience)
+	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
 	if err != nil {
 		return err
 	}
-	conn, err := newAuthenticatedConnection(authClient)
+	unAuthConn, err := newConnection()
+	if err != nil {
+		return err
+	}
+	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
+	accessToken, err := getValidAccessTokenFromConfig(authClient, unAuthCliClient)
+	unAuthConn.Close()
+	if err != nil {
+		return err
+	}
+
+	conn, err := newAuthenticatedConnection(accessToken)
 	if err != nil {
 		return err
 	}

@@ -25,15 +25,13 @@ var (
 type AuthClientInterface interface {
 	GetDeviceCode(scopes []string) (*AuthDeviceResponse, error)
 	PollDeviceAccessToken(deviceResponse *AuthDeviceResponse) (*AuthTokenResponseData, error)
-	GetRefreshedAccessToken(refreshToken string) (*AuthRefreshTokenResponse, error)
 	ValidateToken(ctx context.Context, accessToken string) error
 }
 
 // Implements AuthClientInterface
 type authClient struct {
-	clientId     string
-	clientSecret string
-	audience     string
+	clientId string
+	audience string
 
 	loginUrl string
 	tokenUrl string
@@ -68,15 +66,7 @@ type AuthTokenErrorData struct {
 	ErrorDescription string `json:"error_description"`
 }
 
-type AuthRefreshTokenResponse struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   int    `json:"expires_in"`
-	Scope       string `json:"scope"`
-	IdToken     string `json:"id_token,omitempty"`
-	TokenType   string `json:"token_type"`
-}
-
-func NewAuthClient(tenantUrl, clientId, clientSecret, audience string) (AuthClientInterface, error) {
+func NewAuthClient(tenantUrl, clientId, audience string) (AuthClientInterface, error) {
 	issuerUrl, err := url.Parse(tenantUrl + "/")
 	if err != nil {
 		return nil, err
@@ -100,9 +90,8 @@ func NewAuthClient(tenantUrl, clientId, clientSecret, audience string) (AuthClie
 		return nil, err
 	}
 	return &authClient{
-		clientId:     clientId,
-		clientSecret: clientSecret,
-		audience:     audience,
+		clientId: clientId,
+		audience: audience,
 
 		loginUrl: fmt.Sprintf("%s/oauth/device/code", tenantUrl),
 		tokenUrl: fmt.Sprintf("%s/oauth/token", tenantUrl),
@@ -232,43 +221,6 @@ func (c *authClient) getTokenResponse(deviceCode string) (*AuthTokenResponse, er
 		Result: &tokenResponse,
 		Error:  nil,
 	}, nil
-}
-
-func (c *authClient) GetRefreshedAccessToken(refreshToken string) (*AuthRefreshTokenResponse, error) {
-	payload := strings.NewReader(fmt.Sprintf("grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s", c.clientId, c.clientSecret, refreshToken))
-	req, err := http.NewRequest("POST", c.tokenUrl, payload)
-
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("content-type", "application/x-www-form-urlencoded")
-
-	res, err := getHttpClient().Do(req)
-
-	if err != nil {
-		fmt.Println("Hit this error block")
-		return nil, err
-	}
-
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		// handle errors here
-		fmt.Println("Received this error: ", err)
-		fmt.Println("Got this response: ", body)
-		return nil, err
-	}
-
-	var tokenResponse *AuthRefreshTokenResponse
-	err = json.Unmarshal(body, &tokenResponse)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return tokenResponse, nil
 }
 
 type CustomClaims struct {

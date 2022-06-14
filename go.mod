@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
 	github.com/mhelmich/keycloak v0.3.6
-	github.com/nucleuscloud/api v0.0.0-20220613162541-1b0f4ee064dc
+	github.com/nucleuscloud/api v0.0.0-20220614011740-920c51175d3c
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.1

@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/pkg/auth"
 	"gopkg.in/yaml.v2"
 )
@@ -169,7 +170,7 @@ func clearNucleusAuthFile() error {
 /**
  * Retrieves the access token from the config and validates it.
  */
-func getValidAccessTokenFromConfig(authClient auth.AuthClientInterface) (string, error) {
+func getValidAccessTokenFromConfig(authClient auth.AuthClientInterface, nucleusClient pb.CliServiceClient) (string, error) {
 	config, err := getNucleusAuthConfig()
 	if err != nil {
 		return "", err
@@ -179,7 +180,10 @@ func getValidAccessTokenFromConfig(authClient auth.AuthClientInterface) (string,
 	if err != nil {
 		log.Println("Access token is no longer valid. Attempting to refresh...")
 		if config.RefreshToken != "" {
-			refreshResponse, err := authClient.GetRefreshedAccessToken(config.RefreshToken)
+			reply, err := nucleusClient.RefreshAccessToken(ctx, &pb.RefreshAccessTokenRequest{
+				RefreshToken: config.RefreshToken,
+			})
+			// refreshResponse, err := authClient.GetRefreshedAccessToken(config.RefreshToken)
 			if err != nil {
 				err = clearNucleusAuthFile()
 				if err != nil {
@@ -187,16 +191,22 @@ func getValidAccessTokenFromConfig(authClient auth.AuthClientInterface) (string,
 				}
 				return "", errors.New("unable to refresh token, please try logging in again.")
 			}
+			var newRefreshToken string
+			if reply.RefreshToken != "" {
+				newRefreshToken = reply.RefreshToken
+			} else {
+				newRefreshToken = config.RefreshToken
+			}
 			err = setNucleusAuthFile(NucleusAuth{
-				AccessToken:  refreshResponse.AccessToken,
-				RefreshToken: config.RefreshToken,
-				IdToken:      refreshResponse.IdToken,
+				AccessToken:  reply.AccessToken,
+				RefreshToken: newRefreshToken,
+				IdToken:      reply.IdToken,
 			})
 			if err != nil {
 				log.Println("Successfully refreshed token, but was unable to update nucleus auth file")
 				return "", err
 			}
-			return refreshResponse.AccessToken, authClient.ValidateToken(ctx, refreshResponse.AccessToken)
+			return reply.AccessToken, authClient.ValidateToken(ctx, reply.AccessToken)
 		}
 	}
 	return config.AccessToken, authClient.ValidateToken(ctx, config.AccessToken)

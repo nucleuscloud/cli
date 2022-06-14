@@ -298,10 +298,10 @@ github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRW
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/nsf/jsondiff v0.0.0-20210926074059-1e845ec5d249 h1:NHrXEjTNQY7P0Zfx1aMrNhpgxHmow66XQtm0aQLY0AE=
-github.com/nucleuscloud/api v0.0.0-20220612001816-c38aae45b5cd h1:mMh2D2jmxi4dYhcEp2HoEYsfPgx6Erc4WEFJ7ErD9OI=
-github.com/nucleuscloud/api v0.0.0-20220612001816-c38aae45b5cd/go.mod h1:2asR1qzJhhIAPbTdbba02SzB9C54pxVZsY2BmEMmdrg=
-github.com/nucleuscloud/api v0.0.0-20220613162541-1b0f4ee064dc h1:EZilOl6odR8dksFn83C41k+k+QtAOPjNOmmxoDKY7KU=
-github.com/nucleuscloud/api v0.0.0-20220613162541-1b0f4ee064dc/go.mod h1:2asR1qzJhhIAPbTdbba02SzB9C54pxVZsY2BmEMmdrg=
+github.com/nucleuscloud/api v0.0.0-20220613222312-6f01f1605cae h1:HABYKt8fiWPI3tEjHk1MxPqA9avcqmNl+xoPANWSAHU=
+github.com/nucleuscloud/api v0.0.0-20220613222312-6f01f1605cae/go.mod h1:2asR1qzJhhIAPbTdbba02SzB9C54pxVZsY2BmEMmdrg=
+github.com/nucleuscloud/api v0.0.0-20220614011740-920c51175d3c h1:FaO9qyUOgufjZ2mJ1VyAmpfZaq4IgTxAZZuSTlhuYe4=
+github.com/nucleuscloud/api v0.0.0-20220614011740-920c51175d3c/go.mod h1:2asR1qzJhhIAPbTdbba02SzB9C54pxVZsY2BmEMmdrg=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pelletier/go-toml v1.9.4 h1:tjENF6MfZAg8e4ZmZTeWaWiT2vXtsoO6+iuOjFhECwM=
