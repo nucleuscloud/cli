@@ -10,6 +10,7 @@ import (
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/pkg/auth"
+	"github.com/nucleuscloud/cli/pkg/config"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -21,7 +22,7 @@ var tailLogsCommand = &cobra.Command{
 	Long:  `Tails logs for a given service.`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		deployConfig, err := getNucleusConfig()
+		deployConfig, err := config.GetNucleusConfig()
 		if err != nil {
 			return err
 		}
@@ -78,7 +79,7 @@ func tailLogs(environmentType string, serviceName string, timestamp string) (str
 		return "", err
 	}
 	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
-	accessToken, err := getValidAccessTokenFromConfig(authClient, unAuthCliClient)
+	accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
 	unAuthConn.Close()
 	if err != nil {
 		return "", err
