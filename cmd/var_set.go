@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/nucleuscloud/cli/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +44,7 @@ var varSetCmd = &cobra.Command{
 }
 
 func storeVars(args []string) error {
-	nucleusConfig, err := getNucleusConfig()
+	nucleusConfig, err := config.GetNucleusConfig()
 	if err != nil {
 		return err
 	}
@@ -61,7 +62,7 @@ func storeVars(args []string) error {
 		}
 	}
 
-	err = setNucleusConfig(nucleusConfig)
+	err = config.SetNucleusConfig(nucleusConfig)
 
 	if err != nil {
 		return err

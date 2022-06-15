@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/nucleuscloud/cli/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -32,14 +33,14 @@ var createServiceCmd = &cobra.Command{
 			return errors.New("unsupported service type")
 		}
 
-		nucleusConfig := ConfigYaml{
+		nucleusConfig := config.NucleusConfig{
 			CliVersion: "nucleus-cli/v1alpha1",
-			Spec: SpecStruct{
+			Spec: config.SpecStruct{
 				ServiceName:    servName,
 				ServiceRunTime: serType,
 			},
 		}
-		err = setNucleusConfig(&nucleusConfig)
+		err = config.SetNucleusConfig(&nucleusConfig)
 
 		if err != nil {
 			return errors.New("unable to write data into the file")
@@ -49,8 +50,8 @@ var createServiceCmd = &cobra.Command{
 	},
 }
 
-func getDefaultSpec() (*SpecStruct, error) {
-	spec := SpecStruct{}
+func getDefaultSpec() (*config.SpecStruct, error) {
+	spec := config.SpecStruct{}
 	defaultServiceName, err := getDefaultServiceName()
 
 	if err != nil {

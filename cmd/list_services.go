@@ -8,6 +8,7 @@ import (
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/pkg/auth"
+	"github.com/nucleuscloud/cli/pkg/config"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -19,7 +20,7 @@ var listServicesCommand = &cobra.Command{
 	Long:  `Lists all services in a given namespace`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, err := getNucleusConfig()
+		_, err := config.GetNucleusConfig()
 		if err != nil {
 			return err
 		}
@@ -54,7 +55,7 @@ func listServices(environmentType string) error {
 		return err
 	}
 	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
-	accessToken, err := getValidAccessTokenFromConfig(authClient, unAuthCliClient)
+	accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
 	unAuthConn.Close()
 	if err != nil {
 		return err

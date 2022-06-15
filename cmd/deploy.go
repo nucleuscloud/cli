@@ -17,6 +17,7 @@ import (
 	ga "github.com/mhelmich/go-archiver"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/pkg/auth"
+	"github.com/nucleuscloud/cli/pkg/config"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -29,7 +30,7 @@ var deployCmd = &cobra.Command{
 	Long:  `Creates an environment for your service with the given environmentName and a service with the given serviceName. Deploys your service and returns back a URL where your service is available. `,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		deployConfig, err := getNucleusConfig()
+		deployConfig, err := config.GetNucleusConfig()
 		if err != nil {
 			return err
 		}
@@ -89,7 +90,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 		return err
 	}
 	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
-	accessToken, err := getValidAccessTokenFromConfig(authClient, unAuthCliClient)
+	accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
 	unAuthConn.Close()
 	if err != nil {
 		return err

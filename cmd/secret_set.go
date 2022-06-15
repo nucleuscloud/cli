@@ -27,6 +27,7 @@ import (
 	"github.com/mhelmich/keycloak"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/pkg/auth"
+	"github.com/nucleuscloud/cli/pkg/config"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -44,12 +45,12 @@ var setCmd = &cobra.Command{
 		// todo: probably need to validate this key
 		secretKey := args[0]
 
-		deployConfig, err := getNucleusConfig()
+		deployConfig, err := config.GetNucleusConfig()
 		if err != nil {
 			return err
 		}
 
-		err = upsertNucleusSecrets()
+		err = config.UpsertNucleusSecrets()
 		if err != nil {
 			return err
 		}
@@ -79,7 +80,7 @@ var setCmd = &cobra.Command{
 			return err
 		}
 		unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
-		accessToken, err := getValidAccessTokenFromConfig(authClient, unAuthCliClient)
+		accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
 		unAuthConn.Close()
 		if err != nil {
 			return err

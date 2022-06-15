@@ -6,6 +6,7 @@ import (
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/pkg/auth"
+	"github.com/nucleuscloud/cli/pkg/config"
 	"github.com/spf13/cobra"
 	"github.com/toqueteos/webbrowser"
 )
@@ -43,7 +44,7 @@ var auth0Cmd = &cobra.Command{
 			fmt.Println("There was an error. Please try logging in again")
 			return err
 		}
-		err = setNucleusAuthFile(NucleusAuth{
+		err = config.SetNucleusAuthFile(config.NucleusAuthConfig{
 			AccessToken:  tokenResponse.AccessToken,
 			RefreshToken: tokenResponse.RefreshToken,
 			IdToken:      tokenResponse.IdToken,

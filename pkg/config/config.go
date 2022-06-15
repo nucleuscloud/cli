@@ -1,8 +1,9 @@
-package cmd
+package config
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -12,6 +13,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type NucleusConfig struct {
+	CliVersion string     `yaml:"cliVersion"`
+	Spec       SpecStruct `yaml:"spec"`
+}
+
 type SpecStruct struct {
 	ServiceName    string            `yaml:"serviceName"`
 	ServiceRunTime string            `yaml:"serviceRuntime"`
@@ -19,19 +25,30 @@ type SpecStruct struct {
 	Vars           map[string]string `yaml:"vars,omitempty"`
 }
 
-type ConfigYaml struct {
-	CliVersion string     `yaml:"cliVersion"`
-	Spec       SpecStruct `yaml:"spec"`
+type NucleusAuthConfig struct {
+	AccessToken  string `yaml:"accessToken"`
+	RefreshToken string `yaml:"refreshToken,omitempty"`
+	IdToken      string `yaml:"idToken,omitempty"`
 }
 
-func getNucleusConfig() (*ConfigYaml, error) {
+const (
+	nucleusConfigPath = "./nucleus.yaml"
+	nucleusFolderName = ".nucleus"
+)
+
+var (
+	ErrMustLogin = errors.New("error retrieving auth information. Try logging in via 'nucleus login'")
+)
+
+// Retrieves the nucleus config defined by the user
+func GetNucleusConfig() (*NucleusConfig, error) {
 	// TODO(marco): make it so that parent dirs are recursively searched
-	yamlFile, err := ioutil.ReadFile("./nucleus.yaml")
+	yamlFile, err := ioutil.ReadFile(nucleusConfigPath)
 	if err != nil {
 		return nil, err
 	}
 
-	yamlData := ConfigYaml{}
+	yamlData := NucleusConfig{}
 	err = yaml.Unmarshal(yamlFile, &yamlData)
 
 	if err != nil {
@@ -41,45 +58,28 @@ func getNucleusConfig() (*ConfigYaml, error) {
 	return &yamlData, nil
 }
 
-func setNucleusConfig(config *ConfigYaml) error {
+// Sets the nucleus config defined by the user
+func SetNucleusConfig(config *NucleusConfig) error {
 	yamlData, err := yaml.Marshal(&config)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile("./nucleus.yaml", yamlData, 0644)
+	err = ioutil.WriteFile(nucleusConfigPath, yamlData, 0644)
 	if err != nil {
 		return errors.New("Unable to write data into the config file")
 	}
 	return nil
 }
 
-func upsertNucleusSecrets() error {
-	_, err := ioutil.ReadFile("/nucleus-secrets.yaml")
-
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return err
-	}
-
-	if !errors.Is(err, os.ErrNotExist) {
-		return nil
-	}
-
-	// File doesn't exist yet, let's create it
-	err = ioutil.WriteFile("./nucleus-secrets.yaml", []byte{}, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func upsertNucleusFolder() (string, error) {
+// Get or Creates the Nucleus folder that lives in the homedir and stores persisted settings
+func GetOrCreateNucleusFolder() (string, error) {
 	dirname, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
 
-	fullName := dirname + "/.nucleus"
+	fullName := dirname + "/" + nucleusFolderName
 
 	_, err = os.Stat(fullName)
 	if os.IsNotExist(err) {
@@ -96,14 +96,9 @@ func upsertNucleusFolder() (string, error) {
 	return fullName, nil
 }
 
-type NucleusAuth struct {
-	AccessToken  string `yaml:"accessToken"`
-	RefreshToken string `yaml:"refreshToken,omitempty"`
-	IdToken      string `yaml:"idToken,omitempty"`
-}
-
-func getNucleusAuthConfig() (*NucleusAuth, error) {
-	dirPath, err := upsertNucleusFolder()
+// Gets the nucleus auth config
+func GetNucleusAuthConfig() (*NucleusAuthConfig, error) {
+	dirPath, err := GetOrCreateNucleusFolder()
 	if err != nil {
 		return nil, err
 	}
@@ -112,19 +107,21 @@ func getNucleusAuthConfig() (*NucleusAuth, error) {
 
 	file, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		return nil, err
+		fmt.Println("Auth file doesnt exist. User has not logged in.\n", err)
+		return nil, ErrMustLogin
 	}
 
-	var auth *NucleusAuth
+	var auth *NucleusAuthConfig
 	err = yaml.Unmarshal(file, &auth)
 	if err != nil {
-		return nil, err
+		fmt.Println("Auth config is not in correct format.\n", err)
+		return nil, ErrMustLogin
 	}
 	return auth, nil
 }
 
-func setNucleusAuthFile(authConfig NucleusAuth) error {
-	dirPath, err := upsertNucleusFolder()
+func SetNucleusAuthFile(authConfig NucleusAuthConfig) error {
+	dirPath, err := GetOrCreateNucleusFolder()
 	if err != nil {
 		return err
 	}
@@ -154,8 +151,8 @@ func setNucleusAuthFile(authConfig NucleusAuth) error {
 	return nil
 }
 
-func clearNucleusAuthFile() error {
-	dirPath, err := upsertNucleusFolder()
+func ClearNucleusAuthFile() error {
+	dirPath, err := GetOrCreateNucleusFolder()
 	if err != nil {
 		return err
 	}
@@ -167,11 +164,9 @@ func clearNucleusAuthFile() error {
 	return os.Remove(fileName)
 }
 
-/**
- * Retrieves the access token from the config and validates it.
- */
-func getValidAccessTokenFromConfig(authClient auth.AuthClientInterface, nucleusClient pb.CliServiceClient) (string, error) {
-	config, err := getNucleusAuthConfig()
+// Retrieves the access token from the config and validates it.
+func GetValidAccessTokenFromConfig(authClient auth.AuthClientInterface, nucleusClient pb.CliServiceClient) (string, error) {
+	config, err := GetNucleusAuthConfig()
 	if err != nil {
 		return "", err
 	}
@@ -185,7 +180,7 @@ func getValidAccessTokenFromConfig(authClient auth.AuthClientInterface, nucleusC
 			})
 			// refreshResponse, err := authClient.GetRefreshedAccessToken(config.RefreshToken)
 			if err != nil {
-				err = clearNucleusAuthFile()
+				err = ClearNucleusAuthFile()
 				if err != nil {
 					return "", err
 				}
@@ -197,7 +192,7 @@ func getValidAccessTokenFromConfig(authClient auth.AuthClientInterface, nucleusC
 			} else {
 				newRefreshToken = config.RefreshToken
 			}
-			err = setNucleusAuthFile(NucleusAuth{
+			err = SetNucleusAuthFile(NucleusAuthConfig{
 				AccessToken:  reply.AccessToken,
 				RefreshToken: newRefreshToken,
 				IdToken:      reply.IdToken,
