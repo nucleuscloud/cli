@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -33,6 +34,10 @@ type NucleusAuthConfig struct {
 const (
 	nucleusConfigPath = "./nucleus.yaml"
 	nucleusFolderName = ".nucleus"
+)
+
+var (
+	ErrMustLogin = errors.New("error retrieving auth information. Try logging in via 'nucleus login'")
 )
 
 // Retrieves the nucleus config defined by the user
@@ -102,13 +107,15 @@ func GetNucleusAuthConfig() (*NucleusAuthConfig, error) {
 
 	file, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		return nil, err
+		fmt.Println("Auth file doesnt exist. User has not logged in.\n", err)
+		return nil, ErrMustLogin
 	}
 
 	var auth *NucleusAuthConfig
 	err = yaml.Unmarshal(file, &auth)
 	if err != nil {
-		return nil, err
+		fmt.Println("Auth config is not in correct format.\n", err)
+		return nil, ErrMustLogin
 	}
 	return auth, nil
 }
