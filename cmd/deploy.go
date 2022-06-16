@@ -8,17 +8,21 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
 
+	"github.com/briandowns/spinner"
 	ga "github.com/mhelmich/go-archiver"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/pkg/auth"
 	"github.com/nucleuscloud/cli/pkg/config"
 	"github.com/spf13/cobra"
+	"github.com/vbauerster/mpb/v7"
+	"github.com/vbauerster/mpb/v7/decor"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -71,15 +75,18 @@ var deployCmd = &cobra.Command{
 }
 
 func deploy(environmentType string, serviceName string, serviceType string, folderPath string, isPrivateService bool, envVars map[string]string) error {
-	log.Printf("Getting ready to deploy service: -%s- in environment: -%s- from directory: -%s- \n", serviceName, environmentType, folderPath)
+
+	fmt.Printf("\nGetting deployment ready: \n↪Service: %s \n↪Environment: %s \n↪Project Directory: %s \n\n", serviceName, environmentType, folderPath)
+
 	fd, err := ioutil.TempFile("", "nucleus-cli-")
 	if err != nil {
 		return err
 	}
 
-	if verbose {
-		log.Printf("archiving directory into temp file: %s", fd.Name())
-	}
+	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
+	s1.Start()
+	time.Sleep(5 * time.Second)
+	s1.Stop()
 
 	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
 	if err != nil {
@@ -106,7 +113,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	cliClient := pb.NewCliServiceClient(conn)
 	// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 	var trailer metadata.MD
-	reply, err := cliClient.CreateEnvironment(context.Background(), &pb.CreateEnvironmentRequest{
+	_, err = cliClient.CreateEnvironment(context.Background(), &pb.CreateEnvironmentRequest{
 		EnvironmentType: environmentType,
 	},
 		grpc.Trailer(&trailer),
@@ -115,14 +122,6 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 		return err
 	}
 
-	fmt.Printf("environment successfully created with k8s id: %s\n", reply.ID)
-	if verbose {
-		if len(trailer["x-request-id"]) == 1 {
-			fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
-		}
-	}
-
-	log.Printf("archiving...")
 	gitignorePath := filepath.Join(folderPath, ".gitignore")
 	_, err = os.Stat(gitignorePath)
 	if errors.Is(err, os.ErrNotExist) {
@@ -146,7 +145,6 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 		return err
 	}
 
-	log.Printf("getting upload url...")
 	ctx := context.Background()
 	signedURL, err := cliClient.GetServiceUploadUrl(ctx, &pb.GetServiceUploadUrlRequest{
 		EnvironmentType: environmentType,
@@ -158,13 +156,11 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 		return err
 	}
 
-	log.Printf("uploading archive...")
 	err = uploadArchive(signedURL.URL, fd)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("triggering pipeline...")
 	stream, err := cliClient.Deploy(ctx, &pb.DeployRequest{
 		EnvironmentType: environmentType,
 		ServiceName:     serviceName,
@@ -177,20 +173,40 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 		return err
 	}
 
+	s2 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
+
+	//staging the deploy, total time is about 2100
+	progressBar("Initializing deployment... ", 700)
+	fmt.Print("\n")
+	progressBar("Deploying service ...      ", 700)
+	fmt.Print("\n")
+	progressBar("Finalizing deployment...   ", 700)
+	fmt.Print("\n")
+
+	servUrl := ""
+	s2.Prefix = "Fetching service URL... "
+
 	for {
 		update, err := stream.Recv()
 		if err == io.EOF {
-			break
+			fmt.Println("eof err")
 		} else if err != nil {
 			log.Fatalf("server side error: %s", err.Error())
 		}
 
 		if msg := update.GetDeploymentUpdate(); msg != nil {
-			log.Printf("%s", msg.Message)
 			continue
 		}
 
-		log.Printf("service deployed under: %s\n", update.GetURL())
+		servUrl = update.GetURL()
+
+		if servUrl == "" {
+			s2.Start()
+			time.Sleep(10 * time.Second)
+		} else {
+			s2.Stop()
+			fmt.Printf("Service is deployed at: %s\n", servUrl)
+		}
 		break
 	}
 
@@ -228,6 +244,34 @@ func uploadArchive(signedURL string, r io.Reader) error {
 	}
 
 	return nil
+}
+
+func progressBar(message string, length int32) {
+	p := mpb.New(mpb.WithWidth(64))
+	total := 100
+	name := message
+
+	bar := p.New(int64(total),
+		// BarFillerBuilder with custom style
+		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
+		mpb.PrependDecorators(
+			// display our name with one space on the right
+			decor.Name(name, decor.WC{W: len(name) + 1, C: decor.DidentRight}),
+			// replace ETA decorator with "done" message, OnComplete event
+			decor.OnComplete(
+				decor.AverageETA(decor.ET_STYLE_GO, decor.WC{W: 4}), "Done",
+			),
+		),
+		mpb.AppendDecorators(decor.Percentage()),
+	)
+
+	max := time.Duration(length) * time.Millisecond //this value should be 2x what you think you need since the rand.Intn function takes a random sampling which comes out to about 50% of the value you set
+	for i := 0; i < total; i++ {
+		time.Sleep(time.Duration(rand.Intn(10)+1) * max / 10)
+		bar.Increment()
+	}
+	// wait for our bar to complete and flush
+	p.Wait()
 }
 
 func init() {
