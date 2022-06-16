@@ -27,9 +27,9 @@ var createServiceCmd = &cobra.Command{
 		}
 
 		servName := cliPrompt("Service name: "+"("+defaultSpec.ServiceName+")", defaultSpec.ServiceName)
-		serType := cliPrompt("Service runtime (fastapi,nodejs):", "")
+		serType := cliPrompt("Service runtime (fastapi,nodejs,go):", "")
 
-		if serType != "fastapi" && serType != "nodejs" {
+		if serType != "fastapi" && serType != "nodejs" && serType != "go" {
 			return errors.New("unsupported service type")
 		}
 
