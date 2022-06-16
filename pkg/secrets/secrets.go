@@ -37,16 +37,39 @@ func UpsertNucleusSecrets() error {
 	return nil
 }
 
+func getSecrets() (*NucleusSecrets, error) {
+	file, err := ioutil.ReadFile(secretsPath)
+	if err != nil {
+		return nil, err
+	}
+
+	root := NucleusSecrets{}
+	err = yaml.Unmarshal(file, &root)
+	if err != nil {
+		return nil, err
+	}
+
+	return &root, nil
+}
+
+func GetSecretsByEnvType(envType string) (map[string]string, error) {
+	envType = strings.ToLower(envType)
+
+	root, err := getSecrets()
+	if err != nil {
+		return nil, err
+	}
+
+	if root.Secrets == nil || root.Secrets[envType] == nil {
+		return make(map[string]string), nil
+	}
+	return root.Secrets[envType], nil
+}
+
 func StoreSecret(publicKey string, secretKey string, secretValue string, envType string) error {
 	envType = strings.ToLower(envType)
 
-	file, err := ioutil.ReadFile(secretsPath)
-	if err != nil {
-		return err
-	}
-	root := NucleusSecrets{}
-	err = yaml.Unmarshal(file, &root)
-
+	root, err := getSecrets()
 	if err != nil {
 		return err
 	}

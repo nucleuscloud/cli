@@ -302,6 +302,10 @@ github.com/nucleuscloud/api v0.0.0-20220613222312-6f01f1605cae h1:HABYKt8fiWPI3t
 github.com/nucleuscloud/api v0.0.0-20220613222312-6f01f1605cae/go.mod h1:2asR1qzJhhIAPbTdbba02SzB9C54pxVZsY2BmEMmdrg=
 github.com/nucleuscloud/api v0.0.0-20220614011740-920c51175d3c h1:FaO9qyUOgufjZ2mJ1VyAmpfZaq4IgTxAZZuSTlhuYe4=
 github.com/nucleuscloud/api v0.0.0-20220614011740-920c51175d3c/go.mod h1:2asR1qzJhhIAPbTdbba02SzB9C54pxVZsY2BmEMmdrg=
+github.com/nucleuscloud/api v0.0.0-20220615234930-f7cc07582cdb h1:Ew+05QcjvEv4Fx8pXCRdKlVF+2gR161AirIBceuxKis=
+github.com/nucleuscloud/api v0.0.0-20220615234930-f7cc07582cdb/go.mod h1:2asR1qzJhhIAPbTdbba02SzB9C54pxVZsY2BmEMmdrg=
+github.com/nucleuscloud/api v0.0.0-20220616001500-b9f2ff9ceed4 h1:4KDyu5WiFn1ODVxCFYO9V65/ViQ2PNVKzx+8JKqLucY=
+github.com/nucleuscloud/api v0.0.0-20220616001500-b9f2ff9ceed4/go.mod h1:2asR1qzJhhIAPbTdbba02SzB9C54pxVZsY2BmEMmdrg=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pelletier/go-toml v1.9.4 h1:tjENF6MfZAg8e4ZmZTeWaWiT2vXtsoO6+iuOjFhECwM=
