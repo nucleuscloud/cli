@@ -7,7 +7,6 @@ require (
 	github.com/aws/aws-sdk-go v1.44.27
 	github.com/google/uuid v1.3.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
-	github.com/mhelmich/keycloak v0.3.6
 	github.com/nucleuscloud/api v0.0.0-20220616001500-b9f2ff9ceed4
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
@@ -15,11 +14,9 @@ require (
 	github.com/toqueteos/webbrowser v1.2.0
 	google.golang.org/grpc v1.43.0
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
 require (
-	filippo.io/age v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -48,5 +45,5 @@ require (
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

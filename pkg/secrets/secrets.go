@@ -1,12 +1,16 @@
 package secrets
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
 	"errors"
 	"io/ioutil"
 	"os"
 	"strings"
 
-	"github.com/mhelmich/keycloak"
 	"gopkg.in/yaml.v2"
 )
 
@@ -66,7 +70,7 @@ func GetSecretsByEnvType(envType string) (map[string]string, error) {
 	return root.Secrets[envType], nil
 }
 
-func StoreSecret(publicKey string, secretKey string, secretValue string, envType string) error {
+func StoreSecret(publicKeyBytes []byte, secretKey string, secretValue string, envType string) error {
 	envType = strings.ToLower(envType)
 
 	root, err := getSecrets()
@@ -82,27 +86,52 @@ func StoreSecret(publicKey string, secretKey string, secretValue string, envType
 		root.Secrets[envType] = make(map[string]string)
 	}
 
-	root.Secrets[envType][secretKey] = secretValue
+	publicKey, err := parseRsaPublicKey(publicKeyBytes)
+	if err != nil {
+		return err
+	}
+	ciphertextBytes, err := encryptWithPublicKey([]byte(secretValue), publicKey)
+	if err != nil {
+		return err
+	}
+	root.Secrets[envType][secretKey] = base64.StdEncoding.EncodeToString(ciphertextBytes)
 
 	newBlob, err := yaml.Marshal(root)
 	if err != nil {
 		return err
 	}
 
-	store, err := keycloak.GetStoreFromBytes(newBlob, keycloak.YAML)
-	if err != nil {
-		return err
-	}
-
-	err = store.EncryptSubtree(publicKey, "secrets", envType)
-	if err != nil {
-		return err
-	}
-
-	err = store.ToFile(secretsPath)
+	err = ioutil.WriteFile(secretsPath, newBlob, 0777)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func parseRsaPublicKey(pubKey []byte) (*rsa.PublicKey, error) {
+	// block, _ := pem.Decode([]byte(pubPEM))
+	// if block == nil {
+	// 	return nil, errors.New("failed to parse PEM block containing the key")
+	// }
+	pub, err := x509.ParsePKIXPublicKey(pubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	switch pub := pub.(type) {
+	case *rsa.PublicKey:
+		return pub, nil
+	default:
+		break // fall through
+	}
+	return nil, errors.New("Key type is not RSA")
+}
+
+func encryptWithPublicKey(msg []byte, pub *rsa.PublicKey) ([]byte, error) {
+	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, pub, msg, nil)
+	if err != nil {
+		return nil, err
+	}
+	return ciphertext, nil
 }

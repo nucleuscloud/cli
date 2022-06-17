@@ -110,8 +110,6 @@ var setCmd = &cobra.Command{
 			log.Println("Retrieved public key!")
 		}
 
-		publicKey := string(publicKeyReply.PublicKey)
-
 		secret, err := getSecretValue()
 		if err != nil {
 			return err
@@ -119,7 +117,7 @@ var setCmd = &cobra.Command{
 		if verbose {
 			log.Println("Encrypting secret...")
 		}
-		err = secrets.StoreSecret(publicKey, secretKey, secret, environmentType)
+		err = secrets.StoreSecret(publicKeyReply.PublicKey, secretKey, secret, environmentType)
 		if err != nil {
 			return err
 		}
