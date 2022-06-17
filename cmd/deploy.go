@@ -189,7 +189,6 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	for {
 		update, err := stream.Recv()
 		if err == io.EOF {
-			fmt.Println("eof err")
 			break
 		} else if err != nil {
 			log.Fatalf("server side error: %s", err.Error())
