@@ -20,16 +20,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 
-	"github.com/mhelmich/keycloak"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/pkg/auth"
 	"github.com/nucleuscloud/cli/pkg/config"
+	"github.com/nucleuscloud/cli/pkg/secrets"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 // setCmd represents the set command
@@ -50,7 +49,7 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
-		err = config.UpsertNucleusSecrets()
+		err = secrets.UpsertNucleusSecrets()
 		if err != nil {
 			return err
 		}
@@ -95,7 +94,9 @@ var setCmd = &cobra.Command{
 
 		nucleusClient := pb.NewCliServiceClient(conn)
 
-		fmt.Println("Retrieving public key...")
+		if verbose {
+			log.Println("Attempting to retrieve public key for encrypting secrets...")
+		}
 
 		// todo: cache this key
 		publicKeyReply, err := nucleusClient.GetPublicSecretKey(context.Background(), &pb.GetPublicSecretKeyRequest{
@@ -105,71 +106,26 @@ var setCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
-		fmt.Println("Retrieved public key!")
-
-		publicKey := string(publicKeyReply.PublicKey)
+		if verbose {
+			log.Println("Retrieved public key!")
+		}
 
 		secret, err := getSecretValue()
 		if err != nil {
 			return err
 		}
-
-		// todo: maybe make this configurable
-		fmt.Println("Encrypting secret...")
-		err = storeSecret("./nucleus-secrets.yaml", publicKey, secretKey, secret)
+		if verbose {
+			log.Println("Encrypting secret...")
+		}
+		err = secrets.StoreSecret(publicKeyReply.PublicKey, secretKey, secret, environmentType)
 		if err != nil {
 			return err
 		}
-
-		fmt.Println("Secret encrypted successfully!")
+		if verbose {
+			log.Println("Secret successfully encrypted!")
+		}
 		return nil
 	},
-}
-
-type NucleusSecrets struct {
-	Secrets map[string]string `yaml:"secrets,omitempty" json:"secrets,omitempty"`
-}
-
-func storeSecret(fileName string, publicKey string, secretKey string, secretValue string) error {
-	file, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return err
-	}
-	root := NucleusSecrets{}
-	err = yaml.Unmarshal(file, &root)
-
-	if err != nil {
-		return err
-	}
-
-	if root.Secrets == nil {
-		root.Secrets = make(map[string]string)
-	}
-
-	root.Secrets[secretKey] = secretValue
-
-	newBlob, err := yaml.Marshal(root)
-	if err != nil {
-		return err
-	}
-
-	store, err := keycloak.GetStoreFromBytes(newBlob, keycloak.YAML)
-	if err != nil {
-		return err
-	}
-
-	err = store.EncryptSubtree(publicKey, "secrets")
-	if err != nil {
-		return err
-	}
-
-	err = store.ToFile(fileName)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func getSecretValue() (string, error) {
@@ -184,6 +140,7 @@ func getSecretValue() (string, error) {
 	var secret string
 
 	if !isPiped {
+		fmt.Println("Enter secret followed by [Enter]:")
 		fmt.Print("> ")
 	}
 
