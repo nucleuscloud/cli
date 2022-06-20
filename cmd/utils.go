@@ -53,9 +53,9 @@ func checkProdOk(cmd *cobra.Command, environmentType string, yesPromptFlagName s
 		return err
 	}
 	if !yesPrompt {
-		shouldProceed := cliPrompt("are you sure you want to issue this in production? (y/n)", "n")
+		shouldProceed := cliPrompt("\nAre you sure you want to deploy this in production? (y/n)", "n")
 		if shouldProceed != "y" {
-			return errors.New("exiting as received non yes answer for production invocation")
+			return errors.New("Exiting production deployment")
 		}
 	}
 	return nil

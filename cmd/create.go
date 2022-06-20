@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/nucleuscloud/cli/pkg/config"
 	"github.com/spf13/cobra"
 )
@@ -20,24 +21,65 @@ var createServiceCmd = &cobra.Command{
 
 		fmt.Println("This utility will walk you through creating a Nucleus service.\n\nIt creates a declarative configuration file that you can apply using Nucleus deploy once you're ready to deploy your service.\n\nSee `nucleus create help` for definitive documentation on these fields and exactly what they do.\n\nPress ^C at any time to quit.")
 
+		fmt.Print("\n")
+
 		defaultSpec, err := getDefaultSpec()
 
 		if err != nil {
 			return err
 		}
 
-		servName := cliPrompt("Service name: "+"("+defaultSpec.ServiceName+")", defaultSpec.ServiceName)
-		serType := cliPrompt("Service runtime (fastapi,nodejs):", "")
+		var runtimes = []*survey.Question{
+			{
+				Name: "servName",
+				Prompt: &survey.Input{
+					Message: "Service name: " + "(" + defaultSpec.ServiceName + ")",
+				},
+				Transform: survey.Title,
+			},
+			{
+				Name: "servType",
+				Prompt: &survey.Select{
+					Message: "Select your service's runtime:",
+					Options: []string{
+						"nodejs",
+						"fastapi",
+						"go",
+					},
+				},
+				Validate: survey.Required,
+			},
+		}
 
-		if serType != "fastapi" && serType != "nodejs" {
+		runtimeAnswers := struct {
+			ServName string
+			ServType string
+		}{}
+
+		// ask the question
+		err = survey.Ask(runtimes, &runtimeAnswers, survey.WithIcons(func(icons *survey.IconSet) {
+			icons.Question.Text = ">"
+			icons.Question.Format = "white"
+		}))
+
+		if err != nil {
+			fmt.Println(err.Error())
+			return err
+		}
+
+		if runtimeAnswers.ServName == "" {
+			runtimeAnswers.ServName = defaultSpec.ServiceName
+		}
+
+		if runtimeAnswers.ServType != "fastapi" && runtimeAnswers.ServType != "nodejs" && runtimeAnswers.ServType != "go" {
 			return errors.New("unsupported service type")
 		}
 
 		nucleusConfig := config.NucleusConfig{
 			CliVersion: "nucleus-cli/v1alpha1",
 			Spec: config.SpecStruct{
-				ServiceName:    servName,
-				ServiceRunTime: serType,
+				ServiceName:    runtimeAnswers.ServName,
+				ServiceRunTime: runtimeAnswers.ServType,
 			},
 		}
 		err = config.SetNucleusConfig(&nucleusConfig)
