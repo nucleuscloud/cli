@@ -110,10 +110,6 @@ func StoreSecret(publicKeyBytes []byte, secretKey string, secretValue string, en
 }
 
 func parseRsaPublicKey(pubKey []byte) (*rsa.PublicKey, error) {
-	// block, _ := pem.Decode([]byte(pubPEM))
-	// if block == nil {
-	// 	return nil, errors.New("failed to parse PEM block containing the key")
-	// }
 	pub, err := x509.ParsePKIXPublicKey(pubKey)
 	if err != nil {
 		return nil, err
