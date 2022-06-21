@@ -54,7 +54,7 @@ var createServiceCmd = &cobra.Command{
 					Options: []string{
 						"nodejs",
 						"fastapi",
-						"go",
+						"golang",
 					},
 				},
 				Validate: survey.Required,
