@@ -18,9 +18,11 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-var commandAnswers = struct {
-	Build string
-	Start string
+var ServiceCommands = struct {
+	BuildCommand string
+	StartCommand string
+	ServiceName  string
+	ServiceType  string
 }{}
 
 var createServiceCmd = &cobra.Command{
@@ -34,21 +36,20 @@ var createServiceCmd = &cobra.Command{
 		fmt.Print("\n")
 
 		defaultSpec, err := getDefaultSpec()
-
 		if err != nil {
 			return err
 		}
 
 		var serviceQuestions = []*survey.Question{
 			{
-				Name: "servName",
+				Name: "serviceName",
 				Prompt: &survey.Input{
 					Message: "Service name: " + "(" + defaultSpec.ServiceName + ")",
 				},
 				Transform: survey.Title,
 			},
 			{
-				Name: "servType",
+				Name: "serviceType",
 				Prompt: &survey.Select{
 					Message: "Select your service's runtime:",
 					Options: []string{
@@ -61,13 +62,8 @@ var createServiceCmd = &cobra.Command{
 			},
 		}
 
-		serviceDefinition := struct {
-			ServName string
-			ServType string
-		}{}
-
 		// ask the question
-		err = survey.Ask(serviceQuestions, &serviceDefinition, survey.WithIcons(func(icons *survey.IconSet) {
+		err = survey.Ask(serviceQuestions, &ServiceCommands, survey.WithIcons(func(icons *survey.IconSet) {
 			icons.Question.Text = ">"
 			icons.Question.Format = "white"
 		}))
@@ -76,9 +72,11 @@ var createServiceCmd = &cobra.Command{
 			return err
 		}
 
-		if serviceDefinition.ServName == "" {
-			serviceDefinition.ServName = defaultSpec.ServiceName
+		if ServiceCommands.ServiceName == "" {
+			ServiceCommands.ServiceName = defaultSpec.ServiceName
 		}
+
+		fmt.Println(ServiceCommands.ServiceName, ServiceCommands.ServiceType)
 
 		//refactor these clients into a utils file later
 		authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
@@ -106,8 +104,8 @@ var createServiceCmd = &cobra.Command{
 		cliClient := pb.NewCliServiceClient(conn)
 		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 		var trailer metadata.MD
-		buildStartCommands, err := cliClient.BuildStartCommands(context.Background(), &pb.DefaultBuildStartCommandsRequest{
-			Runtime: serviceDefinition.ServType,
+		defaultBuildStartCommands, err := cliClient.BuildStartCommands(context.Background(), &pb.DefaultBuildStartCommandsRequest{
+			Runtime: ServiceCommands.ServiceType,
 		},
 			grpc.Trailer(&trailer),
 		)
@@ -115,8 +113,8 @@ var createServiceCmd = &cobra.Command{
 			return err
 		}
 
-		bc := buildStartCommands.BuildCommand
-		sc := buildStartCommands.StartCommand
+		bc := defaultBuildStartCommands.BuildCommand
+		sc := defaultBuildStartCommands.StartCommand
 
 		err = runtimeQuestions(bc, sc)
 		if err != nil {
@@ -126,10 +124,10 @@ var createServiceCmd = &cobra.Command{
 		nucleusConfig := config.NucleusConfig{
 			CliVersion: "nucleus-cli/v1alpha1",
 			Spec: config.SpecStruct{
-				ServiceName:    serviceDefinition.ServName,
-				ServiceRunTime: serviceDefinition.ServType,
-				BuildCommand:   strings.ToLower(commandAnswers.Build),
-				StartCommand:   strings.ToLower(commandAnswers.Start),
+				ServiceName:    ServiceCommands.ServiceName,
+				ServiceRunTime: ServiceCommands.ServiceType,
+				BuildCommand:   strings.ToLower(ServiceCommands.BuildCommand),
+				StartCommand:   strings.ToLower(ServiceCommands.StartCommand),
 			},
 		}
 		err = config.SetNucleusConfig(&nucleusConfig)
@@ -179,14 +177,14 @@ func runtimeQuestions(bc string, sc string) error {
 
 	var commands = []*survey.Question{
 		{
-			Name: "build",
+			Name: "buildCommand",
 			Prompt: &survey.Input{
 				Message: "Press enter for default build command -> " + bc + ", or type in custom build command:",
 			},
 			Transform: survey.Title,
 		},
 		{
-			Name: "start",
+			Name: "startCommand",
 			Prompt: &survey.Input{
 				Message: "Press enter for default start command -> " + sc + ", or type in custom start command:",
 			},
@@ -194,17 +192,10 @@ func runtimeQuestions(bc string, sc string) error {
 		},
 	}
 
-	err := survey.Ask(commands, &commandAnswers, survey.WithIcons(func(icons *survey.IconSet) {
+	err := survey.Ask(commands, &ServiceCommands, survey.WithIcons(func(icons *survey.IconSet) {
 		icons.Question.Text = ">"
 		icons.Question.Format = "white"
 	}))
-
-	if commandAnswers.Build == "" {
-		commandAnswers.Build = bc
-	}
-	if commandAnswers.Start == "" {
-		commandAnswers.Start = sc
-	}
 	return err
 }
 
