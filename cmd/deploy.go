@@ -20,6 +20,7 @@ import (
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/pkg/auth"
 	"github.com/nucleuscloud/cli/pkg/config"
+	"github.com/nucleuscloud/cli/pkg/secrets"
 	"github.com/spf13/cobra"
 	"github.com/vbauerster/mpb/v7"
 	"github.com/vbauerster/mpb/v7/decor"
@@ -80,18 +81,20 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
-		return deploy(environmentType, serviceName, serviceType, directoryName, buildCommand, startCommand, deployConfig.Spec.IsPrivate, deployConfig.Spec.Vars)
+		envSecrets, err := secrets.GetSecretsByEnvType(environmentType)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(envSecrets)
+
+		return deploy(environmentType, serviceName, serviceType, directoryName, buildCommand, startCommand, deployConfig.Spec.IsPrivate, deployConfig.Spec.Vars, envSecrets)
 	},
 }
 
-func deploy(environmentType string, serviceName string, serviceType string, folderPath string, buildCommand string, startCommand string, isPrivateService bool, envVars map[string]string) error {
+func deploy(environmentType string, serviceName string, serviceType string, folderPath string, buildCommand string, startCommand string, isPrivateService bool, envVars map[string]string, envSecrets map[string]string) error {
 
 	fmt.Printf("\nGetting deployment ready: \n↪Service: %s \n↪Environment: %s \n↪Project Directory: %s \n\n", serviceName, environmentType, folderPath)
-
-	fd, err := ioutil.TempFile("", "nucleus-cli-")
-	if err != nil {
-		return err
-	}
 
 	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
 	s1.Start()
@@ -132,41 +135,14 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 		return err
 	}
 
-	gitignorePath := filepath.Join(folderPath, ".gitignore")
-	_, err = os.Stat(gitignorePath)
-	if errors.Is(err, os.ErrNotExist) {
-		err = ga.GzipCompress(folderPath, fd, ga.IgnoreDotGit())
-	} else {
-		err = ga.GzipCompress(folderPath, fd, ga.ArchiveGitRepo())
-	}
-	if err != nil {
-		return err
-	}
-
-	// flush buffer to disk
-	err = fd.Sync()
-	if err != nil {
-		return err
-	}
-
-	// set file reader back to the beginning of the file
-	_, err = fd.Seek(0, 0)
-	if err != nil {
-		return err
+	if verbose {
+		if len(trailer["x-request-id"]) == 1 {
+			fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
+		}
 	}
 
 	ctx := context.Background()
-	signedURL, err := cliClient.GetServiceUploadUrl(ctx, &pb.GetServiceUploadUrlRequest{
-		EnvironmentType: environmentType,
-		ServiceName:     serviceName,
-	},
-		grpc.Trailer(&trailer),
-	)
-	if err != nil {
-		return err
-	}
-
-	err = uploadArchive(signedURL.URL, fd)
+	uploadKey, err := bundleAndUploadCode(ctx, cliClient, folderPath, environmentType, serviceName, &trailer)
 	if err != nil {
 		return err
 	}
@@ -174,12 +150,13 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	stream, err := cliClient.Deploy(ctx, &pb.DeployRequest{
 		EnvironmentType: environmentType,
 		ServiceName:     serviceName,
-		URL:             signedURL.UploadKey,
+		URL:             uploadKey,
 		ServiceType:     serviceType,
 		BuildCommand:    buildCommand,
 		StartCommand:    startCommand,
 		IsPrivate:       isPrivateService,
 		Vars:            envVars,
+		Secrets:         envSecrets,
 	})
 	if err != nil {
 		return err
@@ -223,6 +200,59 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	}
 
 	return nil
+}
+
+func bundleAndUploadCode(ctx context.Context, cliClient pb.CliServiceClient, folderPath string, environmentType string, serviceName string, trailer *metadata.MD) (string, error) {
+	fd, err := ioutil.TempFile("", "nucleus-cli-")
+	if err != nil {
+		return "", err
+	}
+
+	if verbose {
+		log.Printf("archiving directory into temp file: %s", fd.Name())
+	}
+
+	log.Printf("archiving...")
+	gitignorePath := filepath.Join(folderPath, ".gitignore")
+	_, err = os.Stat(gitignorePath)
+	if errors.Is(err, os.ErrNotExist) {
+		err = ga.GzipCompress(folderPath, fd, ga.IgnoreDotGit())
+	} else {
+		err = ga.GzipCompress(folderPath, fd, ga.ArchiveGitRepo())
+	}
+	if err != nil {
+		return "", err
+	}
+
+	// flush buffer to disk
+	err = fd.Sync()
+	if err != nil {
+		return "", err
+	}
+
+	// set file reader back to the beginning of the file
+	_, err = fd.Seek(0, 0)
+	if err != nil {
+		return "", err
+	}
+
+	log.Printf("getting upload url...")
+	signedURL, err := cliClient.GetServiceUploadUrl(ctx, &pb.GetServiceUploadUrlRequest{
+		EnvironmentType: environmentType,
+		ServiceName:     serviceName,
+	},
+		grpc.Trailer(trailer),
+	)
+	if err != nil {
+		return "", err
+	}
+
+	log.Printf("uploading archive...")
+	err = uploadArchive(signedURL.URL, fd)
+	if err != nil {
+		return "", err
+	}
+	return signedURL.UploadKey, nil
 }
 
 func uploadArchive(signedURL string, r io.Reader) error {
