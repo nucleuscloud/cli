@@ -65,16 +65,26 @@ var deployCmd = &cobra.Command{
 			return errors.New("service type not provided")
 		}
 
+		buildCommand := deployConfig.Spec.BuildCommand
+		if buildCommand == "" {
+			return errors.New("build command not provided")
+		}
+
+		startCommand := deployConfig.Spec.StartCommand
+		if startCommand == "" {
+			return errors.New("start command not provided")
+		}
+
 		directoryName, err := os.Getwd()
 		if err != nil {
 			return err
 		}
 
-		return deploy(environmentType, serviceName, serviceType, directoryName, deployConfig.Spec.IsPrivate, deployConfig.Spec.Vars)
+		return deploy(environmentType, serviceName, serviceType, directoryName, buildCommand, startCommand, deployConfig.Spec.IsPrivate, deployConfig.Spec.Vars)
 	},
 }
 
-func deploy(environmentType string, serviceName string, serviceType string, folderPath string, isPrivateService bool, envVars map[string]string) error {
+func deploy(environmentType string, serviceName string, serviceType string, folderPath string, buildCommand string, startCommand string, isPrivateService bool, envVars map[string]string) error {
 
 	fmt.Printf("\nGetting deployment ready: \n↪Service: %s \n↪Environment: %s \n↪Project Directory: %s \n\n", serviceName, environmentType, folderPath)
 
@@ -166,6 +176,8 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 		ServiceName:     serviceName,
 		URL:             signedURL.UploadKey,
 		ServiceType:     serviceType,
+		BuildCommand:    buildCommand,
+		StartCommand:    startCommand,
 		IsPrivate:       isPrivateService,
 		Vars:            envVars,
 	})

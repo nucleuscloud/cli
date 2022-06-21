@@ -21,6 +21,8 @@ type NucleusConfig struct {
 type SpecStruct struct {
 	ServiceName    string            `yaml:"serviceName"`
 	ServiceRunTime string            `yaml:"serviceRuntime"`
+	BuildCommand   string            `yaml:"buildCommand"`
+	StartCommand   string            `yaml:"startCommand"`
 	IsPrivate      bool              `yaml:"isPrivate"`
 	Vars           map[string]string `yaml:"vars,omitempty"`
 }

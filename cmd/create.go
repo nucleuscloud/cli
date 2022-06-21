@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -9,9 +10,18 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/nucleuscloud/api/pkg/api/v1/pb"
+	"github.com/nucleuscloud/cli/pkg/auth"
 	"github.com/nucleuscloud/cli/pkg/config"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
+
+var commandAnswers = struct {
+	Build string
+	Start string
+}{}
 
 var createServiceCmd = &cobra.Command{
 	Use:   "create",
@@ -29,7 +39,7 @@ var createServiceCmd = &cobra.Command{
 			return err
 		}
 
-		var runtimes = []*survey.Question{
+		var serviceQuestions = []*survey.Question{
 			{
 				Name: "servName",
 				Prompt: &survey.Input{
@@ -51,35 +61,75 @@ var createServiceCmd = &cobra.Command{
 			},
 		}
 
-		runtimeAnswers := struct {
+		serviceDefinition := struct {
 			ServName string
 			ServType string
 		}{}
 
 		// ask the question
-		err = survey.Ask(runtimes, &runtimeAnswers, survey.WithIcons(func(icons *survey.IconSet) {
+		err = survey.Ask(serviceQuestions, &serviceDefinition, survey.WithIcons(func(icons *survey.IconSet) {
 			icons.Question.Text = ">"
 			icons.Question.Format = "white"
 		}))
 
 		if err != nil {
-			fmt.Println(err.Error())
 			return err
 		}
 
-		if runtimeAnswers.ServName == "" {
-			runtimeAnswers.ServName = defaultSpec.ServiceName
+		if serviceDefinition.ServName == "" {
+			serviceDefinition.ServName = defaultSpec.ServiceName
 		}
 
-		if runtimeAnswers.ServType != "fastapi" && runtimeAnswers.ServType != "nodejs" && runtimeAnswers.ServType != "go" {
-			return errors.New("unsupported service type")
+		//refactor these clients into a utils file later
+		authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
+		if err != nil {
+			return err
+		}
+		unAuthConn, err := newConnection()
+		if err != nil {
+			return err
+		}
+		unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
+		accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
+		unAuthConn.Close()
+		if err != nil {
+			return err
+		}
+
+		conn, err := newAuthenticatedConnection(accessToken)
+		if err != nil {
+			return err
+		}
+
+		defer conn.Close()
+		//retrieve the default build and start commands based on runtime
+		cliClient := pb.NewCliServiceClient(conn)
+		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
+		var trailer metadata.MD
+		buildStartCommands, err := cliClient.BuildStartCommands(context.Background(), &pb.DefaultBuildStartCommandsRequest{
+			Runtime: serviceDefinition.ServType,
+		},
+			grpc.Trailer(&trailer),
+		)
+		if err != nil {
+			return err
+		}
+
+		bc := buildStartCommands.BuildCommand
+		sc := buildStartCommands.StartCommand
+
+		err = runtimeQuestions(bc, sc)
+		if err != nil {
+			return err
 		}
 
 		nucleusConfig := config.NucleusConfig{
 			CliVersion: "nucleus-cli/v1alpha1",
 			Spec: config.SpecStruct{
-				ServiceName:    runtimeAnswers.ServName,
-				ServiceRunTime: runtimeAnswers.ServType,
+				ServiceName:    serviceDefinition.ServName,
+				ServiceRunTime: serviceDefinition.ServType,
+				BuildCommand:   strings.ToLower(commandAnswers.Build),
+				StartCommand:   strings.ToLower(commandAnswers.Start),
 			},
 		}
 		err = config.SetNucleusConfig(&nucleusConfig)
@@ -123,6 +173,39 @@ func cliPrompt(label string, defaultEnv string) string {
 		s = defaultEnv
 	}
 	return strings.TrimSpace(s)
+}
+
+func runtimeQuestions(bc string, sc string) error {
+
+	var commands = []*survey.Question{
+		{
+			Name: "build",
+			Prompt: &survey.Input{
+				Message: "Press enter for default build command -> " + bc + ", or type in custom build command:",
+			},
+			Transform: survey.Title,
+		},
+		{
+			Name: "start",
+			Prompt: &survey.Input{
+				Message: "Press enter for default start command -> " + sc + ", or type in custom start command:",
+			},
+			Transform: survey.Title,
+		},
+	}
+
+	err := survey.Ask(commands, &commandAnswers, survey.WithIcons(func(icons *survey.IconSet) {
+		icons.Question.Text = ">"
+		icons.Question.Format = "white"
+	}))
+
+	if commandAnswers.Build == "" {
+		commandAnswers.Build = bc
+	}
+	if commandAnswers.Start == "" {
+		commandAnswers.Start = sc
+	}
+	return err
 }
 
 func init() {
