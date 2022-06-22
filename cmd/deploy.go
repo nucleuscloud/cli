@@ -67,14 +67,8 @@ var deployCmd = &cobra.Command{
 		}
 
 		buildCommand := deployConfig.Spec.BuildCommand
-		if buildCommand == "" {
-			return errors.New("build command not provided")
-		}
 
 		startCommand := deployConfig.Spec.StartCommand
-		if startCommand == "" {
-			return errors.New("start command not provided")
-		}
 
 		directoryName, err := os.Getwd()
 		if err != nil {
@@ -90,7 +84,6 @@ var deployCmd = &cobra.Command{
 }
 
 func deploy(environmentType string, serviceName string, serviceType string, folderPath string, buildCommand string, startCommand string, isPrivateService bool, envVars map[string]string, envSecrets map[string]string) error {
-
 	fmt.Printf("\nGetting deployment ready: \n↪Service: %s \n↪Environment: %s \n↪Project Directory: %s \n\n", serviceName, environmentType, folderPath)
 
 	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
