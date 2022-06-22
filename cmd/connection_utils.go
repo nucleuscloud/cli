@@ -34,7 +34,6 @@ func getEnv() string {
 	if !isValid {
 		panic(fmt.Sprintf("%s can only be one of %s", nucleusDebugEnvKey, strings.Join(allowedDebugVals, ",")))
 	}
-	fmt.Printf("%s=%s\n", nucleusDebugEnvKey, val)
 	return val
 }
 
