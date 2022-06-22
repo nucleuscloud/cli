@@ -18,8 +18,8 @@ var (
 
 // Auth Vars
 var (
-	auth0ClientId string = "pJTegL4TmzS3RqWdcDlEg2bMpU8LlqnX"
-	auth0BaseUrl  string = "https://dev-idh20w22.us.auth0.com"
+	auth0ClientId string = "STljLBgOpW4fuwyKT30YWBsvnxyVAZkr"
+	auth0BaseUrl  string = "https://auth.stage.usenucleus.cloud"
 	apiAudience   string = "https://api.usenucleus.cloud"
 
 	scopes []string = []string{
