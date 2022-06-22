@@ -50,8 +50,9 @@ var createServiceCmd = &cobra.Command{
 				Validate: func(val interface{}) error {
 					str := val.(string)
 					if str != "" {
-						if !isValidName(str) {
-							return fmt.Errorf("Your service's name can only contain alphanumeric characters and hyphens.")
+						lowerStr := strings.ToLower(str)
+						if !isValidName(lowerStr) {
+							return fmt.Errorf("Your service's custom name can only contain alphanumeric characters and hyphens.")
 						}
 					}
 					return nil
