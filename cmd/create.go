@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+
 var ServiceCommands = struct {
 	BuildCommand string
 	StartCommand string
@@ -61,7 +62,7 @@ var createServiceCmd = &cobra.Command{
 				Validate: survey.Required,
 			},
 		}
-
+    
 		// ask the question
 		err = survey.Ask(serviceQuestions, &ServiceCommands, survey.WithIcons(func(icons *survey.IconSet) {
 			icons.Question.Text = ">"
@@ -75,8 +76,6 @@ var createServiceCmd = &cobra.Command{
 		if ServiceCommands.ServiceName == "" {
 			ServiceCommands.ServiceName = defaultSpec.ServiceName
 		}
-
-		fmt.Println(ServiceCommands.ServiceName, ServiceCommands.ServiceType)
 
 		//refactor these clients into a utils file later
 		authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
