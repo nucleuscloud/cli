@@ -85,9 +85,6 @@ var deployCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
-		fmt.Println(envSecrets)
-
 		return deploy(environmentType, serviceName, serviceType, directoryName, buildCommand, startCommand, deployConfig.Spec.IsPrivate, deployConfig.Spec.Vars, envSecrets)
 	},
 }
