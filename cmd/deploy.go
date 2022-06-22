@@ -202,7 +202,6 @@ func bundleAndUploadCode(ctx context.Context, cliClient pb.CliServiceClient, fol
 		log.Printf("archiving directory into temp file: %s", fd.Name())
 	}
 
-	log.Printf("archiving...")
 	gitignorePath := filepath.Join(folderPath, ".gitignore")
 	_, err = os.Stat(gitignorePath)
 	if errors.Is(err, os.ErrNotExist) {
@@ -226,7 +225,6 @@ func bundleAndUploadCode(ctx context.Context, cliClient pb.CliServiceClient, fol
 		return "", err
 	}
 
-	log.Printf("getting upload url...")
 	signedURL, err := cliClient.GetServiceUploadUrl(ctx, &pb.GetServiceUploadUrlRequest{
 		EnvironmentType: environmentType,
 		ServiceName:     serviceName,
@@ -237,7 +235,6 @@ func bundleAndUploadCode(ctx context.Context, cliClient pb.CliServiceClient, fol
 		return "", err
 	}
 
-	log.Printf("uploading archive...")
 	err = uploadArchive(signedURL.URL, fd)
 	if err != nil {
 		return "", err
