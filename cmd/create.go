@@ -18,7 +18,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-
 var ServiceCommands = struct {
 	BuildCommand string
 	StartCommand string
@@ -48,6 +47,13 @@ var createServiceCmd = &cobra.Command{
 					Message: "Service name: " + "(" + defaultSpec.ServiceName + ")",
 				},
 				Transform: survey.Title,
+				Validate: func(val interface{}) error {
+					str := val.(string)
+					if !isValidName(str) {
+						return fmt.Errorf("Your service's name can only contain alphanumeric characters and hyphens.")
+					}
+					return nil
+				},
 			},
 			{
 				Name: "serviceType",
@@ -62,7 +68,7 @@ var createServiceCmd = &cobra.Command{
 				Validate: survey.Required,
 			},
 		}
-    
+
 		// ask the question
 		err = survey.Ask(serviceQuestions, &ServiceCommands, survey.WithIcons(func(icons *survey.IconSet) {
 			icons.Question.Text = ">"
