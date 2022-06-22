@@ -66,14 +66,8 @@ var deployCmd = &cobra.Command{
 		}
 
 		buildCommand := deployConfig.Spec.BuildCommand
-		if buildCommand == "" {
-			return errors.New("build command not provided")
-		}
 
 		startCommand := deployConfig.Spec.StartCommand
-		if startCommand == "" {
-			return errors.New("start command not provided")
-		}
 
 		directoryName, err := os.Getwd()
 		if err != nil {
