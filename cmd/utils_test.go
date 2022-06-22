@@ -19,3 +19,13 @@ func TestIsValidName(t *testing.T) {
 	assert.True(t, isValidName("still-wood"))
 	assert.True(t, isValidName("evserv2-fastapi"))
 }
+
+// Service Types
+func TestValidateRuntime(t *testing.T) {
+	assert.False(t, isValidRuntime(""))
+	assert.False(t, isValidRuntime("not_supported"))
+	assert.True(t, isValidRuntime("fastapi"))
+	assert.True(t, isValidRuntime("go"))
+	assert.True(t, isValidRuntime("nodejs"))
+	assert.True(t, isValidRuntime("python"))
+}

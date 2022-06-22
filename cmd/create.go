@@ -62,11 +62,7 @@ var createServiceCmd = &cobra.Command{
 				Name: "serviceType",
 				Prompt: &survey.Select{
 					Message: "Select your service's runtime:",
-					Options: []string{
-						"nodejs",
-						"fastapi",
-						"golang",
-					},
+					Options: supportedRuntimes,
 				},
 				Validate: survey.Required,
 			},

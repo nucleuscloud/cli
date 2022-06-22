@@ -60,3 +60,20 @@ func checkProdOk(cmd *cobra.Command, environmentType string, yesPromptFlagName s
 	}
 	return nil
 }
+
+// Runtimes
+var supportedRuntimes = []string{
+	"fastapi",
+	"go",
+	"nodejs",
+	"python",
+}
+
+func isValidRuntime(runtime string) bool {
+	for _, current := range supportedRuntimes {
+		if runtime == current {
+			return true
+		}
+	}
+	return false
+}
