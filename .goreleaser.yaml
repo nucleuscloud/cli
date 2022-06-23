@@ -23,7 +23,7 @@ changelog:
 brews:
   - tap:
       owner: nucleuscloud
-      name: homebrew-nucleus
+      name: homebrew-tap
     folder: Formula
     homepage: https://usenucleus.cloud
     description: CLI for interfacing with Nucleus
