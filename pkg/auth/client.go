@@ -26,6 +26,7 @@ type AuthClientInterface interface {
 	GetDeviceCode(scopes []string) (*AuthDeviceResponse, error)
 	PollDeviceAccessToken(deviceResponse *AuthDeviceResponse) (*AuthTokenResponseData, error)
 	ValidateToken(ctx context.Context, accessToken string) error
+	GetLogoutUrl() (string, error)
 }
 
 // Implements AuthClientInterface
@@ -33,8 +34,9 @@ type authClient struct {
 	clientId string
 	audience string
 
-	loginUrl string
-	tokenUrl string
+	loginUrl  string
+	tokenUrl  string
+	logoutUrl string
 
 	jwtValidator *validator.Validator
 }
@@ -93,8 +95,9 @@ func NewAuthClient(tenantUrl, clientId, audience string) (AuthClientInterface, e
 		clientId: clientId,
 		audience: audience,
 
-		loginUrl: fmt.Sprintf("%s/oauth/device/code", tenantUrl),
-		tokenUrl: fmt.Sprintf("%s/oauth/token", tenantUrl),
+		loginUrl:  fmt.Sprintf("%s/oauth/device/code", tenantUrl),
+		tokenUrl:  fmt.Sprintf("%s/oauth/token", tenantUrl),
+		logoutUrl: fmt.Sprintf("%s/v2/logout", tenantUrl),
 
 		jwtValidator: jwtValidator,
 	}, nil
@@ -241,4 +244,16 @@ func (c *authClient) ValidateToken(ctx context.Context, accessToken string) erro
 func getHttpClient() *http.Client {
 	client := &http.Client{Timeout: 10 * time.Second}
 	return client
+}
+
+func (c *authClient) GetLogoutUrl() (string, error) {
+	base, err := url.Parse(c.logoutUrl)
+	if err != nil {
+		return "", err
+	}
+
+	queryParams := url.Values{}
+	queryParams.Add("client_id", c.clientId)
+	base.RawQuery = queryParams.Encode()
+	return base.String(), nil
 }
