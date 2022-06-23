@@ -79,7 +79,8 @@ var createServiceCmd = &cobra.Command{
 		}
 
 		if ServiceCommands.ServiceName == "" {
-			ServiceCommands.ServiceName = defaultSpec.ServiceName
+			newServiceName := strings.Replace(defaultSpec.ServiceName, "_", "-", -1)
+			ServiceCommands.ServiceName = newServiceName
 		}
 
 		//refactor these clients into a utils file later
