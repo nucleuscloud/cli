@@ -161,7 +161,9 @@ func ClearNucleusAuthFile() error {
 	if dirPath == "" {
 		return errors.New("Could not find the correct nucleus dir to store configs")
 	}
+
 	fileName := dirPath + "/auth.yaml"
+
 	err = os.Remove(fileName)
 	if !os.IsNotExist(err) {
 		return err
