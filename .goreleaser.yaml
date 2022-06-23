@@ -1,0 +1,49 @@
+project_name: nucleus
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: '{{ incpatch .Version }}-next'
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+brews:
+  - tap:
+      owner: nucleuscloud
+      name: homebrew-nucleus
+
+    homepage: https://usenucleus.cloud
+    description: CLI for interfacing with Nucleus
+    license: MIT
+signs:
+  - artifacts: checksum
+    # Used by GH Action to sign with a specific fingerprint
+    args:
+      [
+        '--batch',
+        '-u',
+        '{{ .Env.GPG_FINGERPRINT }}',
+        '--output',
+        '${signature}',
+        '--detach-sign',
+        '${artifact}',
+      ]
