@@ -14,6 +14,10 @@ build:
 	$(GO) build -o bin/nucleus
 .PHONY: build
 
+build-fast:
+	$(GO) build -o bin/nucleus
+.PHONY: build-fast
+
 build-release:
 	env GOOS=darwin GOARCH=amd64 $(GO) build -o bin/nucleus_darwin_amd64
 	env GOOS=darwin GOARCH=arm64 $(GO) build -o bin/nucleus_darwin_arm64
@@ -25,6 +29,11 @@ build-release:
 test:
 	$(GO) test ./... -race -v
 .PHONY: test
+
+test-fast:
+	$(GO) test ./...
+.PHONY: test-fast
+
 
 help:
 	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
