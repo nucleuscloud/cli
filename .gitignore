@@ -5,3 +5,5 @@ bin
 .vscode/
 
 cmd/test.go
+
+dist/

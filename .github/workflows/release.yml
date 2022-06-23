@@ -1,13 +1,16 @@
-name: Github
+name: Go Releaser
 
 on:
   push:
     # branches: [main]
     tags:
-      - 'v*.*.*'
+      - '*'
+
+permissions:
+  contents: write
 
 jobs:
-  build:
+  goreleaser:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go
@@ -16,24 +19,30 @@ jobs:
           go-version: 1.18
 
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Granting private modules access
         run: |
           git config --global url."https://${{ secrets.REPO_PAT }}:x-oauth-basic@github.com/nucleuscloud".insteadOf "https://github.com/nucleuscloud"
 
-      - name: Build
-        run: make build
-        if: startsWith(github.ref, 'refs/heads/main')
+      - name: Fetch all tags
+        run: git fetch --force --tags
 
-      - name: Build For Release
-        run: make build-release
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
+      - name: Import GPG Key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v5
         with:
-          files: |
-            bin/nucleus_darwin_amd64
-            bin/nucleus_darwin_arm64
-            bin/nucleus_linux_amd64
-            bin/nucleus_linux_arm64
-            bin/SHA256SUMS
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          fingerprint: ${{ secrets.GPG_FINGERPRINT }}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v3
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_PAT }}
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
