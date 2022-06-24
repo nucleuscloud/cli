@@ -1,9 +1,12 @@
-package cmd
+package utils
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -18,11 +21,11 @@ var (
 
 // Auth Vars
 var (
-	auth0ClientId string = "STljLBgOpW4fuwyKT30YWBsvnxyVAZkr"
-	auth0BaseUrl  string = "https://auth.stage.usenucleus.cloud"
-	apiAudience   string = "https://api.usenucleus.cloud"
+	Auth0ClientId string = "STljLBgOpW4fuwyKT30YWBsvnxyVAZkr"
+	Auth0BaseUrl  string = "https://auth.stage.usenucleus.cloud"
+	ApiAudience   string = "https://api.usenucleus.cloud"
 
-	scopes []string = []string{
+	Scopes []string = []string{
 		"openid",
 		"profile",
 		"offline_access",
@@ -33,27 +36,27 @@ var (
 	}
 )
 
-func isValidName(s string) bool {
+func IsValidName(s string) bool {
 	return validNameMatcher(s)
 }
 
-func getGrpcTrailer() grpc.CallOption {
+func GetGrpcTrailer() grpc.CallOption {
 	// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 	var trailer metadata.MD
 	return grpc.Trailer(&trailer)
 }
 
-func isValidEnvironmentType(environmentType string) bool {
+func IsValidEnvironmentType(environmentType string) bool {
 	return environmentType != "dev" && environmentType != "stage" && environmentType != "prod"
 }
 
-func checkProdOk(cmd *cobra.Command, environmentType string, yesPromptFlagName string) error {
+func CheckProdOk(cmd *cobra.Command, environmentType string, yesPromptFlagName string) error {
 	yesPrompt, err := cmd.Flags().GetBool(yesPromptFlagName)
 	if err != nil {
 		return err
 	}
 	if !yesPrompt {
-		shouldProceed := cliPrompt("\nAre you sure you want to deploy this in production? (y/n)", "n")
+		shouldProceed := CliPrompt("\nAre you sure you want to deploy this in production? (y/n)", "n")
 		if shouldProceed != "y" {
 			return errors.New("Exiting production deployment")
 		}
@@ -69,6 +72,10 @@ var supportedRuntimes = []string{
 	"python",
 }
 
+func GetSupportedRuntimes() []string {
+	return supportedRuntimes
+}
+
 func isValidRuntime(runtime string) bool {
 	for _, current := range supportedRuntimes {
 		if runtime == current {
@@ -76,4 +83,15 @@ func isValidRuntime(runtime string) bool {
 		}
 	}
 	return false
+}
+
+func CliPrompt(label string, defaultEnv string) string {
+	var s string
+	r := bufio.NewReader(os.Stdin)
+	fmt.Fprint(os.Stderr, label+" ")
+	s, _ = r.ReadString('\n')
+	if s == "\n" {
+		s = defaultEnv
+	}
+	return strings.TrimSpace(s)
 }

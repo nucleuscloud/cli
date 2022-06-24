@@ -1,4 +1,4 @@
-package cmd
+package utils
 
 import (
 	"context"
@@ -8,19 +8,26 @@ import (
 	"os"
 	"strings"
 
+	"github.com/nucleuscloud/api/pkg/api/v1/pb"
+	"github.com/nucleuscloud/cli/internal/pkg/auth"
+	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var (
+const (
 	nucleusDebugEnvKey = "NUCLEUS_DEBUG_ENV"
-	allowedDebugVals   = []string{
-		"dev",
-	}
 )
 
-func getEnv() string {
+var (
+	allowedDebugVals = []string{
+		"dev",
+	}
+	hasLoggedAboutEnvType bool = false
+)
+
+func GetEnv() string {
 	val := os.Getenv(nucleusDebugEnvKey)
 	if val == "" {
 		return val
@@ -32,7 +39,11 @@ func getEnv() string {
 		}
 	}
 	if !isValid {
-		panic(fmt.Sprintf("%s can only be one of %s", nucleusDebugEnvKey, strings.Join(allowedDebugVals, ",")))
+		panic(fmt.Errorf("%s can only be one of %s", nucleusDebugEnvKey, strings.Join(allowedDebugVals, ",")))
+	}
+	if !hasLoggedAboutEnvType {
+		fmt.Printf("%s=%s", nucleusDebugEnvKey, val)
+		hasLoggedAboutEnvType = true
 	}
 	return val
 }
@@ -45,7 +56,7 @@ func getApiUrl() string {
 }
 
 func isDevEnv() bool {
-	return getEnv() == "dev"
+	return GetEnv() == "dev"
 }
 
 func getTransportCreds() (credentials.TransportCredentials, error) {
@@ -63,7 +74,7 @@ func getTransportCreds() (credentials.TransportCredentials, error) {
 	return creds, nil
 }
 
-func newConnection() (*grpc.ClientConn, error) {
+func newAnonymousConnection() (*grpc.ClientConn, error) {
 	creds, err := getTransportCreds()
 	if err != nil {
 		return nil, err
@@ -71,7 +82,7 @@ func newConnection() (*grpc.ClientConn, error) {
 	return grpc.Dial(getApiUrl(), grpc.WithTransportCredentials(creds))
 }
 
-func newAuthenticatedConnection(accessToken string) (*grpc.ClientConn, error) {
+func NewAuthenticatedConnection(accessToken string) (*grpc.ClientConn, error) {
 	creds, err := getTransportCreds()
 	if err != nil {
 		return nil, err
@@ -83,6 +94,37 @@ func newAuthenticatedConnection(accessToken string) (*grpc.ClientConn, error) {
 			AccessToken: accessToken,
 		}),
 	)
+}
+
+type ApiConnectionConfig struct {
+	AuthBaseUrl  string
+	AuthClientId string
+	ApiAudience  string
+}
+
+// Returns a GRPC client that has been authenticated for use with Nucleus API
+func NewApiConnection(cfg ApiConnectionConfig) (*grpc.ClientConn, error) {
+	//refactor these clients into a utils file later
+	authClient, err := auth.NewAuthClient(cfg.AuthBaseUrl, cfg.AuthClientId, cfg.ApiAudience)
+	if err != nil {
+		return nil, err
+	}
+	unAuthConn, err := newAnonymousConnection()
+	if err != nil {
+		return nil, err
+	}
+	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
+	accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
+	defer unAuthConn.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := NewAuthenticatedConnection(accessToken)
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
 }
 
 type loginCreds struct {

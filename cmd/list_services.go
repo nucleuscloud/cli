@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/pkg/auth"
-	"github.com/nucleuscloud/cli/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -30,15 +30,8 @@ var listServicesCommand = &cobra.Command{
 			return err
 		}
 
-		if isValidEnvironmentType(environmentType) {
+		if utils.IsValidEnvironmentType(environmentType) {
 			return errors.New("invalid value for environment")
-		}
-
-		if environmentType == "prod" {
-			err := checkProdOk(cmd, environmentType, "yes")
-			if err != nil {
-				return err
-			}
 		}
 
 		return listServices(environmentType)
@@ -46,27 +39,16 @@ var listServicesCommand = &cobra.Command{
 }
 
 func listServices(environmentType string) error {
-	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
+	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
+		AuthBaseUrl:  utils.Auth0BaseUrl,
+		AuthClientId: utils.Auth0ClientId,
+		ApiAudience:  utils.ApiAudience,
+	})
 	if err != nil {
 		return err
 	}
-	unAuthConn, err := newConnection()
-	if err != nil {
-		return err
-	}
-	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
-	accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
-	unAuthConn.Close()
-	if err != nil {
-		return err
-	}
-
-	conn, err := newAuthenticatedConnection(accessToken)
-	if err != nil {
-		return err
-	}
-
 	defer conn.Close()
+
 	cliClient := pb.NewCliServiceClient(conn)
 	var trailer metadata.MD
 	serviceList, err := cliClient.ListServices(context.Background(), &pb.ListServicesRequest{
@@ -87,6 +69,5 @@ func init() {
 	rootCmd.AddCommand(listServicesCommand)
 
 	listServicesCommand.Flags().StringP("env", "e", "prod", "set the nucleus environment")
-	listServicesCommand.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
 
 }

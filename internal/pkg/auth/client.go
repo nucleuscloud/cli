@@ -50,9 +50,9 @@ type AuthDeviceResponse struct {
 	Interval                int    `json:"interval"`
 }
 
-type AuthTokenResponse struct {
+type authTokenResponse struct {
 	Result *AuthTokenResponseData
-	Error  *AuthTokenErrorData
+	Error  *authTokenErrorData
 }
 
 type AuthTokenResponseData struct {
@@ -63,7 +63,7 @@ type AuthTokenResponseData struct {
 	ExpiresIn    int    `json:"expires_in"`
 }
 
-type AuthTokenErrorData struct {
+type authTokenErrorData struct {
 	Error            string `json:"error"`
 	ErrorDescription string `json:"error_description"`
 }
@@ -82,7 +82,7 @@ func NewAuthClient(tenantUrl, clientId, audience string) (AuthClientInterface, e
 		[]string{audience},
 		validator.WithCustomClaims(
 			func() validator.CustomClaims {
-				return &CustomClaims{}
+				return &customClaims{}
 			},
 		),
 		validator.WithAllowedClockSkew(time.Minute),
@@ -174,7 +174,7 @@ func (c *authClient) PollDeviceAccessToken(deviceResponse *AuthDeviceResponse) (
 	}
 }
 
-func (c *authClient) getTokenResponse(deviceCode string) (*AuthTokenResponse, error) {
+func (c *authClient) getTokenResponse(deviceCode string) (*authTokenResponse, error) {
 	payload := strings.NewReader(fmt.Sprintf("grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=%s&client_id=%s", deviceCode, c.clientId))
 	req, err := http.NewRequest("POST", c.tokenUrl, payload)
 
@@ -209,30 +209,30 @@ func (c *authClient) getTokenResponse(deviceCode string) (*AuthTokenResponse, er
 	}
 
 	if tokenResponse.AccessToken == "" {
-		var errorResponse AuthTokenErrorData
+		var errorResponse authTokenErrorData
 		err = json.Unmarshal(body, &errorResponse)
 		if err != nil {
 			return nil, err
 		}
-		return &AuthTokenResponse{
+		return &authTokenResponse{
 			Result: nil,
 			Error:  &errorResponse,
 		}, nil
 	}
 
-	return &AuthTokenResponse{
+	return &authTokenResponse{
 		Result: &tokenResponse,
 		Error:  nil,
 	}, nil
 }
 
-type CustomClaims struct {
+type customClaims struct {
 	Scope string `json:"scope"`
 }
 
 // Validate does nothing for this example, but we need
 // it to satisfy validator.CustomClaims interface.
-func (c CustomClaims) Validate(ctx context.Context) error {
+func (c customClaims) Validate(ctx context.Context) error {
 	return nil
 }
 

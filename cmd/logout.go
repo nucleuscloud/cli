@@ -3,8 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/nucleuscloud/cli/pkg/auth"
-	"github.com/nucleuscloud/cli/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/auth"
+	"github.com/nucleuscloud/cli/internal/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/toqueteos/webbrowser"
 )
@@ -15,7 +16,7 @@ var logoutCmd = &cobra.Command{
 	Long:  "Logs a user out of their Nucleus account.",
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
+		authClient, err := auth.NewAuthClient(utils.Auth0BaseUrl, utils.Auth0ClientId, utils.ApiAudience)
 		if err != nil {
 			return err
 		}

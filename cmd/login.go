@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/pkg/auth"
-	"github.com/nucleuscloud/cli/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/auth"
+	"github.com/nucleuscloud/cli/internal/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/toqueteos/webbrowser"
 )
@@ -18,19 +19,18 @@ var auth0Cmd = &cobra.Command{
 	Long:  `Logs a user into their Nucleus account. `,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
+		authClient, err := auth.NewAuthClient(utils.ApiAudience, utils.Auth0ClientId, utils.ApiAudience)
 		if err != nil {
 			return err
 		}
 
-		deviceResponse, err := authClient.GetDeviceCode(scopes)
+		deviceResponse, err := authClient.GetDeviceCode(utils.Scopes)
 		if err != nil {
 			return err
 		}
 
-		// fmt.Println("Visit the following URL to login: ", deviceResponse.VerificationURIComplete)
 		fmt.Println("Your activation code is: ", deviceResponse.UserCode)
-		cliPrompt("Press [Enter] to continue in the web browser...", "")
+		utils.CliPrompt("Press [Enter] to continue in the web browser...", "")
 
 		err = webbrowser.Open(deviceResponse.VerificationURIComplete)
 		if err != nil {
@@ -54,7 +54,7 @@ var auth0Cmd = &cobra.Command{
 			return err
 		}
 
-		conn, err := newAuthenticatedConnection(tokenResponse.AccessToken)
+		conn, err := utils.NewAuthenticatedConnection(tokenResponse.AccessToken)
 		if err != nil {
 			return err
 		}
@@ -65,7 +65,7 @@ var auth0Cmd = &cobra.Command{
 
 		fmt.Println("Attempting to register user in Nucleus system...")
 
-		_, err = nucleusClient.ResolveUser(context.Background(), &pb.ResolveUserRequest{}, getGrpcTrailer())
+		_, err = nucleusClient.ResolveUser(context.Background(), &pb.ResolveUserRequest{}, utils.GetGrpcTrailer())
 		if err != nil {
 			return err
 		}
