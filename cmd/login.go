@@ -29,7 +29,6 @@ var auth0Cmd = &cobra.Command{
 			return err
 		}
 
-		// fmt.Println("Visit the following URL to login: ", deviceResponse.VerificationURIComplete)
 		fmt.Println("Your activation code is: ", deviceResponse.UserCode)
 		utils.CliPrompt("Press [Enter] to continue in the web browser...", "")
 

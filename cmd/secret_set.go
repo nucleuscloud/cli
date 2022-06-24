@@ -25,7 +25,6 @@ import (
 	"strings"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/internal/pkg/auth"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/secrets"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
@@ -66,27 +65,14 @@ var setCmd = &cobra.Command{
 			}
 		}
 
-		authClient, err := auth.NewAuthClient(utils.Auth0BaseUrl, utils.Auth0ClientId, utils.ApiAudience)
+		conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
+			AuthBaseUrl:  utils.Auth0BaseUrl,
+			AuthClientId: utils.Auth0ClientId,
+			ApiAudience:  utils.ApiAudience,
+		})
 		if err != nil {
 			return err
 		}
-		unAuthConn, err := utils.NewAnonymousConnection()
-		if err != nil {
-			return err
-		}
-		unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
-		accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
-		unAuthConn.Close()
-		if err != nil {
-			return err
-		}
-
-		conn, err := utils.NewAuthenticatedConnection(accessToken)
-		if err != nil {
-			return err
-		}
-
-		defer conn.Close()
 
 		nucleusClient := pb.NewCliServiceClient(conn)
 

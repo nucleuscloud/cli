@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/internal/pkg/auth"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
@@ -71,26 +70,14 @@ func tailLoop(environmentType string, serviceName string) error {
 }
 
 func tailLogs(environmentType string, serviceName string, timestamp string) (string, error) {
-	authClient, err := auth.NewAuthClient(utils.Auth0BaseUrl, utils.Auth0ClientId, utils.ApiAudience)
+	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
+		AuthBaseUrl:  utils.Auth0BaseUrl,
+		AuthClientId: utils.Auth0ClientId,
+		ApiAudience:  utils.ApiAudience,
+	})
 	if err != nil {
 		return "", err
 	}
-	unAuthConn, err := utils.NewAnonymousConnection()
-	if err != nil {
-		return "", err
-	}
-	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
-	accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
-	unAuthConn.Close()
-	if err != nil {
-		return "", err
-	}
-	conn, err := utils.NewAuthenticatedConnection(accessToken)
-	if err != nil {
-		return "", err
-	}
-
-	defer conn.Close()
 	cliClient := pb.NewCliServiceClient(conn)
 	var trailer metadata.MD
 	stream, err := cliClient.TailLogs(context.Background(), &pb.TailLogsRequest{

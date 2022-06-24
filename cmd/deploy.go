@@ -18,7 +18,6 @@ import (
 	"github.com/briandowns/spinner"
 	ga "github.com/mhelmich/go-archiver"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/internal/pkg/auth"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/secrets"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
@@ -92,27 +91,14 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	time.Sleep(5 * time.Second)
 	s1.Stop()
 
-	authClient, err := auth.NewAuthClient(utils.ApiAudience, utils.Auth0ClientId, utils.ApiAudience)
+	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
+		AuthBaseUrl:  utils.Auth0BaseUrl,
+		AuthClientId: utils.Auth0ClientId,
+		ApiAudience:  utils.ApiAudience,
+	})
 	if err != nil {
 		return err
 	}
-	unAuthConn, err := utils.NewAnonymousConnection()
-	if err != nil {
-		return err
-	}
-	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
-	accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
-	unAuthConn.Close()
-	if err != nil {
-		return err
-	}
-
-	conn, err := utils.NewAuthenticatedConnection(accessToken)
-	if err != nil {
-		return err
-	}
-
-	defer conn.Close()
 
 	cliClient := pb.NewCliServiceClient(conn)
 	// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md

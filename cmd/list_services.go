@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/internal/pkg/auth"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
@@ -47,27 +46,15 @@ var listServicesCommand = &cobra.Command{
 }
 
 func listServices(environmentType string) error {
-	authClient, err := auth.NewAuthClient(utils.Auth0BaseUrl, utils.Auth0ClientId, utils.ApiAudience)
-	if err != nil {
-		return err
-	}
-	unAuthConn, err := utils.NewAnonymousConnection()
-	if err != nil {
-		return err
-	}
-	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
-	accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
-	unAuthConn.Close()
+	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
+		AuthBaseUrl:  utils.Auth0BaseUrl,
+		AuthClientId: utils.Auth0ClientId,
+		ApiAudience:  utils.ApiAudience,
+	})
 	if err != nil {
 		return err
 	}
 
-	conn, err := utils.NewAuthenticatedConnection(accessToken)
-	if err != nil {
-		return err
-	}
-
-	defer conn.Close()
 	cliClient := pb.NewCliServiceClient(conn)
 	var trailer metadata.MD
 	serviceList, err := cliClient.ListServices(context.Background(), &pb.ListServicesRequest{
