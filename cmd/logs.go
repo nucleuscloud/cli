@@ -31,8 +31,13 @@ var logsCommand = &cobra.Command{
 			return err
 		}
 
-		if isValidEnvironmentType(environmentType) {
-			return errors.New("invalid value for environment")
+		window, err := cmd.Flags().GetString("window")
+		if err != nil {
+			return err
+		}
+
+		if !allowedWindowValues(window) {
+			return errors.New("invalid value for log window - should be one of [15min,1h,1d]")
 		}
 
 		serviceName := strings.TrimSpace(sn)
@@ -40,11 +45,11 @@ var logsCommand = &cobra.Command{
 			return ErrInvalidName
 		}
 
-		return logs(environmentType, serviceName)
+		return logs(environmentType, serviceName, window)
 	},
 }
 
-func logs(environmentType string, serviceName string) error {
+func logs(environmentType string, serviceName string, window string) error {
 	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
 	if err != nil {
 		return err
@@ -70,11 +75,18 @@ func logs(environmentType string, serviceName string) error {
 	logs, err := cliClient.Logs(context.Background(), &pb.LogsRequest{
 		EnvironmentType: environmentType,
 		ServiceName:     serviceName,
+		Window:          window,
 	},
 		grpc.Trailer(&trailer),
 	)
 	if err != nil && err != io.EOF {
 		return err
+	}
+
+	fmt.Println("\nGenerating logs for the last " + window + "...\n")
+
+	if len(logs.Log) == 0 {
+		fmt.Println("No logs for this time window. If you just deployed your service, try again in a minute or try a bigger time window.")
 	}
 
 	for i := 0; i < len(logs.Log); i++ {
@@ -83,9 +95,21 @@ func logs(environmentType string, serviceName string) error {
 	return nil
 }
 
+func allowedWindowValues(window string) bool {
+	switch window {
+	case
+		"15min",
+		"1h",
+		"1d":
+		return true
+	}
+	return false
+}
+
 func init() {
 	rootCmd.AddCommand(logsCommand)
 	logsCommand.Flags().StringP("env", "e", "prod", "set the nucleus environment")
 	logsCommand.Flags().StringP("tail", "t", "", "live log tail")
 	logsCommand.Flags().StringP("service", "s", "", "service name")
+	logsCommand.Flags().StringP("window", "w", "", "logging window allowed values: [15min, 1h, 1d]")
 }

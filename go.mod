@@ -9,7 +9,7 @@ require (
 	github.com/briandowns/spinner v1.18.1
 	github.com/google/uuid v1.3.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
-	github.com/nucleuscloud/api v0.0.0-20220624210746-849d0d8c7261
+	github.com/nucleuscloud/api v0.0.0-20220624222749-37bafe7977e9
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.2

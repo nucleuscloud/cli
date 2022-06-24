@@ -322,6 +322,8 @@ github.com/nucleuscloud/api v0.0.0-20220623190939-532f57770488 h1:pOb4sVougQ0fGo
 github.com/nucleuscloud/api v0.0.0-20220623190939-532f57770488/go.mod h1:c4nnY8S3BkMJSI62R9NHWdPtZEYSwoXEtA1MurUenuk=
 github.com/nucleuscloud/api v0.0.0-20220624210746-849d0d8c7261 h1:WVca8TzLB+Sz2ZMH9sNPzfiRAADmOrWKQzPgMsKqAnA=
 github.com/nucleuscloud/api v0.0.0-20220624210746-849d0d8c7261/go.mod h1:GjJ7U7OBFdmuknqVovLCEnpOHtDwRrghe2FojPJBVPg=
+github.com/nucleuscloud/api v0.0.0-20220624222749-37bafe7977e9 h1:8OHTjwXJLJsA3N4CTN0dxVd8jK/gyWDUs0khIYnpOno=
+github.com/nucleuscloud/api v0.0.0-20220624222749-37bafe7977e9/go.mod h1:GjJ7U7OBFdmuknqVovLCEnpOHtDwRrghe2FojPJBVPg=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pelletier/go-toml v1.9.4 h1:tjENF6MfZAg8e4ZmZTeWaWiT2vXtsoO6+iuOjFhECwM=
