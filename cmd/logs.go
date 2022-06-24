@@ -37,8 +37,8 @@ var logsCommand = &cobra.Command{
 
 		if !allowedWindowValues(window) {
 			return errors.New("invalid value for log window - should be one of [15min,1h,1d]")
-    }
-    
+		}
+
 		if utils.IsValidEnvironmentType(environmentType) {
 			return errors.New("invalid value for environment")
 		}
@@ -52,7 +52,7 @@ var logsCommand = &cobra.Command{
 	},
 }
 
-func logs(environmentType string, serviceName string) error {
+func logs(environmentType string, serviceName string, window string) error {
 	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
 		AuthBaseUrl:  utils.Auth0BaseUrl,
 		AuthClientId: utils.Auth0ClientId,
