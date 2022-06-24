@@ -19,7 +19,7 @@ var auth0Cmd = &cobra.Command{
 	Long:  `Logs a user into their Nucleus account. `,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		authClient, err := auth.NewAuthClient(utils.ApiAudience, utils.Auth0ClientId, utils.ApiAudience)
+		authClient, err := auth.NewAuthClient(utils.Auth0BaseUrl, utils.Auth0ClientId, utils.ApiAudience)
 		if err != nil {
 			return err
 		}
