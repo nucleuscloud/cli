@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"strings"
+	"time"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
@@ -48,11 +50,20 @@ var logsCommand = &cobra.Command{
 			return utils.ErrInvalidName
 		}
 
-		return logs(environmentType, serviceName, window)
+		tail, err := cmd.Flags().GetBool("tail")
+		if err != nil {
+			return err
+		}
+
+		if tail {
+			return tailLogsLoop(environmentType, serviceName)
+		} else {
+			return staticLogs(environmentType, serviceName, window)
+		}
 	},
 }
 
-func logs(environmentType string, serviceName string, window string) error {
+func staticLogs(environmentType string, serviceName string, window string) error {
 	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
 		AuthBaseUrl:  utils.Auth0BaseUrl,
 		AuthClientId: utils.Auth0ClientId,
@@ -89,9 +100,62 @@ func logs(environmentType string, serviceName string, window string) error {
 	return nil
 }
 
+func liveTailLogs(environmentType string, serviceName string, timestamp string) (string, error) {
+	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
+		AuthBaseUrl:  utils.Auth0BaseUrl,
+		AuthClientId: utils.Auth0ClientId,
+		ApiAudience:  utils.ApiAudience,
+	})
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+
+	cliClient := pb.NewCliServiceClient(conn)
+	var trailer metadata.MD
+	stream, err := cliClient.TailLogs(context.Background(), &pb.TailLogsRequest{
+		EnvironmentType: environmentType,
+		ServiceName:     serviceName,
+		Timestamp:       timestamp,
+	}, grpc.Trailer(&trailer))
+	if err != nil {
+		return "", err
+	}
+
+	var newTimestamp string
+	for {
+		msg, err := stream.Recv()
+		if err == io.EOF {
+			return newTimestamp, err
+		} else if err != nil {
+			return "", err
+		}
+
+		newTimestamp = msg.Timestamp
+		if msg.LogLine != "" {
+			log.Printf("%s\n", msg.LogLine)
+		}
+	}
+
+}
+
+func tailLogsLoop(environmentType string, serviceName string) error {
+	var ts string
+	var err error
+	for {
+		ts, err = liveTailLogs(environmentType, serviceName, ts)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		time.Sleep(3 * time.Second)
+	}
+
+}
+
 func allowedWindowValues(window string) bool {
 	switch window {
 	case
+		"0",
 		"15min",
 		"1h",
 		"1d":
@@ -103,7 +167,7 @@ func allowedWindowValues(window string) bool {
 func init() {
 	rootCmd.AddCommand(logsCommand)
 	logsCommand.Flags().StringP("env", "e", "prod", "set the nucleus environment")
-	logsCommand.Flags().StringP("tail", "t", "", "live log tail")
+	logsCommand.Flags().BoolP("tail", "t", false, "live log tail")
 	logsCommand.Flags().StringP("service", "s", "", "service name")
-	logsCommand.Flags().StringP("window", "w", "", "logging window allowed values: [15min, 1h, 1d]")
+	logsCommand.Flags().StringP("window", "w", "0", "logging window allowed values: [15min, 1h, 1d]")
 }
