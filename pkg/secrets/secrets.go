@@ -12,10 +12,6 @@ import (
 	"github.com/nucleuscloud/cli/pkg/config"
 )
 
-// type NucleusSecrets struct {
-// 	Secrets map[string]map[string]string `yaml:"secrets,omitempty" json:"secrets,omitempty"`
-// }
-
 func getSecretsFromSpec(spec *config.SpecStruct) config.NucleusSecrets {
 	if spec == nil {
 		spec = &config.SpecStruct{}
