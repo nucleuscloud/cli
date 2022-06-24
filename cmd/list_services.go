@@ -34,13 +34,6 @@ var listServicesCommand = &cobra.Command{
 			return errors.New("invalid value for environment")
 		}
 
-		if environmentType == "prod" {
-			err := utils.CheckProdOk(cmd, environmentType, "yes")
-			if err != nil {
-				return err
-			}
-		}
-
 		return listServices(environmentType)
 	},
 }
@@ -75,6 +68,5 @@ func init() {
 	rootCmd.AddCommand(listServicesCommand)
 
 	listServicesCommand.Flags().StringP("env", "e", "prod", "set the nucleus environment")
-	listServicesCommand.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
 
 }
