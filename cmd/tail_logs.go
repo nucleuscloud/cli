@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/pkg/auth"
-	"github.com/nucleuscloud/cli/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -32,12 +32,12 @@ var tailLogsCommand = &cobra.Command{
 			return err
 		}
 
-		if isValidEnvironmentType(environmentType) {
+		if utils.IsValidEnvironmentType(environmentType) {
 			return errors.New("invalid value for environment")
 		}
 
 		if environmentType == "prod" {
-			err := checkProdOk(cmd, environmentType, "yes")
+			err := utils.CheckProdOk(cmd, environmentType, "yes")
 			if err != nil {
 				return err
 			}
@@ -49,8 +49,8 @@ var tailLogsCommand = &cobra.Command{
 		}
 
 		serviceName = strings.TrimSpace(serviceName)
-		if !isValidName(serviceName) {
-			return ErrInvalidName
+		if !utils.IsValidName(serviceName) {
+			return utils.ErrInvalidName
 		}
 
 		return tailLoop(environmentType, serviceName)
@@ -70,26 +70,16 @@ func tailLoop(environmentType string, serviceName string) error {
 }
 
 func tailLogs(environmentType string, serviceName string, timestamp string) (string, error) {
-	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
+	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
+		AuthBaseUrl:  utils.Auth0BaseUrl,
+		AuthClientId: utils.Auth0ClientId,
+		ApiAudience:  utils.ApiAudience,
+	})
 	if err != nil {
 		return "", err
 	}
-	unAuthConn, err := newConnection()
-	if err != nil {
-		return "", err
-	}
-	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
-	accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
-	unAuthConn.Close()
-	if err != nil {
-		return "", err
-	}
-	conn, err := newAuthenticatedConnection(accessToken)
-	if err != nil {
-		return "", err
-	}
-
 	defer conn.Close()
+
 	cliClient := pb.NewCliServiceClient(conn)
 	var trailer metadata.MD
 	stream, err := cliClient.TailLogs(context.Background(), &pb.TailLogsRequest{
