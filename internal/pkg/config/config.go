@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/pkg/auth"
+	"github.com/nucleuscloud/cli/internal/pkg/auth"
 	"gopkg.in/yaml.v2"
 )
 

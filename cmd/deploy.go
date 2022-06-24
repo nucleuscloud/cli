@@ -18,9 +18,10 @@ import (
 	"github.com/briandowns/spinner"
 	ga "github.com/mhelmich/go-archiver"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/pkg/auth"
-	"github.com/nucleuscloud/cli/pkg/config"
-	"github.com/nucleuscloud/cli/pkg/secrets"
+	"github.com/nucleuscloud/cli/internal/pkg/auth"
+	"github.com/nucleuscloud/cli/internal/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/secrets"
+	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/vbauerster/mpb/v7"
 	"github.com/vbauerster/mpb/v7/decor"
@@ -45,12 +46,12 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
-		if isValidEnvironmentType(environmentType) {
+		if utils.IsValidEnvironmentType(environmentType) {
 			return errors.New("invalid value for environment")
 		}
 
 		if environmentType == "prod" {
-			err := checkProdOk(cmd, environmentType, "yes")
+			err := utils.CheckProdOk(cmd, environmentType, "yes")
 			if err != nil {
 				return err
 			}
@@ -91,7 +92,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	time.Sleep(5 * time.Second)
 	s1.Stop()
 
-	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
+	authClient, err := auth.NewAuthClient(utils.ApiAudience, utils.Auth0ClientId, utils.ApiAudience)
 	if err != nil {
 		return err
 	}

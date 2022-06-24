@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -11,8 +10,9 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/pkg/auth"
-	"github.com/nucleuscloud/cli/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/auth"
+	"github.com/nucleuscloud/cli/internal/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -51,7 +51,7 @@ var createServiceCmd = &cobra.Command{
 					str := val.(string)
 					if str != "" {
 						lowerStr := strings.ToLower(str)
-						if !isValidName(lowerStr) {
+						if !utils.IsValidName(lowerStr) {
 							return fmt.Errorf("Your service's custom name can only contain alphanumeric characters and hyphens.")
 						}
 					}
@@ -62,7 +62,7 @@ var createServiceCmd = &cobra.Command{
 				Name: "serviceType",
 				Prompt: &survey.Select{
 					Message: "Select your service's runtime:",
-					Options: supportedRuntimes,
+					Options: utils.GetSupportedRuntimes(),
 				},
 				Validate: survey.Required,
 			},
@@ -84,7 +84,7 @@ var createServiceCmd = &cobra.Command{
 		}
 
 		//refactor these clients into a utils file later
-		authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
+		authClient, err := auth.NewAuthClient(utils.Auth0BaseUrl, utils.Auth0ClientId, utils.ApiAudience)
 		if err != nil {
 			return err
 		}
@@ -165,17 +165,6 @@ func getDefaultServiceName() (string, error) {
 	}
 	defaultDir := filepath.Base(wd)
 	return defaultDir, nil
-}
-
-func cliPrompt(label string, defaultEnv string) string {
-	var s string
-	r := bufio.NewReader(os.Stdin)
-	fmt.Fprint(os.Stderr, label+" ")
-	s, _ = r.ReadString('\n')
-	if s == "\n" {
-		s = defaultEnv
-	}
-	return strings.TrimSpace(s)
 }
 
 func runtimeQuestions(bc string, sc string) error {

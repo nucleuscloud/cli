@@ -9,8 +9,9 @@ import (
 	"time"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/pkg/auth"
-	"github.com/nucleuscloud/cli/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/auth"
+	"github.com/nucleuscloud/cli/internal/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -32,12 +33,12 @@ var tailLogsCommand = &cobra.Command{
 			return err
 		}
 
-		if isValidEnvironmentType(environmentType) {
+		if utils.IsValidEnvironmentType(environmentType) {
 			return errors.New("invalid value for environment")
 		}
 
 		if environmentType == "prod" {
-			err := checkProdOk(cmd, environmentType, "yes")
+			err := utils.CheckProdOk(cmd, environmentType, "yes")
 			if err != nil {
 				return err
 			}
@@ -49,8 +50,8 @@ var tailLogsCommand = &cobra.Command{
 		}
 
 		serviceName = strings.TrimSpace(serviceName)
-		if !isValidName(serviceName) {
-			return ErrInvalidName
+		if !utils.IsValidName(serviceName) {
+			return utils.ErrInvalidName
 		}
 
 		return tailLoop(environmentType, serviceName)
@@ -70,7 +71,7 @@ func tailLoop(environmentType string, serviceName string) error {
 }
 
 func tailLogs(environmentType string, serviceName string, timestamp string) (string, error) {
-	authClient, err := auth.NewAuthClient(auth0BaseUrl, auth0ClientId, apiAudience)
+	authClient, err := auth.NewAuthClient(utils.Auth0BaseUrl, utils.Auth0ClientId, utils.ApiAudience)
 	if err != nil {
 		return "", err
 	}

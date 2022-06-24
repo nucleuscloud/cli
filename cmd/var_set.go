@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/nucleuscloud/cli/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/spf13/cobra"
 )
 
