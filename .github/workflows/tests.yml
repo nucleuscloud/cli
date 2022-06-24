@@ -19,6 +19,9 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Checkout code
         uses: actions/checkout@v3
+      - name: Granting private modules access
+        run: |
+          git config --global url."https://${{ secrets.REPO_PAT }}:x-oauth-basic@github.com/nucleuscloud".insteadOf "https://github.com/nucleuscloud"
       - name: Test
         run: |
           go version
