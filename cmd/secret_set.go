@@ -49,11 +49,6 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
-		err = secrets.UpsertNucleusSecrets()
-		if err != nil {
-			return err
-		}
-
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
@@ -117,14 +112,15 @@ var setCmd = &cobra.Command{
 		if verbose {
 			log.Println("Encrypting secret...")
 		}
-		err = secrets.StoreSecret(publicKeyReply.PublicKey, secretKey, secret, environmentType)
+		err = secrets.StoreSecret(&deployConfig.Spec, publicKeyReply.PublicKey, secretKey, secret, environmentType)
 		if err != nil {
 			return err
 		}
+
 		if verbose {
 			log.Println("Secret successfully encrypted!")
 		}
-		return nil
+		return config.SetNucleusConfig(deployConfig)
 	},
 }
 

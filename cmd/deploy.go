@@ -75,7 +75,7 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
-		envSecrets, err := secrets.GetSecretsByEnvType(environmentType)
+		envSecrets := secrets.GetSecretsByEnvType(&deployConfig.Spec, environmentType)
 		if err != nil {
 			return err
 		}
