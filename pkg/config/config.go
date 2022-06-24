@@ -18,12 +18,15 @@ type NucleusConfig struct {
 	Spec       SpecStruct `yaml:"spec"`
 }
 
+type NucleusSecrets = map[string]map[string]string
+
 type SpecStruct struct {
 	ServiceName    string            `yaml:"serviceName"`
 	ServiceRunTime string            `yaml:"serviceRuntime"`
 	BuildCommand   string            `yaml:"buildCommand,omitempty"`
 	StartCommand   string            `yaml:"startCommand,omitempty"`
 	Vars           map[string]string `yaml:"vars,omitempty"`
+	Secrets        NucleusSecrets    `yaml:"secrets,omitempty"`
 }
 
 type NucleusAuthConfig struct {
@@ -185,7 +188,6 @@ func GetValidAccessTokenFromConfig(authClient auth.AuthClientInterface, nucleusC
 			reply, err := nucleusClient.RefreshAccessToken(ctx, &pb.RefreshAccessTokenRequest{
 				RefreshToken: config.RefreshToken,
 			})
-			// refreshResponse, err := authClient.GetRefreshedAccessToken(config.RefreshToken)
 			if err != nil {
 				err = ClearNucleusAuthFile()
 				if err != nil {
