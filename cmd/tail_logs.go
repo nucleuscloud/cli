@@ -75,7 +75,7 @@ func tailLogs(environmentType string, serviceName string, timestamp string) (str
 	if err != nil {
 		return "", err
 	}
-	unAuthConn, err := newConnection()
+	unAuthConn, err := utils.NewAnonymousConnection()
 	if err != nil {
 		return "", err
 	}
@@ -85,7 +85,7 @@ func tailLogs(environmentType string, serviceName string, timestamp string) (str
 	if err != nil {
 		return "", err
 	}
-	conn, err := newAuthenticatedConnection(accessToken)
+	conn, err := utils.NewAuthenticatedConnection(accessToken)
 	if err != nil {
 		return "", err
 	}

@@ -96,7 +96,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	if err != nil {
 		return err
 	}
-	unAuthConn, err := newConnection()
+	unAuthConn, err := utils.NewAnonymousConnection()
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 		return err
 	}
 
-	conn, err := newAuthenticatedConnection(accessToken)
+	conn, err := utils.NewAuthenticatedConnection(accessToken)
 	if err != nil {
 		return err
 	}

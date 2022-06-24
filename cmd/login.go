@@ -55,7 +55,7 @@ var auth0Cmd = &cobra.Command{
 			return err
 		}
 
-		conn, err := newAuthenticatedConnection(tokenResponse.AccessToken)
+		conn, err := utils.NewAuthenticatedConnection(tokenResponse.AccessToken)
 		if err != nil {
 			return err
 		}

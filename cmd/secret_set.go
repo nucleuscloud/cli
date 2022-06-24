@@ -70,7 +70,7 @@ var setCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		unAuthConn, err := newConnection()
+		unAuthConn, err := utils.NewAnonymousConnection()
 		if err != nil {
 			return err
 		}
@@ -81,7 +81,7 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
-		conn, err := newAuthenticatedConnection(accessToken)
+		conn, err := utils.NewAuthenticatedConnection(accessToken)
 		if err != nil {
 			return err
 		}

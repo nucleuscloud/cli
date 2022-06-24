@@ -51,7 +51,7 @@ func listServices(environmentType string) error {
 	if err != nil {
 		return err
 	}
-	unAuthConn, err := newConnection()
+	unAuthConn, err := utils.NewAnonymousConnection()
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func listServices(environmentType string) error {
 		return err
 	}
 
-	conn, err := newAuthenticatedConnection(accessToken)
+	conn, err := utils.NewAuthenticatedConnection(accessToken)
 	if err != nil {
 		return err
 	}

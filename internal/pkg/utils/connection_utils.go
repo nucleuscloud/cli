@@ -1,4 +1,4 @@
-package cmd
+package utils
 
 import (
 	"context"
@@ -13,14 +13,18 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var (
+const (
 	nucleusDebugEnvKey = "NUCLEUS_DEBUG_ENV"
-	allowedDebugVals   = []string{
-		"dev",
-	}
 )
 
-func getEnv() string {
+var (
+	allowedDebugVals = []string{
+		"dev",
+	}
+	hasLoggedAboutEnvType bool = false
+)
+
+func GetEnv() string {
 	val := os.Getenv(nucleusDebugEnvKey)
 	if val == "" {
 		return val
@@ -32,7 +36,11 @@ func getEnv() string {
 		}
 	}
 	if !isValid {
-		panic(fmt.Sprintf("%s can only be one of %s", nucleusDebugEnvKey, strings.Join(allowedDebugVals, ",")))
+		panic(fmt.Errorf("%s can only be one of %s", nucleusDebugEnvKey, strings.Join(allowedDebugVals, ",")))
+	}
+	if !hasLoggedAboutEnvType {
+		fmt.Printf("%s=%s", nucleusDebugEnvKey, val)
+		hasLoggedAboutEnvType = true
 	}
 	return val
 }
@@ -45,7 +53,7 @@ func getApiUrl() string {
 }
 
 func isDevEnv() bool {
-	return getEnv() == "dev"
+	return GetEnv() == "dev"
 }
 
 func getTransportCreds() (credentials.TransportCredentials, error) {
@@ -63,7 +71,7 @@ func getTransportCreds() (credentials.TransportCredentials, error) {
 	return creds, nil
 }
 
-func newConnection() (*grpc.ClientConn, error) {
+func NewAnonymousConnection() (*grpc.ClientConn, error) {
 	creds, err := getTransportCreds()
 	if err != nil {
 		return nil, err
@@ -71,7 +79,7 @@ func newConnection() (*grpc.ClientConn, error) {
 	return grpc.Dial(getApiUrl(), grpc.WithTransportCredentials(creds))
 }
 
-func newAuthenticatedConnection(accessToken string) (*grpc.ClientConn, error) {
+func NewAuthenticatedConnection(accessToken string) (*grpc.ClientConn, error) {
 	creds, err := getTransportCreds()
 	if err != nil {
 		return nil, err
