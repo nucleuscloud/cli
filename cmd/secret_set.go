@@ -73,6 +73,7 @@ var setCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		defer conn.Close()
 
 		nucleusClient := pb.NewCliServiceClient(conn)
 

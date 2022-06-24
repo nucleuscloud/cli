@@ -99,6 +99,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
 
 	cliClient := pb.NewCliServiceClient(conn)
 	// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md

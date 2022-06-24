@@ -52,6 +52,8 @@ func logs(environmentType string, serviceName string) error {
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
+
 	cliClient := pb.NewCliServiceClient(conn)
 	var trailer metadata.MD
 	logs, err := cliClient.Logs(context.Background(), &pb.LogsRequest{

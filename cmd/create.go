@@ -87,6 +87,7 @@ var createServiceCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		defer conn.Close()
 		//retrieve the default build and start commands based on runtime
 		cliClient := pb.NewCliServiceClient(conn)
 		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
@@ -164,10 +165,11 @@ func runtimeQuestions(svcCommands *serviceCommands, bc string, sc string) error 
 		},
 	}
 
-	err := survey.Ask(commands, &svcCommands, survey.WithIcons(func(icons *survey.IconSet) {
+	err := survey.Ask(commands, svcCommands, survey.WithIcons(func(icons *survey.IconSet) {
 		icons.Question.Text = ">"
 		icons.Question.Format = "white"
 	}))
+	fmt.Println("hit here", err)
 	return err
 }
 

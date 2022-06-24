@@ -78,6 +78,8 @@ func tailLogs(environmentType string, serviceName string, timestamp string) (str
 	if err != nil {
 		return "", err
 	}
+	defer conn.Close()
+
 	cliClient := pb.NewCliServiceClient(conn)
 	var trailer metadata.MD
 	stream, err := cliClient.TailLogs(context.Background(), &pb.TailLogsRequest{

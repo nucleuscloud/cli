@@ -115,7 +115,7 @@ func NewApiConnection(cfg ApiConnectionConfig) (*grpc.ClientConn, error) {
 	}
 	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
 	accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
-	unAuthConn.Close()
+	defer unAuthConn.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -124,8 +124,6 @@ func NewApiConnection(cfg ApiConnectionConfig) (*grpc.ClientConn, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	defer conn.Close()
 	return conn, nil
 }
 

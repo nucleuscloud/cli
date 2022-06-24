@@ -47,6 +47,7 @@ func listServices(environmentType string) error {
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
 
 	cliClient := pb.NewCliServiceClient(conn)
 	var trailer metadata.MD
