@@ -44,6 +44,12 @@ This will kick off a Github Action, which will do the following:
 
 ## Installing Nucleus CLI
 
+### Homebrew
+You can install Nucleus CLI directly from Homebrew
+```sh
+brew install nucleuscloud/tap/nucleus
+```
+
 ### Download from releases page
 1. Go to the [Releases Page](https://github.com/nucleuscloud/cli/releases).
 2. Download the tarball for your operating system: `tar xzf <path-to-tar.gz> nucleus`
