@@ -19,16 +19,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// secretCmd represents the secret command
-var secretCmd = &cobra.Command{
-	Use:   "secret",
-	Short: "Parent command for the secret resource",
-	Long:  "You must call one of the available sub commands to actually invoke an action against secrets.",
+var servicesCmd = &cobra.Command{
+	Use: "services",
+	Aliases: []string{
+		"svcs",
+	},
+	Short: "Parent command for service interactions.",
+	Long:  "You must call one of the available sub commands to actually invoke an action against services.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(secretCmd)
+	rootCmd.AddCommand(servicesCmd)
 }

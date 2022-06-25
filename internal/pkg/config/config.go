@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
@@ -183,7 +182,7 @@ func GetValidAccessTokenFromConfig(authClient auth.AuthClientInterface, nucleusC
 	ctx := context.Background()
 	err = authClient.ValidateToken(ctx, config.AccessToken)
 	if err != nil {
-		log.Println("Access token is no longer valid. Attempting to refresh...")
+		fmt.Println("Access token is no longer valid. Attempting to refresh...")
 		if config.RefreshToken != "" {
 			reply, err := nucleusClient.RefreshAccessToken(ctx, &pb.RefreshAccessTokenRequest{
 				RefreshToken: config.RefreshToken,
@@ -207,7 +206,7 @@ func GetValidAccessTokenFromConfig(authClient auth.AuthClientInterface, nucleusC
 				IdToken:      reply.IdToken,
 			})
 			if err != nil {
-				log.Println("Successfully refreshed token, but was unable to update nucleus auth file")
+				fmt.Println("Successfully refreshed token, but was unable to update nucleus auth file")
 				return "", err
 			}
 			return reply.AccessToken, authClient.ValidateToken(ctx, reply.AccessToken)

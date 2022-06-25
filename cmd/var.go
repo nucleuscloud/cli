@@ -22,8 +22,8 @@ import (
 // varCmd represents the secret command
 var varCmd = &cobra.Command{
 	Use:   "var",
-	Short: "",
-	Long:  "",
+	Short: "Parent command for plaintext environment variables.",
+	Long:  "You must call one of the available sub commands to actually invoke an action against plaintext environment variables.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},

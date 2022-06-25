@@ -16,7 +16,7 @@ import (
 var auth0Cmd = &cobra.Command{
 	Use:   "login",
 	Short: "Logs a user into their Nucleus account.",
-	Long:  `Logs a user into their Nucleus account. `,
+	Long:  `Logs a user into their Nucleus account and stores an access token locally for later use.`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		authClient, err := auth.NewAuthClient(utils.Auth0BaseUrl, utils.Auth0ClientId, utils.ApiAudience)
@@ -30,7 +30,6 @@ var auth0Cmd = &cobra.Command{
 		}
 
 		fmt.Println("Your activation code is: ", deviceResponse.UserCode)
-		utils.CliPrompt("Press [Enter] to continue in the web browser...", "")
 
 		err = webbrowser.Open(deviceResponse.VerificationURIComplete)
 		if err != nil {
@@ -63,7 +62,9 @@ var auth0Cmd = &cobra.Command{
 
 		nucleusClient := pb.NewCliServiceClient(conn)
 
-		fmt.Println("Attempting to register user in Nucleus system...")
+		if verbose {
+			fmt.Println("Attempting to register user in Nucleus system...")
+		}
 
 		_, err = nucleusClient.ResolveUser(context.Background(), &pb.ResolveUserRequest{}, utils.GetGrpcTrailer())
 		if err != nil {
