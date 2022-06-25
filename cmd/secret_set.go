@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -78,7 +77,7 @@ var setCmd = &cobra.Command{
 		nucleusClient := pb.NewCliServiceClient(conn)
 
 		if verbose {
-			log.Println("Attempting to retrieve public key for encrypting secrets...")
+			fmt.Println("Attempting to retrieve public key for encrypting secrets...")
 		}
 
 		// todo: cache this key
@@ -90,7 +89,7 @@ var setCmd = &cobra.Command{
 			return err
 		}
 		if verbose {
-			log.Println("Retrieved public key!")
+			fmt.Println("Retrieved public key!")
 		}
 
 		secret, err := getSecretValue()
@@ -98,7 +97,7 @@ var setCmd = &cobra.Command{
 			return err
 		}
 		if verbose {
-			log.Println("Encrypting secret...")
+			fmt.Println("Encrypting secret...")
 		}
 		err = secrets.StoreSecret(&deployConfig.Spec, publicKeyReply.PublicKey, secretKey, secret, environmentType)
 		if err != nil {
@@ -106,7 +105,7 @@ var setCmd = &cobra.Command{
 		}
 
 		if verbose {
-			log.Println("Secret successfully encrypted!")
+			fmt.Println("Secret successfully encrypted!")
 		}
 		return config.SetNucleusConfig(deployConfig)
 	},

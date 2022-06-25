@@ -3,8 +3,8 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
-	"log"
 	"strings"
 	"time"
 
@@ -102,7 +102,7 @@ func tailLogs(environmentType string, serviceName string, timestamp string) (str
 
 		newTimestamp = msg.Timestamp
 		if msg.LogLine != "" {
-			log.Printf("%s\n", msg.LogLine)
+			fmt.Printf("%s\n", msg.LogLine)
 		}
 	}
 }

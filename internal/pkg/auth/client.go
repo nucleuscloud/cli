@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -88,7 +87,7 @@ func NewAuthClient(tenantUrl, clientId, audience string) (AuthClientInterface, e
 		validator.WithAllowedClockSkew(time.Minute),
 	)
 	if err != nil {
-		log.Fatalf("Failed to set up the jwt validator")
+		fmt.Printf("Failed to set up the jwt validator")
 		return nil, err
 	}
 	return &authClient{

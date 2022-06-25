@@ -187,7 +187,7 @@ func bundleAndUploadCode(ctx context.Context, cliClient pb.CliServiceClient, fol
 	}
 
 	if verbose {
-		log.Printf("archiving directory into temp file: %s", fd.Name())
+		fmt.Printf("archiving directory into temp file: %s", fd.Name())
 	}
 
 	gitignorePath := filepath.Join(folderPath, ".gitignore")

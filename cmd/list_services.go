@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
 	"strings"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
@@ -58,9 +58,9 @@ func listServices(environmentType string) error {
 		return err
 	}
 
-	log.Printf("services in %s:", environmentType)
+	fmt.Printf("services in %s:\n", environmentType)
 	for _, svcName := range serviceList.ServiceNames {
-		log.Printf("%s", svcName)
+		fmt.Printf("%s\n", svcName)
 	}
 	return nil
 }
