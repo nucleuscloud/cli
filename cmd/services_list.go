@@ -1,3 +1,18 @@
+/*
+Copyright © 2022 NAME HERE <EMAIL ADDRESS>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package cmd
 
 import (
@@ -7,24 +22,20 @@ import (
 	"strings"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
-var listServicesCommand = &cobra.Command{
-	Use:   "listServices",
-	Short: "Lists all services for a given environment type.",
-	Long:  `Lists all of the available services for the specified environment type.`,
-
+var servicesListCmd = &cobra.Command{
+	Use: "list",
+	Aliases: []string{
+		"ls",
+	},
+	Short: "List out available services in your environment.",
+	Long:  "Call this command to list out the available services for a specific environment type",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		_, err := config.GetNucleusConfig()
-		if err != nil {
-			return err
-		}
-
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
@@ -36,6 +47,12 @@ var listServicesCommand = &cobra.Command{
 
 		return listServices(environmentType)
 	},
+}
+
+func init() {
+	servicesCmd.AddCommand(servicesListCmd)
+
+	servicesListCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
 }
 
 func listServices(environmentType string) error {
@@ -58,16 +75,9 @@ func listServices(environmentType string) error {
 		return err
 	}
 
-	fmt.Printf("services in %s:\n", environmentType)
+	fmt.Printf("Services in environment: %s\n", environmentType)
 	for _, svcName := range serviceList.ServiceNames {
-		fmt.Printf("%s\n", svcName)
+		fmt.Printf("* %s\n", svcName)
 	}
 	return nil
-}
-
-func init() {
-	rootCmd.AddCommand(listServicesCommand)
-
-	listServicesCommand.Flags().StringP("env", "e", "prod", "set the nucleus environment")
-
 }
