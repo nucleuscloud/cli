@@ -22,8 +22,8 @@ import (
 // secretCmd represents the secret command
 var secretCmd = &cobra.Command{
 	Use:   "secret",
-	Short: "",
-	Long:  "",
+	Short: "Parent command for the secret resource",
+	Long:  "You must call one of the available sub commands to actually invoke an action against secrets.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},

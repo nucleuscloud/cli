@@ -16,8 +16,8 @@ import (
 
 var listServicesCommand = &cobra.Command{
 	Use:   "listServices",
-	Short: "Lists all services in a given namespace.",
-	Long:  `Lists all services in a given namespace`,
+	Short: "Lists all services for a given environment type.",
+	Long:  `Lists all of the available services for the specified environment type.`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		_, err := config.GetNucleusConfig()

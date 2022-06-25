@@ -31,8 +31,8 @@ import (
 // deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
-	Short: "deploys your service to Nucleus and returns an endpoint to call your service",
-	Long:  `Creates an environment for your service with the given environmentName and a service with the given serviceName. Deploys your service and returns back a URL where your service is available. `,
+	Short: "Deploys your service to Nucleus and returns an endpoint that you can use to communicate with your newly deployed service.",
+	Long:  `Deploys your service to Nucleus and returns an endpoint that you can use to communicate with your newly deployed service.`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		deployConfig, err := config.GetNucleusConfig()

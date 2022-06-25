@@ -27,7 +27,7 @@ import (
 // setCmd represents the set command
 var varSetCmd = &cobra.Command{
 	Use:   "set KEY=VALUE",
-	Short: "Set environment variables for your services. Set multiple by separating them with a space. ",
+	Short: "Set environment variables for your services. Set multiple by separating them with a space. KEY1=VALUE1 ",
 	Long:  "Set environment variables for your services. Set multiple by separating them with a space. For ex. nucleus var set KEY1=VALUE1 KEY2=VALUE2 KEY3=VALUE3.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {

@@ -31,8 +31,7 @@ var verbose bool
 var rootCmd = &cobra.Command{
 	Use:   "nucleus",
 	Short: "Terminal UI that interfaces with the Nucleus system.",
-	Long: `Terminal UI that allows authenticated access to the Nucleus system.
-	This CLI allows you to deploy and manage all of the environments and services within your Nucleus account or accounts.`,
+	Long:  "Terminal UI that allows authenticated access to the Nucleus system.\nThis CLI allows you to deploy and manage all of the environments and services within your Nucleus account or accounts.",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },

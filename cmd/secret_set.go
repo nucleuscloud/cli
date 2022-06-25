@@ -33,8 +33,8 @@ import (
 // setCmd represents the set command
 var setCmd = &cobra.Command{
 	Use:   "set <secret-name>",
-	Short: "",
-	Long:  "",
+	Short: "Encrypts a secret and stores it for use in your nucleus manifest file.",
+	Long:  "Encrypts a secret and stores it for use in your nucleus manifest file.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("must provide secret-name to set secret")

@@ -26,8 +26,8 @@ type serviceCommands struct {
 
 var createServiceCmd = &cobra.Command{
 	Use:   "create",
-	Short: "creates a yaml file that describes the service",
-	Long:  `creates a yaml file that describes the service.`,
+	Short: "Creates a yaml file that describes the service",
+	Long:  `Utility command that walks you through the creation of the Nucleus manifest file. This allows you to call nucleus deploy, among other commands, and gives you definitive documentation of the representation of your service.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Print("This utility will walk you through creating a Nucleus service.\n\nIt creates a declarative configuration file that you can apply using Nucleus deploy once you're ready to deploy your service.\n\nSee `nucleus create help` for definitive documentation on these fields and exactly what they do.\n\nPress ^C at any time to quit.\n\n")
 
