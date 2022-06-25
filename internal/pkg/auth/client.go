@@ -194,9 +194,6 @@ func (c *authClient) getTokenResponse(deviceCode string) (*authTokenResponse, er
 	body, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
-		// handle errors here
-		fmt.Println("Received this error: ", err)
-		fmt.Println("Got this response: ", body)
 		return nil, err
 	}
 

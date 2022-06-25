@@ -62,7 +62,9 @@ var auth0Cmd = &cobra.Command{
 
 		nucleusClient := pb.NewCliServiceClient(conn)
 
-		fmt.Println("Attempting to register user in Nucleus system...")
+		if verbose {
+			fmt.Println("Attempting to register user in Nucleus system...")
+		}
 
 		_, err = nucleusClient.ResolveUser(context.Background(), &pb.ResolveUserRequest{}, utils.GetGrpcTrailer())
 		if err != nil {

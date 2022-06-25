@@ -169,7 +169,6 @@ func runtimeQuestions(svcCommands *serviceCommands, bc string, sc string) error 
 		icons.Question.Text = ">"
 		icons.Question.Format = "white"
 	}))
-	fmt.Println("hit here", err)
 	return err
 }
 
