@@ -4,7 +4,7 @@
 golangci-lint:
 ```brew install golangci-lint```
 
-Command Line Tools Package for XCode: 
+Command Line Tools Package for XCode:
 ```xcode-select --install```
 
 ## Enable private repo access (using ssh)
@@ -46,10 +46,13 @@ This will kick off a Github Action, which will do the following:
 
 ### Download from releases page
 1. Go to the [Releases Page](https://github.com/nucleuscloud/cli/releases).
-2. Download the binary for your operating system.
-3. Rename the downloaded file to `nucleus`.
-4. Add execute permissions to the binary. E.g., on linux and mac: `chmod u+x nucleus`.
+2. Download the tarball for your operating system: `tar xzf <path-to-tar.gz> nucleus`
 5. Put the binary somewhere on your `PATH`. E.g., on linux and mac: `mv nucleus /usr/local/bin/nucleus`.
 
 ### Install via a package manager
-TODO
+Ensure you have `go` installed.
+This is only possible today for Nucleus devs as the CLI depends on types that live in the private organization
+```sh
+make
+./bin/nucleus
+```
