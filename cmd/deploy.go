@@ -152,7 +152,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	defer p.Wait()
 	total := 100
 
-	bar := GetProgressBar(p, "Deploying service ...", total)
+	bar := getProgressBar(p, "Deploying service ...", total)
 
 	// max := time.Duration(700) * time.Millisecond //this value should be 2x what you think you need since the rand.Intn function takes a random sampling which comes out to about 50% of the value you set
 	// for i := 0; i < total; i++ {
@@ -179,6 +179,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 		// bar.Increment()
 		deployUpdate := update.GetDeploymentUpdate()
 		if deployUpdate != nil {
+			bar.Increment()
 			continue
 		}
 
@@ -291,7 +292,7 @@ func uploadArchive(signedURL string, r io.Reader) error {
 // 	p.Wait()
 // }
 
-func GetProgressBar(progress *mpb.Progress, name string, total int) *mpb.Bar {
+func getProgressBar(progress *mpb.Progress, name string, total int) *mpb.Bar {
 	return progress.New(int64(total),
 		// BarFillerBuilder with custom style
 		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
