@@ -149,7 +149,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	servUrl := ""
 
 	p := mpb.New(mpb.WithWidth(64))
-	defer p.Wait()
+	// defer p.Wait()
 	total := 100
 
 	bar := getProgressBar(p, "Deploying service ...", total)
