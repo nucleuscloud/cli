@@ -88,8 +88,6 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 
 	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
 	s1.Start()
-	time.Sleep(5 * time.Second)
-	s1.Stop()
 
 	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
 		AuthBaseUrl:  utils.Auth0BaseUrl,
@@ -139,6 +137,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	if err != nil {
 		return err
 	}
+	s1.Stop()
 
 	s2 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
 
