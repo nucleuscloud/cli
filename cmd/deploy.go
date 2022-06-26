@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -139,43 +138,55 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	}
 	s1.Stop()
 
-	s2 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
-
 	//staging the deploy, total time is about 2100
-	progressBar("Initializing deployment... ", 700)
-	fmt.Print("\n")
-	progressBar("Deploying service ...      ", 700)
-	fmt.Print("\n")
-	progressBar("Finalizing deployment...   ", 700)
-	fmt.Print("\n")
+	// progressBar("Initializing deployment... ", 700)
+	// fmt.Print("\n")
+	// progressBar("Deploying service ...      ", 700)
+	// fmt.Print("\n")
+	// progressBar("Finalizing deployment...   ", 700)
+	// fmt.Print("\n")
 
 	servUrl := ""
-	s2.Prefix = "Fetching service URL... "
 
+	p := mpb.New(mpb.WithWidth(64))
+	defer p.Wait()
+	total := 100
+
+	bar := GetProgressBar(p, "Deploying service ...", total)
+
+	// max := time.Duration(700) * time.Millisecond //this value should be 2x what you think you need since the rand.Intn function takes a random sampling which comes out to about 50% of the value you set
+	// for i := 0; i < total; i++ {
+	// 	if shouldAbort() {
+	// 		bar.Abort(false)
+	// 	}
+	// 	time.Sleep(time.Duration(rand.Intn(10)+1) * max / 10)
+	// 	bar.Increment()
+	// }
+	// // wait for our bar to complete and flush
+	// p.Wait()
+	s2 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
+	s2.Start()
 	for {
 		update, err := stream.Recv()
 		if err == io.EOF {
 			break
 		} else if err != nil {
+			// bar.Abort(true)
+			s2.Stop()
 			log.Fatalf("server side error: %s", err.Error())
 		}
 
-		if msg := update.GetDeploymentUpdate(); msg != nil {
+		// bar.Increment()
+		deployUpdate := update.GetDeploymentUpdate()
+		if deployUpdate != nil {
 			continue
 		}
 
 		servUrl = update.GetURL()
-
-		if servUrl == "" {
-			s2.Start()
-			time.Sleep(10 * time.Second)
-		} else {
-			s2.Stop()
-			fmt.Printf("Service is deployed at: %s\n", servUrl)
-		}
+		s2.Stop()
+		fmt.Printf("Service is deployed at: %s\n", servUrl)
 		break
 	}
-
 	return nil
 }
 
@@ -262,12 +273,26 @@ func uploadArchive(signedURL string, r io.Reader) error {
 	return nil
 }
 
-func progressBar(message string, length int32) {
-	p := mpb.New(mpb.WithWidth(64))
-	total := 100
-	name := message
+// func progressBar(message string, length int32, shouldAbort func() bool) {
+// 	p := mpb.New(mpb.WithWidth(64))
+// 	total := 100
 
-	bar := p.New(int64(total),
+// 	bar := getProgressBar(p, message, total)
+
+// 	max := time.Duration(length) * time.Millisecond //this value should be 2x what you think you need since the rand.Intn function takes a random sampling which comes out to about 50% of the value you set
+// 	for i := 0; i < total; i++ {
+// 		if shouldAbort() {
+// 			bar.Abort(false)
+// 		}
+// 		time.Sleep(time.Duration(rand.Intn(10)+1) * max / 10)
+// 		bar.Increment()
+// 	}
+// 	// wait for our bar to complete and flush
+// 	p.Wait()
+// }
+
+func GetProgressBar(progress *mpb.Progress, name string, total int) *mpb.Bar {
+	return progress.New(int64(total),
 		// BarFillerBuilder with custom style
 		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
 		mpb.PrependDecorators(
@@ -280,14 +305,6 @@ func progressBar(message string, length int32) {
 		),
 		mpb.AppendDecorators(decor.Percentage()),
 	)
-
-	max := time.Duration(length) * time.Millisecond //this value should be 2x what you think you need since the rand.Intn function takes a random sampling which comes out to about 50% of the value you set
-	for i := 0; i < total; i++ {
-		time.Sleep(time.Duration(rand.Intn(10)+1) * max / 10)
-		bar.Increment()
-	}
-	// wait for our bar to complete and flush
-	p.Wait()
 }
 
 func init() {
