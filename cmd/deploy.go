@@ -178,6 +178,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 
 		// bar.Increment()
 		deployUpdate := update.GetDeploymentUpdate()
+		fmt.Println(deployUpdate)
 		if deployUpdate != nil {
 			bar.Increment()
 			continue
