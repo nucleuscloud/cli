@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -149,8 +150,8 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	servUrl := ""
 
 	p := mpb.New(mpb.WithWidth(64))
-	// defer p.Wait()
-	total := 100
+	defer p.Wait()
+	total := 68
 
 	bar := getProgressBar(p, "Deploying service ...", total)
 
@@ -164,30 +165,48 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	// }
 	// // wait for our bar to complete and flush
 	// p.Wait()
-	s2 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
-	s2.Start()
+	//s2.Start()
+	//s2 := spinner.New(spinner.CharSets[35], 100*time.Millisecond)
 	for {
 		update, err := stream.Recv()
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			// bar.Abort(true)
-			s2.Stop()
+			//s2.Stop()
 			log.Fatalf("server side error: %s", err.Error())
 		}
 
 		// bar.Increment()
 		deployUpdate := update.GetDeploymentUpdate()
-		fmt.Println(deployUpdate)
 		if deployUpdate != nil {
-			bar.Increment()
+			bar.IncrBy(2) // there are 34 msgs the server send to the client, so total is 68/34 = 2 per message will get us to 100
 			continue
 		}
 
 		servUrl = update.GetURL()
-		s2.Stop()
+		barStatus := bar.Completed()
+
+		if servUrl != "" {
+			if !barStatus {
+				rem := 68 - bar.Current()
+				fmt.Println("current bar is at ", bar.Current())
+				fmt.Println("remaining is", rem) //if servUrl is returned but bar isn't done yet, just increment it so that it looks smooth
+				for i := 0; i <= int(rem); i++ {
+					time.Sleep(time.Duration(rand.Intn(10)+1) * time.Duration(rem) / 10)
+					bar.IncrBy(2)
+				}
+				fmt.Printf("Service is deployed at: %s\n", servUrl)
+				break
+			}
+		}
+
 		fmt.Printf("Service is deployed at: %s\n", servUrl)
-		break
+
+		//servUrl = update.GetURL()
+		// //s2.Stop()
+		// fmt.Printf("Service is deployed at: %s\n", servUrl)
+		// break
 	}
 	return nil
 }
