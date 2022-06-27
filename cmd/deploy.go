@@ -155,18 +155,6 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 
 	bar := getProgressBar(p, "Deploying service ...", total)
 
-	// max := time.Duration(700) * time.Millisecond //this value should be 2x what you think you need since the rand.Intn function takes a random sampling which comes out to about 50% of the value you set
-	// for i := 0; i < total; i++ {
-	// 	if shouldAbort() {
-	// 		bar.Abort(false)
-	// 	}
-	// 	time.Sleep(time.Duration(rand.Intn(10)+1) * max / 10)
-	// 	bar.Increment()
-	// }
-	// // wait for our bar to complete and flush
-	// p.Wait()
-	//s2.Start()
-	//s2 := spinner.New(spinner.CharSets[35], 100*time.Millisecond)
 	for {
 		update, err := stream.Recv()
 		if err == io.EOF {
