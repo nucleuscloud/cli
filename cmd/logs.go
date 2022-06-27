@@ -36,10 +36,6 @@ var logsCommand = &cobra.Command{
 			return err
 		}
 
-		if !allowedWindowValues(window) {
-			fmt.Println("Windw must be one of allowed values [15mn,1h,1d]")
-		}
-
 		if utils.IsValidEnvironmentType(environmentType) {
 			return errors.New("invalid value for environment")
 		}
@@ -93,7 +89,7 @@ func staticLogs(environmentType string, serviceName string, window string) error
 	fmt.Println("\nGenerating logs for the last " + window + "...\n")
 
 	if len(logs.Log) == 0 {
-		fmt.Println("No logs for this time window. If you just deployed your service, try again in a minute or try a bigger time window.")
+		fmt.Println("No logs for this service at this time window. if you just deployed your service, try again in a minute or try a bigger time window.")
 	}
 
 	for i := 0; i < len(logs.Log); i++ {
