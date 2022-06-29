@@ -50,7 +50,10 @@ var logsCommand = &cobra.Command{
 			return err
 		}
 
-		if tail {
+		if window != "" && tail {
+			fmt.Println("Can't pass in both window and tail flags. Only one at a time.")
+			return nil
+		} else if tail {
 			return liveTailLogs(environmentType, serviceName)
 		} else if allowedWindowValues(window) {
 			return staticLogs(environmentType, serviceName, window)
