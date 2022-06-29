@@ -152,7 +152,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	// defer p.Wait()
 	// total := 68
 	bar := getProgressBar(p, "Deploying service...", 0)
-	var currCompleted int = 0
+	var currCompleted int64 = 0
 	for {
 		update, err := stream.Recv()
 		if err == io.EOF {
@@ -175,9 +175,9 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 				if bar.Current() == 0 {
 					bar.SetTotal(int64(totalTasks), false)
 				}
-				if taskCount.GetCompleted() != int32(currCompleted) {
-					bar.IncrBy(int(taskCount.GetCompleted()) - currCompleted)
-					currCompleted = int(taskCount.GetCompleted())
+				if taskCount.GetCompleted() != currCompleted {
+					bar.IncrInt64(taskCount.GetCompleted() - currCompleted)
+					currCompleted = taskCount.GetCompleted()
 				}
 			}
 			continue
