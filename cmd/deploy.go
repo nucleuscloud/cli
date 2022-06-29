@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -139,18 +138,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	}
 	s1.Stop()
 
-	//staging the deploy, total time is about 2100
-	// progressBar("Initializing deployment... ", 700)
-	// fmt.Print("\n")
-	// progressBar("Deploying service ...      ", 700)
-	// fmt.Print("\n")
-	// progressBar("Finalizing deployment...   ", 700)
-	// fmt.Print("\n")
-
-	servUrl := ""
 	p := mpb.New(mpb.WithWidth(64))
-	// defer p.Wait()
-	// total := 68
 	bar := getProgressBar(p, "Deploying service...", 0)
 	var currCompleted int64 = 0
 	for {
@@ -188,7 +176,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 		bar.EnableTriggerComplete()
 		p.Wait()
 
-		servUrl = update.GetURL()
+		servUrl := update.GetURL()
 		if servUrl == "" {
 			fmt.Printf("Unable to retrieve URL..please try again")
 		} else {
@@ -290,34 +278,6 @@ func uploadArchive(signedURL string, r io.Reader) error {
 	}
 
 	return nil
-}
-
-func ProgressBar(message string, length int32) {
-	p := mpb.New(mpb.WithWidth(64))
-	total := 100
-	name := message
-
-	bar := p.New(int64(total),
-		// BarFillerBuilder with custom style
-		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
-		mpb.PrependDecorators(
-			// display our name with one space on the right
-			decor.Name(name, decor.WC{W: len(name) + 1, C: decor.DidentRight}),
-			// replace ETA decorator with "done" message, OnComplete event
-			decor.OnComplete(
-				decor.AverageETA(decor.ET_STYLE_GO, decor.WC{W: 4}), "Done",
-			),
-		),
-		mpb.AppendDecorators(decor.Percentage()),
-	)
-
-	max := time.Duration(length) * time.Millisecond //this value should be 2x what you think you need since the rand.Intn function takes a random sampling which comes out to about 50% of the value you set
-	for i := 0; i < total; i++ {
-		time.Sleep(time.Duration(rand.Intn(10)+1) * max / 10)
-		bar.Increment()
-	}
-	// wait for our bar to complete and flush
-	p.Wait()
 }
 
 func init() {
