@@ -139,44 +139,74 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	}
 	s1.Stop()
 
-	s2 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
-
 	//staging the deploy, total time is about 2100
-	progressBar("Initializing deployment... ", 700)
-	fmt.Print("\n")
-	progressBar("Deploying service ...      ", 700)
-	fmt.Print("\n")
-	progressBar("Finalizing deployment...   ", 700)
-	fmt.Print("\n")
+	// progressBar("Initializing deployment... ", 700)
+	// fmt.Print("\n")
+	// progressBar("Deploying service ...      ", 700)
+	// fmt.Print("\n")
+	// progressBar("Finalizing deployment...   ", 700)
+	// fmt.Print("\n")
 
 	servUrl := ""
-	s2.Prefix = "Fetching service URL... "
-
+	p := mpb.New(mpb.WithWidth(64))
+	// defer p.Wait()
+	// total := 68
+	bar := getProgressBar(p, "Deploying service...", 0)
+	var currCompleted int = 0
 	for {
 		update, err := stream.Recv()
 		if err == io.EOF {
+			bar.Abort(true)
 			break
 		} else if err != nil {
+			bar.Abort(true)
 			log.Fatalf("server side error: %s", err.Error())
 		}
 
-		if msg := update.GetDeploymentUpdate(); msg != nil {
+		deployUpdate := update.GetDeploymentUpdate()
+		if deployUpdate != nil {
+			if deployUpdate.GetIsFailure() {
+				bar.Abort(true)
+				return fmt.Errorf(deployUpdate.GetMessage())
+			}
+			taskCount := deployUpdate.GetTaskStatusCount()
+			totalTasks := getTotalTasks(taskCount)
+			if taskCount != nil && totalTasks > 0 {
+				if bar.Current() == 0 {
+					bar.SetTotal(int64(totalTasks), false)
+				}
+				if taskCount.GetCompleted() != int32(currCompleted) {
+					bar.IncrBy(int(taskCount.GetCompleted()) - currCompleted)
+					currCompleted = int(taskCount.GetCompleted())
+				}
+			}
 			continue
 		}
+		// should have to do a final increment because once all 4 tasks are completed we just return the url
+		bar.Increment()
+		// For some reason the bar never completes without this call.
+		bar.EnableTriggerComplete()
+		p.Wait()
 
 		servUrl = update.GetURL()
-
 		if servUrl == "" {
-			s2.Start()
-			time.Sleep(10 * time.Second)
+			fmt.Printf("Unable to retrieve URL..please try again")
 		} else {
-			s2.Stop()
-			fmt.Printf("Service is deployed at: %s\n", servUrl)
+			fmt.Printf("\nService is deployed at: %s\n", servUrl)
 		}
 		break
 	}
 
+	p.Wait()
+
 	return nil
+}
+
+func getTotalTasks(taskCount *pb.DeploymentTaskStatusCount) int {
+	if taskCount == nil {
+		return 0
+	}
+	return int(taskCount.Completed) + int(taskCount.Failed) + int(taskCount.Incomplete) + int(taskCount.Skipped)
 }
 
 func bundleAndUploadCode(ctx context.Context, cliClient pb.CliServiceClient, folderPath string, environmentType string, serviceName string, trailer *metadata.MD) (string, error) {
@@ -262,7 +292,7 @@ func uploadArchive(signedURL string, r io.Reader) error {
 	return nil
 }
 
-func progressBar(message string, length int32) {
+func ProgressBar(message string, length int32) {
 	p := mpb.New(mpb.WithWidth(64))
 	total := 100
 	name := message
@@ -295,4 +325,19 @@ func init() {
 
 	deployCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
 	deployCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
+}
+
+func getProgressBar(progress *mpb.Progress, name string, total int) *mpb.Bar {
+	return progress.New(int64(total),
+		// BarFillerBuilder with custom style
+		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
+		mpb.PrependDecorators(
+			decor.Name(name, decor.WC{W: len(name) + 1, C: decor.DidentRight}),
+			decor.OnComplete(
+				decor.Spinner([]string{}),
+				"",
+			),
+		),
+		mpb.AppendDecorators(decor.Percentage()),
+	)
 }
