@@ -42,7 +42,7 @@ func GetEnv() string {
 		panic(fmt.Errorf("%s can only be one of %s", nucleusDebugEnvKey, strings.Join(allowedDebugVals, ",")))
 	}
 	if !hasLoggedAboutEnvType {
-		fmt.Printf("%s=%s", nucleusDebugEnvKey, val)
+		fmt.Printf("%s=%s\n", nucleusDebugEnvKey, val)
 		hasLoggedAboutEnvType = true
 	}
 	return val

@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -139,44 +138,63 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	}
 	s1.Stop()
 
-	s2 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
-
-	//staging the deploy, total time is about 2100
-	progressBar("Initializing deployment... ", 700)
-	fmt.Print("\n")
-	progressBar("Deploying service ...      ", 700)
-	fmt.Print("\n")
-	progressBar("Finalizing deployment...   ", 700)
-	fmt.Print("\n")
-
-	servUrl := ""
-	s2.Prefix = "Fetching service URL... "
-
+	p := mpb.New(mpb.WithWidth(64))
+	bar := getProgressBar(p, "Deploying service...", 0)
+	var currCompleted int64 = 0
 	for {
 		update, err := stream.Recv()
 		if err == io.EOF {
+			bar.Abort(true)
 			break
 		} else if err != nil {
+			bar.Abort(true)
 			log.Fatalf("server side error: %s", err.Error())
 		}
 
-		if msg := update.GetDeploymentUpdate(); msg != nil {
+		deployUpdate := update.GetDeploymentUpdate()
+		if deployUpdate != nil {
+			if deployUpdate.GetIsFailure() {
+				bar.Abort(true)
+				return fmt.Errorf(deployUpdate.GetMessage())
+			}
+			taskCount := deployUpdate.GetTaskStatusCount()
+			totalTasks := getTotalTasks(taskCount)
+			if taskCount != nil && totalTasks > 0 {
+				if bar.Current() == 0 {
+					bar.SetTotal(int64(totalTasks), false)
+				}
+				if taskCount.GetCompleted() != currCompleted {
+					bar.IncrInt64(taskCount.GetCompleted() - currCompleted)
+					currCompleted = taskCount.GetCompleted()
+				}
+			}
 			continue
 		}
+		// should have to do a final increment because once all 4 tasks are completed we just return the url
+		bar.Increment()
+		// For some reason the bar never completes without this call.
+		bar.EnableTriggerComplete()
+		p.Wait()
 
-		servUrl = update.GetURL()
-
+		servUrl := update.GetURL()
 		if servUrl == "" {
-			s2.Start()
-			time.Sleep(10 * time.Second)
+			fmt.Printf("Unable to retrieve URL..please try again")
 		} else {
-			s2.Stop()
-			fmt.Printf("Service is deployed at: %s\n", servUrl)
+			fmt.Printf("\nService is deployed at: %s\n", servUrl)
 		}
 		break
 	}
 
+	p.Wait()
+
 	return nil
+}
+
+func getTotalTasks(taskCount *pb.DeploymentTaskStatusCount) int {
+	if taskCount == nil {
+		return 0
+	}
+	return int(taskCount.Completed) + int(taskCount.Failed) + int(taskCount.Incomplete) + int(taskCount.Skipped)
 }
 
 func bundleAndUploadCode(ctx context.Context, cliClient pb.CliServiceClient, folderPath string, environmentType string, serviceName string, trailer *metadata.MD) (string, error) {
@@ -262,37 +280,24 @@ func uploadArchive(signedURL string, r io.Reader) error {
 	return nil
 }
 
-func progressBar(message string, length int32) {
-	p := mpb.New(mpb.WithWidth(64))
-	total := 100
-	name := message
-
-	bar := p.New(int64(total),
-		// BarFillerBuilder with custom style
-		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
-		mpb.PrependDecorators(
-			// display our name with one space on the right
-			decor.Name(name, decor.WC{W: len(name) + 1, C: decor.DidentRight}),
-			// replace ETA decorator with "done" message, OnComplete event
-			decor.OnComplete(
-				decor.AverageETA(decor.ET_STYLE_GO, decor.WC{W: 4}), "Done",
-			),
-		),
-		mpb.AppendDecorators(decor.Percentage()),
-	)
-
-	max := time.Duration(length) * time.Millisecond //this value should be 2x what you think you need since the rand.Intn function takes a random sampling which comes out to about 50% of the value you set
-	for i := 0; i < total; i++ {
-		time.Sleep(time.Duration(rand.Intn(10)+1) * max / 10)
-		bar.Increment()
-	}
-	// wait for our bar to complete and flush
-	p.Wait()
-}
-
 func init() {
 	rootCmd.AddCommand(deployCmd)
 
 	deployCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
 	deployCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
+}
+
+func getProgressBar(progress *mpb.Progress, name string, total int) *mpb.Bar {
+	return progress.New(int64(total),
+		// BarFillerBuilder with custom style
+		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
+		mpb.PrependDecorators(
+			decor.Name(name, decor.WC{W: len(name) + 1, C: decor.DidentRight}),
+			decor.OnComplete(
+				decor.Spinner([]string{}),
+				"",
+			),
+		),
+		mpb.AppendDecorators(decor.Percentage()),
+	)
 }

@@ -314,6 +314,12 @@ github.com/nucleuscloud/api v0.0.0-20220625220717-fd9239a5c907 h1:QhGhFVk1TiMXc4
 github.com/nucleuscloud/api v0.0.0-20220625220717-fd9239a5c907/go.mod h1:gvoE67Slv7f2v3vcOvpeBEtROBvXpYwNf5REO1xfge0=
 github.com/nucleuscloud/api v0.0.0-20220627013917-4af84e7adef3 h1:EgXDneJomgUSUR9/b6u1HJK1gt/+ffu4AzLLJopA+jc=
 github.com/nucleuscloud/api v0.0.0-20220627013917-4af84e7adef3/go.mod h1:gvoE67Slv7f2v3vcOvpeBEtROBvXpYwNf5REO1xfge0=
+github.com/nucleuscloud/api v0.0.0-20220629192359-43f0cc4dad2b h1:hS3vlVa4iF5yPSk+HVvlrsTrwF9A4k77fbl/BQoUJC4=
+github.com/nucleuscloud/api v0.0.0-20220629192359-43f0cc4dad2b/go.mod h1:FHIGZICxwvY1N55vHPJKRbgmnCnzoxfdbzI32un4/0o=
+github.com/nucleuscloud/api v0.0.0-20220629220013-290dc19b928b h1:GnBJSsrERrF61akDHzu9FItWt85tVcjuxYpQLWxefn0=
+github.com/nucleuscloud/api v0.0.0-20220629220013-290dc19b928b/go.mod h1:FHIGZICxwvY1N55vHPJKRbgmnCnzoxfdbzI32un4/0o=
+github.com/nucleuscloud/api v0.0.0-20220629220600-757c5d923eda h1:L45rNpD+DLG8dIeCDPbJTZ29zCZd879rLqWshljuIfE=
+github.com/nucleuscloud/api v0.0.0-20220629220600-757c5d923eda/go.mod h1:FHIGZICxwvY1N55vHPJKRbgmnCnzoxfdbzI32un4/0o=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pelletier/go-toml v1.9.4 h1:tjENF6MfZAg8e4ZmZTeWaWiT2vXtsoO6+iuOjFhECwM=
