@@ -16,13 +16,13 @@ limitations under the License.
 package cmd
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/secrets"
@@ -57,10 +57,25 @@ var setCmd = &cobra.Command{
 			return errors.New("invalid value for environment")
 		}
 
+		secretResult, err := getSecretValue()
+		if err != nil {
+			return err
+		}
+
 		if environmentType == "prod" {
-			err := utils.CheckProdOk(cmd, environmentType, "yes")
-			if err != nil {
-				return err
+			if secretResult.isPiped {
+				yesPrompt, err := cmd.Flags().GetBool("yes")
+				if err != nil {
+					return err
+				}
+				if !yesPrompt {
+					return fmt.Errorf("must provide -y when piping in secret value to production environment")
+				}
+			} else {
+				err := utils.CheckProdOk(cmd, environmentType, "yes")
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -92,14 +107,10 @@ var setCmd = &cobra.Command{
 			fmt.Println("Retrieved public key!")
 		}
 
-		secret, err := getSecretValue()
-		if err != nil {
-			return err
-		}
 		if verbose {
 			fmt.Println("Encrypting secret...")
 		}
-		err = secrets.StoreSecret(&deployConfig.Spec, publicKeyReply.PublicKey, secretKey, secret, environmentType)
+		err = secrets.StoreSecret(&deployConfig.Spec, publicKeyReply.PublicKey, secretKey, secretResult.value, environmentType)
 		if err != nil {
 			return err
 		}
@@ -111,34 +122,47 @@ var setCmd = &cobra.Command{
 	},
 }
 
-func getSecretValue() (string, error) {
-	isPiped, err := isPipedInput()
+type SecretResult struct {
+	value   string
+	isPiped bool
+}
 
+func getSecretValue() (*SecretResult, error) {
+	secretValue := ""
+
+	piped, err := isPipedInput()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	reader := bufio.NewReader(os.Stdin)
-
-	var secret string
-
-	if !isPiped {
-		fmt.Println("Enter secret followed by [Enter]:")
-		fmt.Print("> ")
+	if piped {
+		_, err = fmt.Scanf("%s", &secretValue)
+		if err != nil {
+			return nil, err
+		}
+		secretValue = strings.TrimSpace(secretValue)
+		if secretValue == "" {
+			return nil, fmt.Errorf("secret length must be greater than 0")
+		}
+		return &SecretResult{
+			value:   secretValue,
+			isPiped: true,
+		}, nil
 	}
 
-	secret, err = reader.ReadString('\n')
+	err = survey.AskOne(&survey.Input{
+		Message: "Enter secret followed by [Enter]:",
+	}, &secretValue)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	trimmedSecret := strings.TrimSpace(secret)
-
-	if len(trimmedSecret) == 0 {
-		return "", errors.New("must provide value to set secret")
+	if secretValue == "" {
+		return nil, fmt.Errorf("secret length must be greater than 0")
 	}
-
-	return trimmedSecret, nil
+	return &SecretResult{
+		value:   secretValue,
+		isPiped: false,
+	}, nil
 }
 
 func isPipedInput() (bool, error) {

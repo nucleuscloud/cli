@@ -1,13 +1,10 @@
 package utils
 
 import (
-	"bufio"
-	"errors"
 	"fmt"
-	"os"
 	"regexp"
-	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -56,9 +53,16 @@ func CheckProdOk(cmd *cobra.Command, environmentType string, yesPromptFlagName s
 		return err
 	}
 	if !yesPrompt {
-		shouldProceed := CliPrompt("\nAre you sure you want to deploy this in production? (y/n)", "n")
-		if shouldProceed != "y" {
-			return errors.New("Exiting production deployment")
+		shouldProceed := false
+		err = survey.AskOne(&survey.Confirm{
+			Message: "Are you sure you want to invoke this command in production?",
+		}, &shouldProceed)
+		if err != nil {
+			return err
+		}
+
+		if !shouldProceed {
+			return fmt.Errorf("exiting production deployment")
 		}
 	}
 	return nil
@@ -83,15 +87,4 @@ func isValidRuntime(runtime string) bool {
 		}
 	}
 	return false
-}
-
-func CliPrompt(label string, defaultEnv string) string {
-	var s string
-	r := bufio.NewReader(os.Stdin)
-	fmt.Fprint(os.Stderr, label+" ")
-	s, _ = r.ReadString('\n')
-	if s == "\n" {
-		s = defaultEnv
-	}
-	return strings.TrimSpace(s)
 }
