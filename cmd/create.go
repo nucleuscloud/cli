@@ -48,11 +48,9 @@ var createServiceCmd = &cobra.Command{
 				Transform: survey.Title,
 				Validate: func(val interface{}) error {
 					str := val.(string)
-					if str != "" {
-						lowerStr := strings.ToLower(str)
-						if !utils.IsValidName(lowerStr) {
-							return fmt.Errorf("Your service's custom name can only contain alphanumeric characters and hyphens.")
-						}
+					lowerStr := strings.ToLower(str)
+					if !utils.IsValidName(lowerStr) {
+						return fmt.Errorf("Your service's current name: " + defaultSpec.ServiceName + ", contains invalid characters. It can only contain alphanumeric characters and hyphens.")
 					}
 					return nil
 				},
@@ -75,11 +73,6 @@ var createServiceCmd = &cobra.Command{
 		}))
 		if err != nil {
 			return err
-		}
-
-		if svcCommands.ServiceName == "" {
-			newServiceName := strings.Replace(defaultSpec.ServiceName, "_", "-", -1)
-			svcCommands.ServiceName = newServiceName
 		}
 
 		conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
