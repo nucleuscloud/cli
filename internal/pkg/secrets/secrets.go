@@ -32,26 +32,18 @@ func GetSecretsByEnvType(spec *config.SpecStruct, envType string) map[string]str
 		return map[string]string{}
 	}
 
-	var secretKey string
+	output := map[string]string{}
 
-	output := make(map[string]string)
-
-	for k, e := range root {
-		secretKey = k
-		for e, v := range e {
-			if envType == e {
-				output[secretKey] = v
-			}
+	for key, envMap := range root {
+		if val, ok := envMap[envType]; ok {
+			output[key] = val
 		}
-
 	}
 
 	return output
 }
 
-func GetSecretsBySecretKey(spec *config.SpecStruct, secretKey string) map[string]string {
-	secretKey = strings.ToLower(secretKey)
-
+func getSecretsBySecretKey(spec *config.SpecStruct, secretKey string) map[string]string {
 	root := getSecretsFromSpec(spec)
 
 	if root == nil || root[secretKey] == nil {
@@ -70,7 +62,7 @@ func StoreSecret(spec *config.SpecStruct, publicKeyBytes []byte, secretKey strin
 		spec.Secrets[secretKey] = map[string]string{}
 	}
 
-	secrets := GetSecretsBySecretKey(spec, secretKey)
+	secrets := getSecretsBySecretKey(spec, secretKey)
 
 	if secrets == nil {
 		secrets = map[string]string{}
@@ -89,7 +81,6 @@ func StoreSecret(spec *config.SpecStruct, publicKeyBytes []byte, secretKey strin
 	secrets[envType] = base64.StdEncoding.EncodeToString(ciphertextBytes)
 
 	spec.Secrets[secretKey] = secrets
-
 	return nil
 }
 
