@@ -19,7 +19,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -136,7 +135,7 @@ func getSecretValue() (string, error) {
 	err = survey.AskOne(&survey.Input{
 		Message: "Enter secret followed by [Enter]:",
 	}, &secretValue)
-	if err != nil && err != io.EOF {
+	if err != nil {
 		return "", err
 	}
 	if secretValue == "" {
