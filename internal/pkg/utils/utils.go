@@ -69,7 +69,7 @@ var supportedRuntimes = []string{
 	"fastapi",
 	"go",
 	"nodejs",
-	"python",
+	//"python",
 }
 
 func GetSupportedRuntimes() []string {
