@@ -57,15 +57,25 @@ var setCmd = &cobra.Command{
 			return errors.New("invalid value for environment")
 		}
 
-		secret, err := getSecretValue()
+		secretResult, err := getSecretValue()
 		if err != nil {
 			return err
 		}
 
 		if environmentType == "prod" {
-			err := utils.CheckProdOk(cmd, environmentType, "yes")
-			if err != nil {
-				return err
+			if secretResult.isPiped {
+				yesPrompt, err := cmd.Flags().GetBool("yes")
+				if err != nil {
+					return err
+				}
+				if !yesPrompt {
+					return fmt.Errorf("must provide -y when piping in secret value to production environment")
+				}
+			} else {
+				err := utils.CheckProdOk(cmd, environmentType, "yes")
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -100,7 +110,7 @@ var setCmd = &cobra.Command{
 		if verbose {
 			fmt.Println("Encrypting secret...")
 		}
-		err = secrets.StoreSecret(&deployConfig.Spec, publicKeyReply.PublicKey, secretKey, secret, environmentType)
+		err = secrets.StoreSecret(&deployConfig.Spec, publicKeyReply.PublicKey, secretKey, secretResult.value, environmentType)
 		if err != nil {
 			return err
 		}
@@ -112,36 +122,47 @@ var setCmd = &cobra.Command{
 	},
 }
 
-func getSecretValue() (string, error) {
+type SecretResult struct {
+	value   string
+	isPiped bool
+}
+
+func getSecretValue() (*SecretResult, error) {
 	secretValue := ""
 
 	piped, err := isPipedInput()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if piped {
 		_, err = fmt.Scanf("%s", &secretValue)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		secretValue = strings.TrimSpace(secretValue)
 		if secretValue == "" {
-			return "", fmt.Errorf("secret length must be greater than 0")
+			return nil, fmt.Errorf("secret length must be greater than 0")
 		}
-		return secretValue, nil
+		return &SecretResult{
+			value:   secretValue,
+			isPiped: true,
+		}, nil
 	}
 
 	err = survey.AskOne(&survey.Input{
 		Message: "Enter secret followed by [Enter]:",
 	}, &secretValue)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if secretValue == "" {
-		return "", fmt.Errorf("secret length must be greater than 0")
+		return nil, fmt.Errorf("secret length must be greater than 0")
 	}
-	return secretValue, nil
+	return &SecretResult{
+		value:   secretValue,
+		isPiped: false,
+	}, nil
 }
 
 func isPipedInput() (bool, error) {
