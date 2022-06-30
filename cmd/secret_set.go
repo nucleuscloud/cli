@@ -16,13 +16,14 @@ limitations under the License.
 package cmd
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/secrets"
@@ -55,6 +56,11 @@ var setCmd = &cobra.Command{
 
 		if utils.IsValidEnvironmentType(environmentType) {
 			return errors.New("invalid value for environment")
+		}
+
+		secret, err := getSecretValue()
+		if err != nil {
+			return err
 		}
 
 		if environmentType == "prod" {
@@ -92,10 +98,6 @@ var setCmd = &cobra.Command{
 			fmt.Println("Retrieved public key!")
 		}
 
-		secret, err := getSecretValue()
-		if err != nil {
-			return err
-		}
 		if verbose {
 			fmt.Println("Encrypting secret...")
 		}
@@ -112,33 +114,35 @@ var setCmd = &cobra.Command{
 }
 
 func getSecretValue() (string, error) {
-	isPiped, err := isPipedInput()
+	secretValue := ""
 
+	piped, err := isPipedInput()
 	if err != nil {
 		return "", err
 	}
 
-	reader := bufio.NewReader(os.Stdin)
-
-	var secret string
-
-	if !isPiped {
-		fmt.Println("Enter secret followed by [Enter]:")
-		fmt.Print("> ")
+	if piped {
+		_, err = fmt.Scanf("%s", &secretValue)
+		if err != nil {
+			return "", err
+		}
+		secretValue = strings.TrimSpace(secretValue)
+		if secretValue == "" {
+			return "", fmt.Errorf("secret length must be greater than 0")
+		}
+		return secretValue, nil
 	}
 
-	secret, err = reader.ReadString('\n')
-	if err != nil {
+	err = survey.AskOne(&survey.Input{
+		Message: "Enter secret followed by [Enter]:",
+	}, &secretValue)
+	if err != nil && err != io.EOF {
 		return "", err
 	}
-
-	trimmedSecret := strings.TrimSpace(secret)
-
-	if len(trimmedSecret) == 0 {
-		return "", errors.New("must provide value to set secret")
+	if secretValue == "" {
+		return "", fmt.Errorf("secret length must be greater than 0")
 	}
-
-	return trimmedSecret, nil
+	return secretValue, nil
 }
 
 func isPipedInput() (bool, error) {
