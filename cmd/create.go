@@ -22,6 +22,7 @@ type serviceCommands struct {
 	StartCommand string
 	ServiceName  string
 	ServiceType  string
+	IsPrivate    bool
 }
 
 var createServiceCmd = &cobra.Command{
@@ -43,14 +44,14 @@ var createServiceCmd = &cobra.Command{
 			{
 				Name: "serviceName",
 				Prompt: &survey.Input{
-					Message: "Service name: " + "(" + defaultSpec.ServiceName + ")",
+					Message: "Service name:",
+					Default: defaultSpec.ServiceName,
 				},
-				Transform: survey.Title,
+				Transform: survey.ToLower,
 				Validate: func(val interface{}) error {
 					str := val.(string)
-					lowerStr := strings.ToLower(str)
-					if !utils.IsValidName(lowerStr) {
-						return fmt.Errorf("Your service's current name: " + defaultSpec.ServiceName + ", contains invalid characters. It can only contain alphanumeric characters and hyphens.")
+					if !utils.IsValidName(str) {
+						return fmt.Errorf("The name you provided contains invalid characters. It can only contain alphanumeric characters and hyphens.")
 					}
 					return nil
 				},
@@ -62,6 +63,13 @@ var createServiceCmd = &cobra.Command{
 					Options: utils.GetSupportedRuntimes(),
 				},
 				Validate: survey.Required,
+			},
+			{
+				Name: "isPrivate",
+				Prompt: &survey.Confirm{
+					Message: "Is your service private?",
+					Default: false,
+				},
 			},
 		}
 
@@ -108,10 +116,11 @@ var createServiceCmd = &cobra.Command{
 		nucleusConfig := config.NucleusConfig{
 			CliVersion: "nucleus-cli/v1alpha1",
 			Spec: config.SpecStruct{
-				ServiceName:    strings.ToLower(svcCommands.ServiceName),
-				ServiceRunTime: strings.ToLower(svcCommands.ServiceType),
-				BuildCommand:   strings.ToLower(svcCommands.BuildCommand),
-				StartCommand:   strings.ToLower(svcCommands.StartCommand),
+				ServiceName:    svcCommands.ServiceName,
+				ServiceRunTime: svcCommands.ServiceType,
+				BuildCommand:   svcCommands.BuildCommand,
+				StartCommand:   svcCommands.StartCommand,
+				IsPrivate:      svcCommands.IsPrivate,
 			},
 		}
 		err = config.SetNucleusConfig(&nucleusConfig)
@@ -139,7 +148,7 @@ func getDefaultServiceName() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defaultDir := filepath.Base(wd)
+	defaultDir := strings.ReplaceAll(strings.ToValidUTF8(strings.ToLower(filepath.Base(wd)), ""), "_", "-")
 	return defaultDir, nil
 }
 
@@ -148,16 +157,18 @@ func runtimeQuestions(svcCommands *serviceCommands, bc string, sc string) error 
 		{
 			Name: "buildCommand",
 			Prompt: &survey.Input{
-				Message: "Press enter for default build command -> " + bc + ", or type in custom build command:",
+				Message: "Build command:",
+				Default: bc,
 			},
-			Transform: survey.Title,
+			Transform: survey.ToLower,
 		},
 		{
 			Name: "startCommand",
 			Prompt: &survey.Input{
-				Message: "Press enter for default start command -> " + sc + ", or type in custom start command:",
+				Message: "Start command:",
+				Default: sc,
 			},
-			Transform: survey.Title,
+			Transform: survey.ToLower,
 		},
 	}
 
