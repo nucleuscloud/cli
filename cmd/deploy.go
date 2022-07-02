@@ -39,6 +39,10 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
+		if !utils.IsValidName(deployConfig.Spec.ServiceName) {
+			return utils.ErrInvalidName
+		}
+
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
@@ -78,7 +82,7 @@ var deployCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return deploy(environmentType, serviceName, serviceType, directoryName, buildCommand, startCommand, false, deployConfig.Spec.Vars, envSecrets)
+		return deploy(environmentType, serviceName, serviceType, directoryName, buildCommand, startCommand, deployConfig.Spec.IsPrivate, deployConfig.Spec.Vars, envSecrets)
 	},
 }
 

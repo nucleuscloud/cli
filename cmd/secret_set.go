@@ -48,6 +48,10 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
+		if !utils.IsValidName(deployConfig.Spec.ServiceName) {
+			return utils.ErrInvalidName
+		}
+
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err

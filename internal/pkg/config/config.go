@@ -24,6 +24,7 @@ type SpecStruct struct {
 	ServiceRunTime string            `yaml:"serviceRuntime"`
 	BuildCommand   string            `yaml:"buildCommand,omitempty"`
 	StartCommand   string            `yaml:"startCommand,omitempty"`
+	IsPrivate      bool              `yaml:"isPrivate"`
 	Vars           map[string]string `yaml:"vars,omitempty"`
 	Secrets        NucleusSecrets    `yaml:"secrets,omitempty"`
 }
