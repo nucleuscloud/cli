@@ -44,6 +44,11 @@ var (
 	ErrMustLogin = errors.New("error retrieving auth information. Try logging in via 'nucleus login'")
 )
 
+func DoesNucleusConfigExist() bool {
+	_, err := os.Stat(nucleusConfigPath)
+	return !errors.Is(err, os.ErrNotExist)
+}
+
 // Retrieves the nucleus config defined by the user
 func GetNucleusConfig() (*NucleusConfig, error) {
 	// TODO(marco): make it so that parent dirs are recursively searched

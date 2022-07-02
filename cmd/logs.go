@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"strings"
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
+	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -37,12 +37,22 @@ var logsCommand = &cobra.Command{
 		}
 
 		if utils.IsValidEnvironmentType(environmentType) {
-			return errors.New("invalid value for environment")
+			return fmt.Errorf("invalid value for environment")
 		}
 
 		serviceName := strings.TrimSpace(sn)
+		if serviceName == "" {
+			if config.DoesNucleusConfigExist() {
+				cfg, err := config.GetNucleusConfig()
+				if err != nil {
+					return err
+				}
+				serviceName = cfg.Spec.ServiceName
+			}
+		}
+
 		if !utils.IsValidName(serviceName) {
-			return utils.ErrInvalidName
+			return utils.ErrInvalidServiceName
 		}
 
 		tail, err := cmd.Flags().GetBool("tail")
@@ -51,9 +61,13 @@ var logsCommand = &cobra.Command{
 		}
 
 		if window != "" && tail {
-			fmt.Println("Can't pass in both window and tail flags. Only one at a time.")
-			return nil
-		} else if tail {
+			fmt.Println("Ignoring provided window to tail")
+		}
+		if window == "" {
+			window = "15min"
+		}
+
+		if tail {
 			return liveTailLogs(environmentType, serviceName)
 		} else if allowedWindowValues(window) {
 			return staticLogs(environmentType, serviceName, window)
