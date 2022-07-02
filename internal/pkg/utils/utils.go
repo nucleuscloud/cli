@@ -11,9 +11,8 @@ import (
 )
 
 var (
-	// ErrInvalidName -
-	ErrInvalidName   = fmt.Errorf("invalid name")
-	validNameMatcher = regexp.MustCompile("^[a-z][a-z1-9-]*$").MatchString
+	ErrInvalidServiceName = fmt.Errorf("invalid name")
+	validNameMatcher      = regexp.MustCompile("^[a-z][a-z1-9-]*$").MatchString
 )
 
 // Auth Vars
