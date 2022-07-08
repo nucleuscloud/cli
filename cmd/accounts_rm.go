@@ -25,20 +25,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var accountsInviteCmd = &cobra.Command{
-	Use: "invite <email>",
+var accountsRmCmd = &cobra.Command{
+	Use: "rm <email>",
 	Aliases: []string{
-		"inv",
-		"add",
+		"remove",
 	},
-	Short: "Allows you to invite a user to your account",
-	Long:  "Invites a user to access your account. *This will give them admin permissions to your account today!",
+	Short: "Allows you to remove a user to your account",
+	Long:  "Removes a user from accessing your account. *Note: You can't remove yourself or the account owner",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			return fmt.Errorf("must provide an email to invite someone to your account")
+			return fmt.Errorf("must provide an email to remove someone from your account")
 		}
 		if len(args) > 1 {
-			return fmt.Errorf("may only invite one email at a time")
+			return fmt.Errorf("may only remove one email at a time")
 		}
 		email := args[0]
 		_, err := mail.ParseAddress(email)
@@ -46,15 +45,15 @@ var accountsInviteCmd = &cobra.Command{
 			return err
 		}
 
-		return inviteUser(email)
+		return removeUser(email)
 	},
 }
 
 func init() {
-	accountsCmd.AddCommand(accountsInviteCmd)
+	accountsCmd.AddCommand(accountsRmCmd)
 }
 
-func inviteUser(email string) error {
+func removeUser(email string) error {
 	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
 		AuthBaseUrl:  utils.Auth0BaseUrl,
 		AuthClientId: utils.Auth0ClientId,
@@ -65,14 +64,10 @@ func inviteUser(email string) error {
 	}
 	defer conn.Close()
 
-	fmt.Println("Inviting user...")
+	fmt.Println("Removing user...")
 	cliClient := pb.NewCliServiceClient(conn)
-	_, err = cliClient.InviteUserToAccount(context.Background(), &pb.InviteUserToAccountRequest{
+	_, err = cliClient.RemoveUserFromAccount(context.Background(), &pb.RemoveUserFromAccountRequest{
 		Email: email,
 	})
-	if err != nil {
-		return err
-	}
-	fmt.Printf("invite for %s sent!\n", email)
-	return nil
+	return err
 }
