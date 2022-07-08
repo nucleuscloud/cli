@@ -20,10 +20,7 @@ import (
 )
 
 var dockerCmd = &cobra.Command{
-	Use: "services",
-	Aliases: []string{
-		"svcs",
-	},
+	Use:   "docker",
 	Short: "Parent command for docker interactions.",
 	Long:  "You must call one of the available sub commands to actually invoke an action against services.",
 	RunE: func(cmd *cobra.Command, args []string) error {

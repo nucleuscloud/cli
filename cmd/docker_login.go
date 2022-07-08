@@ -26,10 +26,7 @@ import (
 )
 
 var dockerLoginCmd = &cobra.Command{
-	Use: "list",
-	Aliases: []string{
-		"ls",
-	},
+	Use:   "login",
 	Short: "Set docker login credentials for your service environment.",
 	Long:  "If your service uses a docker image that resides in a private registry, use this command to let nucleus pull the image.",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -150,8 +147,7 @@ func getPassword() (*PasswordResult, error) {
 			isPiped: true,
 		}, nil
 	}
-
-	err = survey.AskOne(&survey.Input{
+	err = survey.AskOne(&survey.Password{
 		Message: "Enter password followed by [Enter]:",
 	}, &passwordValue)
 	if err != nil {
