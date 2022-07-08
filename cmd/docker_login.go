@@ -85,7 +85,7 @@ var dockerLoginCmd = &cobra.Command{
 			}
 		}
 
-		return nil
+		return dockerLogin(environmentType, server, username, passwordResult.value, email)
 	},
 }
 
