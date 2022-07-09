@@ -7,10 +7,10 @@ require (
 	github.com/auth0/go-jwt-middleware/v2 v2.0.1
 	github.com/briandowns/spinner v1.18.1
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
-	github.com/nucleuscloud/api v0.0.0-20220701180841-accb4cc6e163
+	github.com/nucleuscloud/api v0.0.0-20220709005938-f2cd0aba3138
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.8.0
 	github.com/toqueteos/webbrowser v1.2.0
 	github.com/vbauerster/mpb/v7 v7.4.2
 	google.golang.org/grpc v1.46.2
