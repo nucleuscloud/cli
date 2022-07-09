@@ -49,7 +49,7 @@ var deployCmd = &cobra.Command{
 		}
 
 		if utils.IsValidEnvironmentType(environmentType) {
-			return errors.New("invalid value for environment")
+			return fmt.Errorf("invalid value for environment")
 		}
 
 		if environmentType == "prod" {
@@ -61,12 +61,12 @@ var deployCmd = &cobra.Command{
 
 		serviceName := deployConfig.Spec.ServiceName
 		if serviceName == "" {
-			return errors.New("service name not provided")
+			return fmt.Errorf("service name not provided")
 		}
 
 		serviceType := deployConfig.Spec.ServiceRunTime
 		if serviceType == "" {
-			return errors.New("service type not provided")
+			return fmt.Errorf("service type not provided")
 		}
 
 		buildCommand := deployConfig.Spec.BuildCommand
@@ -82,12 +82,38 @@ var deployCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return deploy(environmentType, serviceName, serviceType, directoryName, buildCommand, startCommand, deployConfig.Spec.IsPrivate, deployConfig.Spec.Vars, envSecrets)
+
+		req := deployRequest{
+			environmentType:  environmentType,
+			serviceName:      serviceName,
+			serviceType:      serviceType,
+			image:            deployConfig.Spec.Image,
+			folderPath:       directoryName,
+			buildCommand:     buildCommand,
+			startCommand:     startCommand,
+			isPrivateService: deployConfig.Spec.IsPrivate,
+			envVars:          deployConfig.Spec.Vars,
+			envSecrets:       envSecrets,
+		}
+		return deploy(req)
 	},
 }
 
-func deploy(environmentType string, serviceName string, serviceType string, folderPath string, buildCommand string, startCommand string, isPrivateService bool, envVars map[string]string, envSecrets map[string]string) error {
-	fmt.Printf("\nGetting deployment ready: \n↪Service: %s \n↪Environment: %s \n↪Project Directory: %s \n\n", serviceName, environmentType, folderPath)
+type deployRequest struct {
+	environmentType  string
+	serviceName      string
+	serviceType      string
+	image            string
+	folderPath       string
+	buildCommand     string
+	startCommand     string
+	isPrivateService bool
+	envVars          map[string]string
+	envSecrets       map[string]string
+}
+
+func deploy(req deployRequest) error {
+	fmt.Printf("\nGetting deployment ready: \n↪Service: %s \n↪Environment: %s \n↪Project Directory: %s \n\n", req.serviceName, req.environmentType, req.folderPath)
 
 	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
 	s1.Start()
@@ -106,7 +132,7 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 	var trailer metadata.MD
 	_, err = cliClient.CreateEnvironment(context.Background(), &pb.CreateEnvironmentRequest{
-		EnvironmentType: environmentType,
+		EnvironmentType: req.environmentType,
 	},
 		grpc.Trailer(&trailer),
 	)
@@ -121,22 +147,31 @@ func deploy(environmentType string, serviceName string, serviceType string, fold
 	}
 
 	ctx := context.Background()
-	uploadKey, err := bundleAndUploadCode(ctx, cliClient, folderPath, environmentType, serviceName, &trailer)
-	if err != nil {
-		return err
-	}
 
-	stream, err := cliClient.Deploy(ctx, &pb.DeployRequest{
-		EnvironmentType: environmentType,
-		ServiceName:     serviceName,
-		URL:             uploadKey,
-		ServiceType:     serviceType,
-		BuildCommand:    buildCommand,
-		StartCommand:    startCommand,
-		IsPrivate:       isPrivateService,
-		Vars:            envVars,
-		Secrets:         envSecrets,
-	})
+	deployRequest := pb.DeployRequest{
+		EnvironmentType: req.environmentType,
+		ServiceName:     req.serviceName,
+		ServiceType:     req.serviceType,
+		IsPrivate:       req.isPrivateService,
+		Vars:            req.envVars,
+		Secrets:         req.envSecrets,
+	}
+	if req.serviceType == "docker" {
+		if req.image == "" {
+			return fmt.Errorf("must provide image if service type is 'docker'")
+		}
+		deployRequest.Image = req.image
+	} else {
+		uploadKey, err := bundleAndUploadCode(ctx, cliClient, req.folderPath, req.environmentType, req.serviceName, &trailer)
+		if err != nil {
+			return err
+		}
+		deployRequest.URL = uploadKey
+		deployRequest.BuildCommand = req.buildCommand
+		deployRequest.StartCommand = req.startCommand
+	}
+	fmt.Printf("image url: %s", deployRequest.Image)
+	stream, err := cliClient.Deploy(ctx, &deployRequest)
 	if err != nil {
 		return err
 	}
