@@ -310,10 +310,6 @@ github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjY
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/nucleuscloud/api v0.0.0-20220709005938-f2cd0aba3138 h1:jKpHePc4Rd8jPITXOQTzGu3tZldQs1v3Yh0uyGBsRGQ=
-github.com/nucleuscloud/api v0.0.0-20220709005938-f2cd0aba3138/go.mod h1:ijGzkpIaSUnmuiU4sRJUNSocXaGhivlOdhOgNSsn+dE=
-github.com/nucleuscloud/api v0.0.0-20220709185323-5639660f01e4 h1:4LgYjZ2PRFznio6QQbyly93S2NPhUClueYKBH3RpIGw=
-github.com/nucleuscloud/api v0.0.0-20220709185323-5639660f01e4/go.mod h1:ijGzkpIaSUnmuiU4sRJUNSocXaGhivlOdhOgNSsn+dE=
 github.com/nucleuscloud/api v0.0.0-20220709231647-f874743506d8 h1:XeQWm1zTb7f6LloSdI4ZeLzkc4dpnr9RN4ZaAoPBsDY=
 github.com/nucleuscloud/api v0.0.0-20220709231647-f874743506d8/go.mod h1:ijGzkpIaSUnmuiU4sRJUNSocXaGhivlOdhOgNSsn+dE=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
