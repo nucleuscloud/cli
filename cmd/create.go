@@ -13,8 +13,6 @@ import (
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 type serviceCommands struct {
@@ -23,7 +21,15 @@ type serviceCommands struct {
 	ServiceName  string
 	ServiceType  string
 	IsPrivate    bool
+	DockerImage  string
 }
+
+var (
+	surveyIcons = survey.WithIcons(func(icons *survey.IconSet) {
+		icons.Question.Text = ">"
+		icons.Question.Format = "white"
+	})
+)
 
 var createServiceCmd = &cobra.Command{
 	Use: "create",
@@ -75,42 +81,51 @@ var createServiceCmd = &cobra.Command{
 
 		// ask the question
 		var svcCommands serviceCommands
-		err = survey.Ask(serviceQuestions, &svcCommands, survey.WithIcons(func(icons *survey.IconSet) {
-			icons.Question.Text = ">"
-			icons.Question.Format = "white"
-		}))
+		err = survey.Ask(serviceQuestions, &svcCommands, surveyIcons)
 		if err != nil {
 			return err
 		}
 
-		conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
-			AuthBaseUrl:  utils.Auth0BaseUrl,
-			AuthClientId: utils.Auth0ClientId,
-			ApiAudience:  utils.ApiAudience,
-		})
-		if err != nil {
-			return err
-		}
-		defer conn.Close()
-		//retrieve the default build and start commands based on runtime
-		cliClient := pb.NewCliServiceClient(conn)
-		// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
-		var trailer metadata.MD
-		defaultBuildStartCommands, err := cliClient.BuildStartCommands(context.Background(), &pb.DefaultBuildStartCommandsRequest{
-			Runtime: svcCommands.ServiceType,
-		},
-			grpc.Trailer(&trailer),
-		)
-		if err != nil {
-			return err
-		}
+		if svcCommands.ServiceType == "docker" {
+			err = survey.Ask([]*survey.Question{
+				{
+					Name: "dockerImage",
+					Prompt: &survey.Input{
+						Message: "Docker Image URL:",
+					},
+				},
+			}, &svcCommands, surveyIcons)
+			if err != nil {
+				return err
+			}
+		} else {
+			conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
+				AuthBaseUrl:  utils.Auth0BaseUrl,
+				AuthClientId: utils.Auth0ClientId,
+				ApiAudience:  utils.ApiAudience,
+			})
+			if err != nil {
+				return err
+			}
+			defer conn.Close()
+			//retrieve the default build and start commands based on runtime
+			cliClient := pb.NewCliServiceClient(conn)
+			defaultBuildStartCommands, err := cliClient.BuildStartCommands(context.Background(), &pb.DefaultBuildStartCommandsRequest{
+				Runtime: svcCommands.ServiceType,
+			},
+				utils.GetGrpcTrailer(),
+			)
+			if err != nil {
+				return err
+			}
 
-		bc := defaultBuildStartCommands.BuildCommand
-		sc := defaultBuildStartCommands.StartCommand
+			bc := defaultBuildStartCommands.BuildCommand
+			sc := defaultBuildStartCommands.StartCommand
 
-		err = runtimeQuestions(&svcCommands, bc, sc)
-		if err != nil {
-			return err
+			err = runtimeQuestions(&svcCommands, bc, sc)
+			if err != nil {
+				return err
+			}
 		}
 
 		nucleusConfig := config.NucleusConfig{
@@ -118,6 +133,7 @@ var createServiceCmd = &cobra.Command{
 			Spec: config.SpecStruct{
 				ServiceName:    svcCommands.ServiceName,
 				ServiceRunTime: svcCommands.ServiceType,
+				Image:          svcCommands.DockerImage,
 				BuildCommand:   svcCommands.BuildCommand,
 				StartCommand:   svcCommands.StartCommand,
 				IsPrivate:      svcCommands.IsPrivate,
@@ -172,10 +188,7 @@ func runtimeQuestions(svcCommands *serviceCommands, bc string, sc string) error 
 		},
 	}
 
-	err := survey.Ask(commands, svcCommands, survey.WithIcons(func(icons *survey.IconSet) {
-		icons.Question.Text = ">"
-		icons.Question.Format = "white"
-	}))
+	err := survey.Ask(commands, svcCommands, surveyIcons)
 	return err
 }
 

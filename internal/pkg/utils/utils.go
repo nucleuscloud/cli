@@ -72,6 +72,7 @@ var supportedRuntimes = []string{
 	"fastapi",
 	"go",
 	"nodejs",
+	"docker",
 	//"python",
 }
 
