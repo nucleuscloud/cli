@@ -23,6 +23,7 @@ const (
 var (
 	allowedDebugVals = []string{
 		"dev",
+		"stage",
 	}
 	hasLoggedAboutEnvType bool = false
 )
@@ -51,12 +52,17 @@ func GetEnv() string {
 func getApiUrl() string {
 	if isDevEnv() {
 		return "localhost:50051"
+	} else if isStageEnv() {
+		return "nucleus-api.nucleus-api.svcs.stage.usenucleus.cloud:443"
 	}
-	return "nucleus-api.nucleus-api.svcs.stage.usenucleus.cloud:443"
+	return "nucleus-api.nucleus-api.svcs.prod.usenucleus.cloud:443"
 }
 
 func isDevEnv() bool {
 	return GetEnv() == "dev"
+}
+func isStageEnv() bool {
+	return GetEnv() == "stage"
 }
 
 func getTransportCreds() (credentials.TransportCredentials, error) {
