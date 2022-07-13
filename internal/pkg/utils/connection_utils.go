@@ -108,6 +108,26 @@ type ApiConnectionConfig struct {
 	ApiAudience  string
 }
 
+func NewApiConnectionByEnv(envType string) (*grpc.ClientConn, error) {
+	switch envType {
+	case "prod":
+	case "":
+		return NewApiConnection(ApiConnectionConfig{
+			AuthBaseUrl:  auth.Auth0ProdBaseUrl,
+			AuthClientId: auth.Auth0ProdClientId,
+			ApiAudience:  auth.ApiAudience,
+		})
+	case "stage":
+	case "dev":
+		return NewApiConnection(ApiConnectionConfig{
+			AuthBaseUrl:  auth.Auth0StageBaseUrl,
+			AuthClientId: auth.Auth0StageClientId,
+			ApiAudience:  auth.ApiAudience,
+		})
+	}
+	return nil, fmt.Errorf("must provide valid env type")
+}
+
 // Returns a GRPC client that has been authenticated for use with Nucleus API
 func NewApiConnection(cfg ApiConnectionConfig) (*grpc.ClientConn, error) {
 	//refactor these clients into a utils file later

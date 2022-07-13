@@ -16,7 +16,7 @@ var logoutCmd = &cobra.Command{
 	Long:  "Logs a user out of their Nucleus account.",
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		authClient, err := auth.NewAuthClient(utils.Auth0BaseUrl, utils.Auth0ClientId, utils.ApiAudience)
+		authClient, err := auth.NewAuthClientByEnv(utils.GetEnv())
 		if err != nil {
 			return err
 		}

@@ -83,11 +83,7 @@ var setCmd = &cobra.Command{
 			}
 		}
 
-		conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
-			AuthBaseUrl:  utils.Auth0BaseUrl,
-			AuthClientId: utils.Auth0ClientId,
-			ApiAudience:  utils.ApiAudience,
-		})
+		conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
 		if err != nil {
 			return err
 		}
