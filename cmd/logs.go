@@ -79,12 +79,7 @@ var logsCommand = &cobra.Command{
 }
 
 func staticLogs(environmentType string, serviceName string, window string) error {
-	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
-		AuthBaseUrl:  utils.Auth0BaseUrl,
-		AuthClientId: utils.Auth0ClientId,
-		ApiAudience:  utils.ApiAudience,
-	})
-
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
 	if err != nil {
 		return err
 	}
@@ -116,11 +111,7 @@ func staticLogs(environmentType string, serviceName string, window string) error
 }
 
 func liveTailLogs(environmentType string, serviceName string) error {
-	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
-		AuthBaseUrl:  utils.Auth0BaseUrl,
-		AuthClientId: utils.Auth0ClientId,
-		ApiAudience:  utils.ApiAudience,
-	})
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
 	if err != nil {
 		return err
 	}

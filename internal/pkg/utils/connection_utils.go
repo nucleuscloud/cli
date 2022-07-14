@@ -23,6 +23,7 @@ const (
 var (
 	allowedDebugVals = []string{
 		"dev",
+		"stage",
 	}
 	hasLoggedAboutEnvType bool = false
 )
@@ -51,12 +52,17 @@ func GetEnv() string {
 func getApiUrl() string {
 	if isDevEnv() {
 		return "localhost:50051"
+	} else if isStageEnv() {
+		return "nucleus-api.nucleus-api.svcs.stage.usenucleus.cloud:443"
 	}
-	return "nucleus-api.nucleus-api.svcs.stage.usenucleus.cloud:443"
+	return "nucleus-api.nucleus-api.svcs.prod.usenucleus.cloud:443"
 }
 
 func isDevEnv() bool {
 	return GetEnv() == "dev"
+}
+func isStageEnv() bool {
+	return GetEnv() == "stage"
 }
 
 func getTransportCreds() (credentials.TransportCredentials, error) {
@@ -100,6 +106,26 @@ type ApiConnectionConfig struct {
 	AuthBaseUrl  string
 	AuthClientId string
 	ApiAudience  string
+}
+
+func NewApiConnectionByEnv(envType string) (*grpc.ClientConn, error) {
+	switch envType {
+	case "prod":
+	case "":
+		return NewApiConnection(ApiConnectionConfig{
+			AuthBaseUrl:  auth.Auth0ProdBaseUrl,
+			AuthClientId: auth.Auth0ProdClientId,
+			ApiAudience:  auth.ApiAudience,
+		})
+	case "stage":
+	case "dev":
+		return NewApiConnection(ApiConnectionConfig{
+			AuthBaseUrl:  auth.Auth0StageBaseUrl,
+			AuthClientId: auth.Auth0StageClientId,
+			ApiAudience:  auth.ApiAudience,
+		})
+	}
+	return nil, fmt.Errorf("must provide valid env type")
 }
 
 // Returns a GRPC client that has been authenticated for use with Nucleus API

@@ -17,10 +17,6 @@ var (
 
 // Auth Vars
 var (
-	Auth0ClientId string = "STljLBgOpW4fuwyKT30YWBsvnxyVAZkr"
-	Auth0BaseUrl  string = "https://auth.stage.usenucleus.cloud"
-	ApiAudience   string = "https://api.usenucleus.cloud"
-
 	Scopes []string = []string{
 		"openid",
 		"profile",

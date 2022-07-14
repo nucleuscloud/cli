@@ -118,11 +118,7 @@ func deploy(req deployRequest) error {
 	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
 	s1.Start()
 
-	conn, err := utils.NewApiConnection(utils.ApiConnectionConfig{
-		AuthBaseUrl:  utils.Auth0BaseUrl,
-		AuthClientId: utils.Auth0ClientId,
-		ApiAudience:  utils.ApiAudience,
-	})
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
 	if err != nil {
 		return err
 	}

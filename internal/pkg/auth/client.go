@@ -15,6 +15,16 @@ import (
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 )
 
+const (
+	Auth0StageClientId string = "STljLBgOpW4fuwyKT30YWBsvnxyVAZkr"
+	Auth0StageBaseUrl  string = "https://auth.stage.usenucleus.cloud"
+
+	Auth0ProdClientId string = "6zk97YDDj9YplY9jqOaHmKYojhEXquD8"
+	Auth0ProdBaseUrl  string = "https://auth.prod.usenucleus.cloud"
+
+	ApiAudience string = "https://api.usenucleus.cloud"
+)
+
 var (
 	ErrAccessDenied = errors.New("access denied")
 	ErrExpiredToken = errors.New("expired token")
@@ -65,6 +75,19 @@ type AuthTokenResponseData struct {
 type authTokenErrorData struct {
 	Error            string `json:"error"`
 	ErrorDescription string `json:"error_description"`
+}
+
+func NewAuthClientByEnv(envType string) (AuthClientInterface, error) {
+	switch envType {
+	case "prod":
+	case "":
+		return NewAuthClient(Auth0ProdBaseUrl, Auth0ProdClientId, ApiAudience)
+
+	case "stage":
+	case "dev":
+		return NewAuthClient(Auth0StageBaseUrl, Auth0StageClientId, ApiAudience)
+	}
+	return nil, fmt.Errorf("must provide valid env type")
 }
 
 func NewAuthClient(tenantUrl, clientId, audience string) (AuthClientInterface, error) {

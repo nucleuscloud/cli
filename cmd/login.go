@@ -19,7 +19,7 @@ var auth0Cmd = &cobra.Command{
 	Long:  `Logs a user into their Nucleus account and stores an access token locally for later use.`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		authClient, err := auth.NewAuthClient(utils.Auth0BaseUrl, utils.Auth0ClientId, utils.ApiAudience)
+		authClient, err := auth.NewAuthClientByEnv(utils.GetEnv())
 		if err != nil {
 			return err
 		}
