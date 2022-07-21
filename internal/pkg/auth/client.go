@@ -79,12 +79,10 @@ type authTokenErrorData struct {
 
 func NewAuthClientByEnv(envType string) (AuthClientInterface, error) {
 	switch envType {
-	case "prod":
-	case "":
+	case "prod", "":
 		return NewAuthClient(Auth0ProdBaseUrl, Auth0ProdClientId, ApiAudience)
 
-	case "stage":
-	case "dev":
+	case "dev", "stage":
 		return NewAuthClient(Auth0StageBaseUrl, Auth0StageClientId, ApiAudience)
 	}
 	return nil, fmt.Errorf("must provide valid env type")

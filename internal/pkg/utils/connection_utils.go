@@ -110,15 +110,13 @@ type ApiConnectionConfig struct {
 
 func NewApiConnectionByEnv(envType string) (*grpc.ClientConn, error) {
 	switch envType {
-	case "prod":
-	case "":
+	case "prod", "":
 		return NewApiConnection(ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0ProdBaseUrl,
 			AuthClientId: auth.Auth0ProdClientId,
 			ApiAudience:  auth.ApiAudience,
 		})
-	case "stage":
-	case "dev":
+	case "dev", "stage":
 		return NewApiConnection(ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0StageBaseUrl,
 			AuthClientId: auth.Auth0StageClientId,
