@@ -7,7 +7,7 @@ require (
 	github.com/auth0/go-jwt-middleware/v2 v2.0.1
 	github.com/briandowns/spinner v1.18.1
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
-	github.com/nucleuscloud/api v0.0.0-20220711052139-d1e909019960
+	github.com/nucleuscloud/api v0.0.0-20220723020428-856404dbbf3b
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.8.0
