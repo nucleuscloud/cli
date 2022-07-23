@@ -26,8 +26,8 @@ import (
 
 var servicesUnPauseCmd = &cobra.Command{
 	Use:   "unpause",
-	Short: "UnPause a service in your environment.",
-	Long:  "Call this command to unpause a service. This will make a service active and accessible.",
+	Short: "Un-pause a service in your environment.",
+	Long:  "Call this command to un-pause a service. This will make a service active and accessible.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {

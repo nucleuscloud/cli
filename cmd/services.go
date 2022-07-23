@@ -23,6 +23,7 @@ var servicesCmd = &cobra.Command{
 	Use: "services",
 	Aliases: []string{
 		"svcs",
+		"svc",
 	},
 	Short: "Parent command for service interactions.",
 	Long:  "You must call one of the available sub commands to actually invoke an action against services.",
