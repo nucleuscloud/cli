@@ -197,7 +197,6 @@ func GetValidAccessTokenFromConfig(authClient auth.AuthClientInterface, nucleusC
 				RefreshToken: config.RefreshToken,
 			})
 			if err != nil {
-				fmt.Println("REFRESH ERR", err, reply)
 				err = ClearNucleusAuthFile()
 				if err != nil {
 					return "", err
