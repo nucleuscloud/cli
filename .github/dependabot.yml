@@ -8,8 +8,8 @@ updates:
     schedule:
       interval: "weekly"
 registries:
-  nucleuscloud-api:
+  api:
     type: git
-    url: https://github.com
+    url: https://github.com/nucleuscloud/api
     username: x-access-token
     password: ${{secrets.REPO_PAT}}
