@@ -8,7 +8,7 @@ updates:
     schedule:
       interval: "weekly"
 registries:
-  api:
+  github-octocat:
     type: git
     url: https://github.com/nucleuscloud/api
     username: x-access-token
