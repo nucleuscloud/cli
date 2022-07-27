@@ -108,7 +108,14 @@ var deployCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return setAuthzPolicy(ctx, cliClient, environmentType, serviceName, []string{}, []string{})
+		return setAuthzPolicy(
+			ctx,
+			cliClient,
+			environmentType,
+			serviceName,
+			deployConfig.Spec.AllowedServices,
+			deployConfig.Spec.DisallowedServices,
+		)
 	},
 }
 
