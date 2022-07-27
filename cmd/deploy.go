@@ -83,6 +83,15 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
+		conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
+		cliClient := pb.NewCliServiceClient(conn)
+
+		ctx := context.Background()
 		req := deployRequest{
 			environmentType:  environmentType,
 			serviceName:      serviceName,
@@ -95,8 +104,32 @@ var deployCmd = &cobra.Command{
 			envVars:          deployConfig.Spec.Vars,
 			envSecrets:       envSecrets,
 		}
-		return deploy(req)
+		err = deploy(ctx, cliClient, req)
+		if err != nil {
+			return err
+		}
+		return setAuthzPolicy(ctx, cliClient, environmentType, serviceName, []string{}, []string{})
 	},
+}
+
+func setAuthzPolicy(
+	ctx context.Context,
+	cliClient pb.CliServiceClient,
+	environmentType string,
+	serviceName string,
+	allowList []string,
+	denyList []string,
+) error {
+	_, err := cliClient.SetServiceMtlsPolicy(ctx, &pb.SetServiceMtlsPolicyRequest{
+		EnvironmentType:    environmentType,
+		ServiceName:        serviceName,
+		AllowedServices:    allowList,
+		DisallowedServices: denyList,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type deployRequest struct {
@@ -112,22 +145,15 @@ type deployRequest struct {
 	envSecrets       map[string]string
 }
 
-func deploy(req deployRequest) error {
+func deploy(ctx context.Context, cliClient pb.CliServiceClient, req deployRequest) error {
 	fmt.Printf("\nGetting deployment ready: \n↪Service: %s \n↪Environment: %s \n↪Project Directory: %s \n\n", req.serviceName, req.environmentType, req.folderPath)
 
 	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
 	s1.Start()
 
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
-	cliClient := pb.NewCliServiceClient(conn)
 	// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
 	var trailer metadata.MD
-	_, err = cliClient.CreateEnvironment(context.Background(), &pb.CreateEnvironmentRequest{
+	_, err := cliClient.CreateEnvironment(ctx, &pb.CreateEnvironmentRequest{
 		EnvironmentType: req.environmentType,
 	},
 		grpc.Trailer(&trailer),
@@ -141,8 +167,6 @@ func deploy(req deployRequest) error {
 			fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
 		}
 	}
-
-	ctx := context.Background()
 
 	deployRequest := pb.DeployRequest{
 		EnvironmentType: req.environmentType,

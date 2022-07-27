@@ -20,14 +20,16 @@ type NucleusConfig struct {
 type NucleusSecrets = map[string]map[string]string
 
 type SpecStruct struct {
-	ServiceName    string            `yaml:"serviceName"`
-	ServiceRunTime string            `yaml:"serviceRuntime"`
-	Image          string            `yaml:"image,omitempty"`
-	BuildCommand   string            `yaml:"buildCommand,omitempty"`
-	StartCommand   string            `yaml:"startCommand,omitempty"`
-	IsPrivate      bool              `yaml:"isPrivate"`
-	Vars           map[string]string `yaml:"vars,omitempty"`
-	Secrets        NucleusSecrets    `yaml:"secrets,omitempty"`
+	ServiceName        string            `yaml:"serviceName"`
+	ServiceRunTime     string            `yaml:"serviceRuntime"`
+	Image              string            `yaml:"image,omitempty"`
+	BuildCommand       string            `yaml:"buildCommand,omitempty"`
+	StartCommand       string            `yaml:"startCommand,omitempty"`
+	IsPrivate          bool              `yaml:"isPrivate"`
+	Vars               map[string]string `yaml:"vars,omitempty"`
+	Secrets            NucleusSecrets    `yaml:"secrets,omitempty"`
+	AllowedServices    []string          `yaml:"allowedServices,omitempty"`
+	DisallowedServices []string          `yaml:"disallowedServices,omitempty"`
 }
 
 type NucleusAuthConfig struct {
@@ -42,7 +44,7 @@ const (
 )
 
 var (
-	ErrMustLogin = errors.New("error retrieving auth information. Try logging in via 'nucleus login'")
+	ErrMustLogin = fmt.Errorf("error retrieving auth information. Try logging in via 'nucleus login'")
 )
 
 func DoesNucleusConfigExist() bool {
@@ -77,7 +79,7 @@ func SetNucleusConfig(config *NucleusConfig) error {
 
 	err = ioutil.WriteFile(nucleusConfigPath, yamlData, 0644)
 	if err != nil {
-		return errors.New("Unable to write data into the config file")
+		return fmt.Errorf("Unable to write data into the config file")
 	}
 	return nil
 }
@@ -137,7 +139,7 @@ func SetNucleusAuthFile(authConfig NucleusAuthConfig) error {
 	}
 
 	if dirPath == "" {
-		return errors.New("Could not find the correct nucleus dir to store configs")
+		return fmt.Errorf("Could not find the correct nucleus dir to store configs")
 	}
 
 	fileName := dirPath + "/auth.yaml"
@@ -168,7 +170,7 @@ func ClearNucleusAuthFile() error {
 	}
 
 	if dirPath == "" {
-		return errors.New("Could not find the correct nucleus dir to store configs")
+		return fmt.Errorf("Could not find the correct nucleus dir to store configs")
 	}
 
 	fileName := dirPath + "/auth.yaml"
@@ -199,7 +201,7 @@ func GetValidAccessTokenFromConfig(authClient auth.AuthClientInterface, nucleusC
 				if err != nil {
 					return "", err
 				}
-				return "", errors.New("unable to refresh token, please try logging in again.")
+				return "", fmt.Errorf("unable to refresh token, please try logging in again.")
 			}
 			var newRefreshToken string
 			if reply.RefreshToken != "" {
