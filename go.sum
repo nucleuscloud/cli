@@ -313,8 +313,8 @@ github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjY
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/nucleuscloud/api v0.0.0-20220726034839-f0aca26dee6b h1:uy3IwiFTluqq23fXY22N0lYEqHJ+6Zv8p+XHUEzpyTY=
-github.com/nucleuscloud/api v0.0.0-20220726034839-f0aca26dee6b/go.mod h1:+eScLuyExGYX5cJC3ovXl7Jszu5ZVl5ag0MWrXFgSv8=
+github.com/nucleuscloud/api v0.0.0-20220727041246-41be3077552a h1:a4CQHtWm0jPKWyeHuhO0EBKgPC3qgxfpHJp4Pb5xD6M=
+github.com/nucleuscloud/api v0.0.0-20220727041246-41be3077552a/go.mod h1:LALuVYuOThvvIM3ELrfzFJ0rnMNtSYReGzDdIcekBK8=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pelletier/go-toml v1.9.4 h1:tjENF6MfZAg8e4ZmZTeWaWiT2vXtsoO6+iuOjFhECwM=
