@@ -7,8 +7,10 @@ updates:
     # Check the go mod registry for updates every week
     schedule:
       interval: "weekly"
+    registries:
+      - nucleuscloud-api
 registries:
-  github-octocat:
+  nucleuscloud-api:
     type: git
     url: https://github.com/nucleuscloud/api
     username: x-access-token
