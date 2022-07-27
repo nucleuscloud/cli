@@ -10,6 +10,6 @@ updates:
 registries:
   nucleuscloud-api:
     type: git
-    url: https://github.com/nucleuscloud/api
+    url: https://github.com
     username: x-access-token
     password: ${{secrets.REPO_PAT}}
