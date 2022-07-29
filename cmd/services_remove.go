@@ -16,18 +16,21 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
-var servicesUnPauseCmd = &cobra.Command{
-	Use:   "unpause",
-	Short: "Un-pause a service in your environment.",
-	Long:  "Call this command to un-pause a service. This will make a service active and accessible.",
+var servicesRemoveCmd = &cobra.Command{
+	Use:     "remove",
+	Aliases: []string{"rm"},
+	Short:   "Remove a service from your environment.",
+	Long:    "Completely remove a service from your environment. This operation is destructive!",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
@@ -58,21 +61,37 @@ var servicesUnPauseCmd = &cobra.Command{
 			return utils.ErrInvalidServiceName
 		}
 
-		if environmentType == "prod" {
-			err := utils.PromptToProceed(cmd, environmentType, "yes")
-			if err != nil {
-				return err
-			}
+		err = utils.PromptToProceed(cmd, environmentType, "yes")
+		if err != nil {
+			return err
 		}
 
-		return setServicePause(environmentType, serviceName, false)
+		return removeService(environmentType, serviceName)
 	},
 }
 
 func init() {
-	servicesCmd.AddCommand(servicesUnPauseCmd)
+	servicesCmd.AddCommand(servicesRemoveCmd)
 
-	servicesUnPauseCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
-	servicesUnPauseCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
-	servicesUnPauseCmd.Flags().StringP("service", "s", "", "set the service name, if not provided will pull from nucleus.yaml (if there is one)")
+	servicesRemoveCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
+	servicesRemoveCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prompt")
+	servicesRemoveCmd.Flags().StringP("service", "s", "", "set the service name, if not provided will pull from nucleus.yaml (if there is one)")
+}
+
+func removeService(environmentType string, serviceName string) error {
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	cliClient := pb.NewCliServiceClient(conn)
+	_, err = cliClient.RemoveService(context.Background(), &pb.RemoveServiceRequest{
+		EnvironmentType: strings.TrimSpace(environmentType),
+		ServiceName:     serviceName,
+	}, utils.GetGrpcTrailer())
+	if err != nil {
+		return err
+	}
+	return nil
 }

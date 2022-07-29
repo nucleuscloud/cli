@@ -42,7 +42,7 @@ func IsValidEnvironmentType(environmentType string) bool {
 	return environmentType != "dev" && environmentType != "stage" && environmentType != "prod"
 }
 
-func CheckProdOk(cmd *cobra.Command, environmentType string, yesPromptFlagName string) error {
+func PromptToProceed(cmd *cobra.Command, environmentType string, yesPromptFlagName string) error {
 	yesPrompt, err := cmd.Flags().GetBool(yesPromptFlagName)
 	if err != nil {
 		return err
@@ -50,14 +50,14 @@ func CheckProdOk(cmd *cobra.Command, environmentType string, yesPromptFlagName s
 	if !yesPrompt {
 		shouldProceed := false
 		err = survey.AskOne(&survey.Confirm{
-			Message: "Are you sure you want to invoke this command in production?",
+			Message: fmt.Sprintf("Are you sure you want to invoke this command in %s?", environmentType),
 		}, &shouldProceed)
 		if err != nil {
 			return err
 		}
 
 		if !shouldProceed {
-			return fmt.Errorf("exiting production deployment")
+			return fmt.Errorf("exiting %s deployment", environmentType)
 		}
 	}
 	return nil

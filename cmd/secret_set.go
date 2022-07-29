@@ -76,7 +76,7 @@ var setCmd = &cobra.Command{
 					return fmt.Errorf("must provide -y when piping in secret value to production environment")
 				}
 			} else {
-				err := utils.CheckProdOk(cmd, environmentType, "yes")
+				err := utils.PromptToProceed(cmd, environmentType, "yes")
 				if err != nil {
 					return err
 				}
