@@ -53,7 +53,7 @@ var deployCmd = &cobra.Command{
 		}
 
 		if environmentType == "prod" {
-			err := utils.CheckProdOk(cmd, environmentType, "yes")
+			err := utils.PromptToProceed(cmd, environmentType, "yes")
 			if err != nil {
 				return err
 			}
