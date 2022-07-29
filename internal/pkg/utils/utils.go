@@ -69,7 +69,7 @@ var supportedRuntimes = []string{
 	"go",
 	"nodejs",
 	"docker",
-	//"python",
+	"python",
 }
 
 func GetSupportedRuntimes() []string {
