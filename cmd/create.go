@@ -11,6 +11,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
+	"github.com/nucleuscloud/cli/internal/pkg/procfile"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
 )
@@ -98,7 +99,7 @@ var createServiceCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-		} else {
+		} else if svcCommands.ServiceType != "python" {
 			conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
 			if err != nil {
 				return err
@@ -122,6 +123,11 @@ var createServiceCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
+		} else if svcCommands.ServiceType == "python" {
+			err = ensureProcfileExists()
+			if err != nil {
+				return err
+			}
 		}
 
 		nucleusConfig := config.NucleusConfig{
@@ -142,6 +148,28 @@ var createServiceCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func ensureProcfileExists() error {
+	// ask about proc file if it doesn't exist
+	if !procfile.DoesProcfileExist() {
+		var entrypoint string
+		err := survey.AskOne(&survey.Input{
+			Message: "What is the entrypoint to your web server?",
+			Help:    "python server.py",
+		}, &entrypoint)
+		if err != nil {
+			return err
+		}
+		if entrypoint == "" {
+			return fmt.Errorf("entrypoint length must be greater than 0")
+		}
+		err = procfile.SetProcfile(&procfile.Procfile{Web: entrypoint})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func getDefaultSpec() (*config.SpecStruct, error) {

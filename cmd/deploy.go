@@ -168,6 +168,7 @@ func deploy(ctx context.Context, cliClient pb.CliServiceClient, req deployReques
 	if err != nil {
 		return err
 	}
+	s1.Stop()
 
 	if verbose {
 		if len(trailer["x-request-id"]) == 1 {
@@ -183,27 +184,37 @@ func deploy(ctx context.Context, cliClient pb.CliServiceClient, req deployReques
 		Vars:            req.envVars,
 		Secrets:         req.envSecrets,
 	}
+
+	if req.serviceType == "python" {
+		err = ensureProcfileExists()
+		if err != nil {
+			return err
+		}
+	}
+
 	if req.serviceType == "docker" {
 		if req.image == "" {
 			return fmt.Errorf("must provide image if service type is 'docker'")
 		}
 		deployRequest.Image = req.image
 	} else {
+		s1.Start()
 		uploadKey, err := bundleAndUploadCode(ctx, cliClient, req.folderPath, req.environmentType, req.serviceName, &trailer)
 		if err != nil {
+			s1.Stop()
 			return err
 		}
 		deployRequest.URL = uploadKey
 		deployRequest.BuildCommand = req.buildCommand
 		deployRequest.StartCommand = req.startCommand
 	}
-	fmt.Printf("image url: %s", deployRequest.Image)
+
 	stream, err := cliClient.Deploy(ctx, &deployRequest)
 	if err != nil {
+		s1.Stop()
 		return err
 	}
 	s1.Stop()
-
 	p := mpb.New(mpb.WithWidth(64))
 	bar := getProgressBar(p, "Deploying service...", 0)
 	var currCompleted int64 = 0
