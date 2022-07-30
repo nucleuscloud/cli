@@ -69,8 +69,24 @@ var deployCmd = &cobra.Command{
 			return fmt.Errorf("service type not provided")
 		}
 
-		buildCommand := deployConfig.Spec.BuildCommand
+		// convert fastapi to python
+		if serviceType == "fastapi" {
+			serviceType = "python"
+			deployConfig.Spec.ServiceRunTime = "python"
+			err = config.SetNucleusConfig(deployConfig)
+			if err != nil {
+				return fmt.Errorf("unable to convert fastapi project to python")
+			}
+		}
 
+		if serviceType == "python" {
+			err = ensureProcfileExists()
+			if err != nil {
+				return err
+			}
+		}
+
+		buildCommand := deployConfig.Spec.BuildCommand
 		startCommand := deployConfig.Spec.StartCommand
 
 		directoryName, err := os.Getwd()
@@ -183,13 +199,6 @@ func deploy(ctx context.Context, cliClient pb.CliServiceClient, req deployReques
 		IsPrivate:       req.isPrivateService,
 		Vars:            req.envVars,
 		Secrets:         req.envSecrets,
-	}
-
-	if req.serviceType == "python" {
-		err = ensureProcfileExists()
-		if err != nil {
-			return err
-		}
 	}
 
 	if req.serviceType == "docker" {

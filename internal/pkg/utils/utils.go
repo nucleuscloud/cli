@@ -65,7 +65,6 @@ func PromptToProceed(cmd *cobra.Command, environmentType string, yesPromptFlagNa
 
 // Runtimes
 var supportedRuntimes = []string{
-	"fastapi",
 	"go",
 	"nodejs",
 	"docker",
