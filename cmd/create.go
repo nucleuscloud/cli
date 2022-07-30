@@ -155,7 +155,8 @@ func ensureProcfileExists() error {
 	if !procfile.DoesProcfileExist() {
 		var entrypoint string
 		err := survey.AskOne(&survey.Input{
-			Message: "What is the entrypoint file to your web server?",
+			Message: "What is the entrypoint to your web server?",
+			Help:    "python server.py",
 		}, &entrypoint)
 		if err != nil {
 			return err
