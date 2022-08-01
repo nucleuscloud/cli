@@ -335,7 +335,7 @@ func bundleAndUploadCode(ctx context.Context, cliClient pb.CliServiceClient, fol
 
 func uploadArchive(signedURL string, r io.Reader) error {
 	httpClient := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 120 * time.Second,
 	}
 
 	// TODO: Figure out how to send this as a stream instead of reading into memory.
