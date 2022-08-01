@@ -61,6 +61,8 @@ var servicesRemoveCmd = &cobra.Command{
 			return utils.ErrInvalidServiceName
 		}
 
+		fmt.Printf("Service to delete: \n↪Environment: %s\n↪Service: %s\n", environmentType, serviceName)
+
 		err = utils.PromptToProceed(cmd, environmentType, "yes")
 		if err != nil {
 			return err
