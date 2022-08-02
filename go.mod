@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.5
 	github.com/auth0/go-jwt-middleware/v2 v2.0.1
-	github.com/briandowns/spinner v1.18.1
+	github.com/briandowns/spinner v1.19.0
 	github.com/fatih/color v1.13.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
 	github.com/nucleuscloud/api v0.0.0-20220802023115-7ff508b37cff
