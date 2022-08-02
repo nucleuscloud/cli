@@ -21,8 +21,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -71,9 +73,43 @@ func listServices(environmentType string) error {
 		return err
 	}
 
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+
+	tbl := table.New("Name", "Status", "Visibility", "Url")
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
 	fmt.Printf("Services in environment: %s\n", environmentType)
-	for _, svcName := range serviceList.ServiceNames {
-		fmt.Printf("* %s\n", svcName)
+	for svcName, svcInfo := range serviceList.InfoMap {
+		tbl.AddRow(
+			svcName,
+			getIsActiveLabel(svcInfo.IsActive),
+			getVisibilityLabel(svcInfo.IsPrivate),
+			getUrlLabel(svcInfo.IsPrivate, svcInfo.Url),
+		)
 	}
+	tbl.Print()
+
 	return nil
+}
+
+func getIsActiveLabel(isActive bool) string {
+	if isActive {
+		return "Active"
+	}
+	return "Inactive"
+}
+
+func getVisibilityLabel(isPrivate bool) string {
+	if isPrivate {
+		return "Private"
+	}
+	return "Public"
+}
+
+func getUrlLabel(isPrivate bool, url string) string {
+	if isPrivate {
+		return ""
+	}
+	return url
 }

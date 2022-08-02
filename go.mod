@@ -6,8 +6,10 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.5
 	github.com/auth0/go-jwt-middleware/v2 v2.0.1
 	github.com/briandowns/spinner v1.18.1
+	github.com/fatih/color v1.13.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
-	github.com/nucleuscloud/api v0.0.0-20220729024843-e5b12081536e
+	github.com/nucleuscloud/api v0.0.0-20220802023115-7ff508b37cff
+	github.com/rodaine/table v1.0.1
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.8.0
@@ -21,7 +23,6 @@ require (
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.0 // indirect
