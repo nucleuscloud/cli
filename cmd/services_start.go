@@ -16,22 +16,19 @@ limitations under the License.
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
-var servicesPauseCmd = &cobra.Command{
-	Use:   "pause",
-	Short: "Pause a service in your environment.",
-	Long:  "Call this command to pause a service. This will shut it down and no longer make it accessible.",
+var servicesStartCmd = &cobra.Command{
+	Use:     "start",
+	Short:   "start a service in your environment.",
+	Aliases: []string{"unpause"},
+	Long:    "Call this command to start a service. This will make a service active and accessible.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
@@ -69,34 +66,14 @@ var servicesPauseCmd = &cobra.Command{
 			}
 		}
 
-		return setServicePause(environmentType, serviceName, true)
+		return setServicePause(environmentType, serviceName, false)
 	},
 }
 
 func init() {
-	servicesCmd.AddCommand(servicesPauseCmd)
+	servicesCmd.AddCommand(servicesStartCmd)
 
-	servicesPauseCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
-	servicesPauseCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
-	servicesPauseCmd.Flags().StringP("service", "s", "", "set the service name, if not provided will pull from nucleus.yaml (if there is one)")
-}
-
-func setServicePause(environmentType string, serviceName string, isPaused bool) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
-	cliClient := pb.NewCliServiceClient(conn)
-	var trailer metadata.MD
-	_, err = cliClient.SetServicePauseStatus(context.Background(), &pb.SetServicePauseStatusRequest{
-		EnvironmentType: strings.TrimSpace(environmentType),
-		ServiceName:     serviceName,
-		IsPaused:        isPaused,
-	}, grpc.Trailer(&trailer))
-	if err != nil {
-		return err
-	}
-	return nil
+	servicesStartCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
+	servicesStartCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
+	servicesStartCmd.Flags().StringP("service", "s", "", "set the service name, if not provided will pull from nucleus.yaml (if there is one)")
 }

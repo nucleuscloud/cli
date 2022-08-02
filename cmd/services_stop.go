@@ -16,18 +16,23 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
-var servicesUnPauseCmd = &cobra.Command{
-	Use:   "unpause",
-	Short: "Un-pause a service in your environment.",
-	Long:  "Call this command to un-pause a service. This will make a service active and accessible.",
+var servicesStopCmd = &cobra.Command{
+	Use:     "stop",
+	Short:   "Stop a service in your environment.",
+	Aliases: []string{"pause"},
+	Long:    "Call this command to stop a service. This will shut it down and no longer make it accessible.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
@@ -65,14 +70,34 @@ var servicesUnPauseCmd = &cobra.Command{
 			}
 		}
 
-		return setServicePause(environmentType, serviceName, false)
+		return setServicePause(environmentType, serviceName, true)
 	},
 }
 
 func init() {
-	servicesCmd.AddCommand(servicesUnPauseCmd)
+	servicesCmd.AddCommand(servicesStopCmd)
 
-	servicesUnPauseCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
-	servicesUnPauseCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
-	servicesUnPauseCmd.Flags().StringP("service", "s", "", "set the service name, if not provided will pull from nucleus.yaml (if there is one)")
+	servicesStopCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
+	servicesStopCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
+	servicesStopCmd.Flags().StringP("service", "s", "", "set the service name, if not provided will pull from nucleus.yaml (if there is one)")
+}
+
+func setServicePause(environmentType string, serviceName string, isPaused bool) error {
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	cliClient := pb.NewCliServiceClient(conn)
+	var trailer metadata.MD
+	_, err = cliClient.SetServicePauseStatus(context.Background(), &pb.SetServicePauseStatusRequest{
+		EnvironmentType: strings.TrimSpace(environmentType),
+		ServiceName:     serviceName,
+		IsPaused:        isPaused,
+	}, grpc.Trailer(&trailer))
+	if err != nil {
+		return err
+	}
+	return nil
 }
