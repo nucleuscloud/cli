@@ -53,9 +53,9 @@ func getApiUrl() string {
 	if isDevEnv() {
 		return "localhost:50051"
 	} else if isStageEnv() {
-		return "nucleus-api.nucleus-api.svcs.stage.usenucleus.cloud:443"
+		return "nucleus-api-nucleus-api.svcs.stage.usenucleus.cloud:443"
 	}
-	return "nucleus-api.nucleus-api.svcs.prod.usenucleus.cloud:443"
+	return "nucleus-api-nucleus-api.svcs.prod.usenucleus.cloud:443"
 }
 
 func isDevEnv() bool {
