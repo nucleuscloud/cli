@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,6 +27,7 @@ import (
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/secrets"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/spf13/cobra"
 )
 
@@ -83,25 +84,39 @@ var setCmd = &cobra.Command{
 			}
 		}
 
-		conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+		conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
 
-		nucleusClient := pb.NewCliServiceClient(conn)
+		cliClient := pb.NewCliServiceClient(conn)
+		svcClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
 
 		if verbose {
 			fmt.Println("Attempting to retrieve public key for encrypting secrets...")
 		}
 
 		// todo: cache this key
-		publicKeyReply, err := nucleusClient.GetPublicSecretKey(context.Background(), &pb.GetPublicSecretKeyRequest{
-			EnvironmentType: environmentType,
-			ServiceName:     deployConfig.Spec.ServiceName,
-		}, utils.GetGrpcTrailer())
-		if err != nil {
-			return err
+		var publicKey []byte
+		if onPrem {
+			publicKeyReply, err := svcClient.GetPublicSecretKey(context.Background(), &svcmgmtv1alpha1.GetPublicSecretKeyRequest{
+				EnvironmentType: environmentType,
+				ServiceName:     deployConfig.Spec.ServiceName,
+			})
+			if err != nil {
+				return err
+			}
+			publicKey = publicKeyReply.PublicKey
+		} else {
+			publicKeyReply, err := cliClient.GetPublicSecretKey(context.Background(), &pb.GetPublicSecretKeyRequest{
+				EnvironmentType: environmentType,
+				ServiceName:     deployConfig.Spec.ServiceName,
+			}, utils.GetGrpcTrailer())
+			if err != nil {
+				return err
+			}
+			publicKey = publicKeyReply.PublicKey
 		}
 		if verbose {
 			fmt.Println("Retrieved public key!")
@@ -110,7 +125,7 @@ var setCmd = &cobra.Command{
 		if verbose {
 			fmt.Println("Encrypting secret...")
 		}
-		err = secrets.StoreSecret(&deployConfig.Spec, publicKeyReply.PublicKey, secretKey, secretResult.value, environmentType)
+		err = secrets.StoreSecret(&deployConfig.Spec, publicKey, secretKey, secretResult.value, environmentType)
 		if err != nil {
 			return err
 		}

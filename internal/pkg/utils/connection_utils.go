@@ -11,6 +11,7 @@ import (
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/auth"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
+	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -108,26 +109,81 @@ type ApiConnectionConfig struct {
 	ApiAudience  string
 }
 
-func NewApiConnectionByEnv(envType string) (*grpc.ClientConn, error) {
+func newApiConnectionByEnvManaged(envType string) (*grpc.ClientConn, error) {
 	switch envType {
 	case "prod", "":
 		return NewApiConnection(ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0ProdBaseUrl,
 			AuthClientId: auth.Auth0ProdClientId,
 			ApiAudience:  auth.ApiAudience,
-		})
+		}, false)
 	case "dev", "stage":
 		return NewApiConnection(ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0StageBaseUrl,
 			AuthClientId: auth.Auth0StageClientId,
 			ApiAudience:  auth.ApiAudience,
-		})
+		}, false)
 	}
 	return nil, fmt.Errorf("must provide valid env type")
 }
 
+func newApiConnectionByEnvOnPrem(envType string) (*grpc.ClientConn, error) {
+	switch envType {
+	case "prod", "":
+		return NewApiConnection(ApiConnectionConfig{
+			AuthBaseUrl:  auth.Auth0ProdBaseUrl,
+			AuthClientId: auth.Auth0ProdClientId,
+			ApiAudience:  auth.ApiAudience,
+		}, true)
+	case "dev", "stage":
+		return NewApiConnection(ApiConnectionConfig{
+			AuthBaseUrl:  auth.Auth0StageBaseUrl,
+			AuthClientId: auth.Auth0StageClientId,
+			ApiAudience:  auth.ApiAudience,
+		}, true)
+	}
+	return nil, fmt.Errorf("must provide valid env type")
+}
+
+func NewApiConnectionByEnv(envType string, isOnPrem bool) (*grpc.ClientConn, error) {
+	if isOnPrem {
+		return newApiConnectionByEnvOnPrem(envType)
+	}
+	return newApiConnectionByEnvManaged(envType)
+}
+
+func NewApiConnection(cfg ApiConnectionConfig, isOnPrem bool) (*grpc.ClientConn, error) {
+	if isOnPrem {
+		return NewApiConnectionOnPrem(cfg)
+	}
+	return NewApiConnectionManaged(cfg)
+}
+
+func NewApiConnectionOnPrem(cfg ApiConnectionConfig) (*grpc.ClientConn, error) {
+	authClient, err := auth.NewAuthClient(cfg.AuthBaseUrl, cfg.AuthClientId, cfg.ApiAudience)
+	if err != nil {
+		return nil, err
+	}
+	unAuthConn, err := newAnonymousConnection()
+	if err != nil {
+		return nil, err
+	}
+	unAuthCliClient := mgmtv1alpha1.NewMgmtServiceClient(unAuthConn)
+	accessToken, err := config.GetValidAccessTokenFromConfig2(authClient, unAuthCliClient)
+	defer unAuthConn.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := NewAuthenticatedConnection(accessToken)
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
+}
+
 // Returns a GRPC client that has been authenticated for use with Nucleus API
-func NewApiConnection(cfg ApiConnectionConfig) (*grpc.ClientConn, error) {
+func NewApiConnectionManaged(cfg ApiConnectionConfig) (*grpc.ClientConn, error) {
 	//refactor these clients into a utils file later
 	authClient, err := auth.NewAuthClient(cfg.AuthBaseUrl, cfg.AuthClientId, cfg.ApiAudience)
 	if err != nil {

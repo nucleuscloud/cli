@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -58,20 +59,11 @@ func init() {
 }
 
 func listServices(environmentType string) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-
-	cliClient := pb.NewCliServiceClient(conn)
-	var trailer metadata.MD
-	serviceList, err := cliClient.ListServices(context.Background(), &pb.ListServicesRequest{
-		EnvironmentType: strings.TrimSpace(environmentType),
-	}, grpc.Trailer(&trailer))
-	if err != nil {
-		return err
-	}
 
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
@@ -79,17 +71,43 @@ func listServices(environmentType string) error {
 	tbl := table.New("Name", "Status", "Visibility", "Url")
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
-	fmt.Printf("Services in environment: %s\n", environmentType)
-	for svcName, svcInfo := range serviceList.InfoMap {
-		tbl.AddRow(
-			svcName,
-			getIsActiveLabel(svcInfo.IsActive),
-			getVisibilityLabel(svcInfo.IsPrivate),
-			getUrlLabel(svcInfo.IsPrivate, svcInfo.Url),
-		)
+	if onPrem {
+		cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
+		serviceList, err := cliClient.GetServices(context.Background(), &svcmgmtv1alpha1.GetServicesRequest{
+			EnvironmentType: strings.TrimSpace(environmentType),
+		})
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Services in environment: %s\n", environmentType)
+		for svcName, svcInfo := range serviceList.Services {
+			tbl.AddRow(
+				svcName,
+				getIsActiveLabel(svcInfo.IsActive),
+				getVisibilityLabel(svcInfo.IsPrivate),
+				getUrlLabel(svcInfo.IsPrivate, svcInfo.Url),
+			)
+		}
+	} else {
+		cliClient := pb.NewCliServiceClient(conn)
+		var trailer metadata.MD
+		serviceList, err := cliClient.ListServices(context.Background(), &pb.ListServicesRequest{
+			EnvironmentType: strings.TrimSpace(environmentType),
+		}, grpc.Trailer(&trailer))
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Services in environment: %s\n", environmentType)
+		for svcName, svcInfo := range serviceList.InfoMap {
+			tbl.AddRow(
+				svcName,
+				getIsActiveLabel(svcInfo.IsActive),
+				getVisibilityLabel(svcInfo.IsPrivate),
+				getUrlLabel(svcInfo.IsPrivate, svcInfo.Url),
+			)
+		}
 	}
 	tbl.Print()
-
 	return nil
 }
 

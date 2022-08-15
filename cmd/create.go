@@ -100,24 +100,27 @@ var createServiceCmd = &cobra.Command{
 				return err
 			}
 		} else if svcCommands.ServiceType != "python" {
-			conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+			conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
 			if err != nil {
 				return err
 			}
 			defer conn.Close()
 			//retrieve the default build and start commands based on runtime
-			cliClient := pb.NewCliServiceClient(conn)
-			defaultBuildStartCommands, err := cliClient.BuildStartCommands(context.Background(), &pb.DefaultBuildStartCommandsRequest{
-				Runtime: svcCommands.ServiceType,
-			},
-				utils.GetGrpcTrailer(),
-			)
-			if err != nil {
-				return err
+			var bc string
+			var sc string
+			if onPrem {
+				// todo
+			} else {
+				cliClient := pb.NewCliServiceClient(conn)
+				defaultBuildStartCommands, err := cliClient.BuildStartCommands(context.Background(), &pb.DefaultBuildStartCommandsRequest{
+					Runtime: svcCommands.ServiceType,
+				})
+				if err != nil {
+					return err
+				}
+				bc = defaultBuildStartCommands.BuildCommand
+				sc = defaultBuildStartCommands.StartCommand
 			}
-
-			bc := defaultBuildStartCommands.BuildCommand
-			sc := defaultBuildStartCommands.StartCommand
 
 			err = runtimeQuestions(&svcCommands, bc, sc)
 			if err != nil {

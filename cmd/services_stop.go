@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +23,7 @@ import (
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -83,12 +84,24 @@ func init() {
 }
 
 func setServicePause(environmentType string, serviceName string, isPaused bool) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
+	if onPrem {
+		cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
+		_, err = cliClient.SetServiceActiveStatus(context.Background(), &svcmgmtv1alpha1.SetServiceActiveStatusRequest{
+			EnvironmentType: strings.TrimSpace(environmentType),
+			ServiceName:     serviceName,
+			IsActive:        !isPaused,
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 	cliClient := pb.NewCliServiceClient(conn)
 	var trailer metadata.MD
 	_, err = cliClient.SetServicePauseStatus(context.Background(), &pb.SetServicePauseStatusRequest{

@@ -11,8 +11,6 @@ import (
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 var logsCommand = &cobra.Command{
@@ -79,76 +77,79 @@ var logsCommand = &cobra.Command{
 }
 
 func staticLogs(environmentType string, serviceName string, window string) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	cliClient := pb.NewCliServiceClient(conn)
-	var trailer metadata.MD
-	logs, err := cliClient.Logs(context.Background(), &pb.LogsRequest{
-		EnvironmentType: environmentType,
-		ServiceName:     serviceName,
-		Window:          window,
-	},
-		grpc.Trailer(&trailer),
-	)
-	if err != nil && err != io.EOF {
-		return err
-	}
+	if onPrem {
+		// todo
+	} else {
+		cliClient := pb.NewCliServiceClient(conn)
+		logs, err := cliClient.Logs(context.Background(), &pb.LogsRequest{
+			EnvironmentType: environmentType,
+			ServiceName:     serviceName,
+			Window:          window,
+		})
+		if err != nil && err != io.EOF {
+			return err
+		}
 
-	fmt.Println("\nGenerating logs for the last " + window + "...\n")
+		fmt.Println("\nGenerating logs for the last " + window + "...\n")
 
-	if len(logs.Log) == 0 {
-		fmt.Println("No logs for this service at this time window. if you just deployed your service, try again in a minute or try a bigger time window.")
-	}
+		if len(logs.Log) == 0 {
+			fmt.Println("No logs for this service at this time window. if you just deployed your service, try again in a minute or try a bigger time window.")
+		}
 
-	for i := 0; i < len(logs.Log); i++ {
-		fmt.Println(string(logs.Log[i]))
+		for i := 0; i < len(logs.Log); i++ {
+			fmt.Println(string(logs.Log[i]))
+		}
 	}
 	return nil
 }
 
 func liveTailLogs(environmentType string, serviceName string) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
 	if err != nil {
 		return err
 	}
 
 	defer conn.Close()
 
-	var timestamp string
-
-	cliClient := pb.NewCliServiceClient(conn)
-	var trailer metadata.MD
-	stream, err := cliClient.TailLogs(context.Background(), &pb.TailLogsRequest{
-		EnvironmentType: environmentType,
-		ServiceName:     serviceName,
-		Timestamp:       timestamp,
-	}, grpc.Trailer(&trailer))
-	if err != nil {
-		return err
-	}
-
-	fmt.Print("\nStarting live tail, only new logs are published ...\n")
-
-	check := "check"
-	for {
-		resp, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-
-		if check != resp.LogLine {
-			fmt.Println("\n" + resp.LogLine)
-		}
+	if onPrem {
+		// todo
+	} else {
+		var timestamp string
+		cliClient := pb.NewCliServiceClient(conn)
+		stream, err := cliClient.TailLogs(context.Background(), &pb.TailLogsRequest{
+			EnvironmentType: environmentType,
+			ServiceName:     serviceName,
+			Timestamp:       timestamp,
+		})
 		if err != nil {
-			log.Fatalf("can not receive %v", err)
-			break
+			return err
 		}
 
-		check = resp.LogLine
+		fmt.Print("\nStarting live tail, only new logs are published ...\n")
+
+		check := "check"
+		for {
+			resp, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+
+			if check != resp.LogLine {
+				fmt.Println("\n" + resp.LogLine)
+			}
+			if err != nil {
+				log.Fatalf("can not receive %v", err)
+				break
+			}
+
+			check = resp.LogLine
+		}
 	}
 	return nil
 }

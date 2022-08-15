@@ -3,7 +3,6 @@ package procfile
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -23,7 +22,7 @@ func DoesProcfileExist() bool {
 }
 
 func GetProcfile() (*Procfile, error) {
-	file, err := ioutil.ReadFile(procfilePath)
+	file, err := os.ReadFile(procfilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +41,7 @@ func SetProcfile(file *Procfile) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(procfilePath, data, 0644)
+	err = os.WriteFile(procfilePath, data, 0644)
 	if err != nil {
 		return fmt.Errorf("unable to write data into procfile")
 	}
