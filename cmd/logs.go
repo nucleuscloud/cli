@@ -69,6 +69,12 @@ var logsCommand = &cobra.Command{
 		}
 
 		// managed
+		if window != "" && tail {
+			fmt.Println("Ignoring provided window to tail")
+		}
+		if window == "" {
+			window = "15min"
+		}
 		if tail {
 			return liveTailLogs(environmentType, serviceName)
 		} else if allowedWindowValues(window) {
