@@ -53,11 +53,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.nucleus-cli.yaml)")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	rootCmd.Flags().BoolP("onprem", "", false, "Toggles on prem version of the cli")
+	rootCmd.PersistentFlags().BoolVarP(&onPrem, "onprem", "", false, "Toggles on prem version of the cli")
 }
 
 // initConfig reads in config file and ENV variables if set.
