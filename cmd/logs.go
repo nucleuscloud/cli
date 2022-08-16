@@ -103,18 +103,21 @@ func getOnPremLogs(envType string, serviceName string, window string, shouldTail
 	if err != nil {
 		return err
 	}
-	defer logStream.CloseSend()
 	for {
 		msg, err := logStream.Recv()
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
+			err2 := logStream.CloseSend()
+			if err2 != nil {
+				fmt.Println(err2)
+			}
 			return err
 		}
 		fmt.Println(msg.Log)
 	}
-	return nil
+	return logStream.CloseSend()
 }
 
 func staticLogs(environmentType string, serviceName string, window string) error {

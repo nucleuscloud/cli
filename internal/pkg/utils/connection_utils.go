@@ -169,7 +169,7 @@ func NewApiConnectionOnPrem(cfg ApiConnectionConfig) (*grpc.ClientConn, error) {
 		return nil, err
 	}
 	unAuthCliClient := mgmtv1alpha1.NewMgmtServiceClient(unAuthConn)
-	accessToken, err := config.GetValidAccessTokenFromConfig2(authClient, unAuthCliClient)
+	accessToken, err := getValidAccessTokenFromConfig(authClient, nil, unAuthCliClient, true, cfg.AuthClientId)
 	defer unAuthConn.Close()
 	if err != nil {
 		return nil, err
@@ -194,7 +194,7 @@ func NewApiConnectionManaged(cfg ApiConnectionConfig) (*grpc.ClientConn, error) 
 		return nil, err
 	}
 	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
-	accessToken, err := config.GetValidAccessTokenFromConfig(authClient, unAuthCliClient)
+	accessToken, err := getValidAccessTokenFromConfig(authClient, unAuthCliClient, nil, false, cfg.AuthClientId)
 	defer unAuthConn.Close()
 	if err != nil {
 		return nil, err
@@ -219,4 +219,92 @@ func (c *loginCreds) GetRequestMetadata(context.Context, ...string) (map[string]
 
 func (c *loginCreds) RequireTransportSecurity() bool {
 	return !isDevEnv()
+}
+
+// Retrieves the access token from the config and validates it.
+func getValidAccessTokenFromConfig(
+	authClient auth.AuthClientInterface,
+	cliClient pb.CliServiceClient,
+	mgmtClient mgmtv1alpha1.MgmtServiceClient,
+	isOnPrem bool,
+	clientId string,
+) (string, error) {
+	cfg, err := config.GetNucleusAuthConfig()
+	if err != nil {
+		return "", err
+	}
+	ctx := context.Background()
+	err = authClient.ValidateToken(ctx, cfg.AccessToken)
+	if err != nil {
+		fmt.Println("Access token is no longer valid. Attempting to refresh...")
+		if cfg.RefreshToken != "" {
+			res, err := getRefreshResponse(ctx, cliClient, mgmtClient, isOnPrem, clientId, cfg.RefreshToken)
+			if err != nil {
+				err2 := config.ClearNucleusAuthFile()
+				if err2 != nil {
+					fmt.Println("unable to remove nucleus auth file", err2)
+				}
+				fmt.Println(err)
+				return "", fmt.Errorf("unable to refresh token, please try logging in again.")
+			}
+			var newRefreshToken string
+			if res.RefreshToken != "" {
+				newRefreshToken = res.RefreshToken
+			} else {
+				newRefreshToken = cfg.RefreshToken
+			}
+			err = config.SetNucleusAuthFile(config.NucleusAuthConfig{
+				AccessToken:  res.AccessToken,
+				RefreshToken: newRefreshToken,
+				IdToken:      res.IdToken,
+			})
+			if err != nil {
+				fmt.Println("Successfully refreshed token, but was unable to update nucleus auth file")
+				return "", err
+			}
+			return res.AccessToken, authClient.ValidateToken(ctx, res.AccessToken)
+		}
+	}
+	return cfg.AccessToken, authClient.ValidateToken(ctx, cfg.AccessToken)
+}
+
+type refreshResponse struct {
+	AccessToken  string
+	RefreshToken string
+	IdToken      string
+}
+
+func getRefreshResponse(
+	ctx context.Context,
+	cliClient pb.CliServiceClient,
+	mgmtClient mgmtv1alpha1.MgmtServiceClient,
+	isOnPrem bool,
+	clientId string,
+	refreshToken string,
+) (*refreshResponse, error) {
+	if isOnPrem {
+		reply, err := mgmtClient.GetNewAccessToken(ctx, &mgmtv1alpha1.GetNewAccessTokenRequest{
+			ClientId:     clientId,
+			RefreshToken: refreshToken,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return &refreshResponse{
+			AccessToken:  reply.AccessToken,
+			RefreshToken: reply.RefreshToken,
+			IdToken:      reply.IdToken,
+		}, nil
+	}
+	reply, err := cliClient.RefreshAccessToken(ctx, &pb.RefreshAccessTokenRequest{
+		RefreshToken: refreshToken,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &refreshResponse{
+		AccessToken:  reply.AccessToken,
+		RefreshToken: reply.RefreshToken,
+		IdToken:      reply.IdToken,
+	}, nil
 }
