@@ -10,9 +10,8 @@ import (
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 var logsCommand = &cobra.Command{
@@ -59,14 +58,23 @@ var logsCommand = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		follow, err := cmd.Flags().GetBool("follow")
+		if err != nil {
+			return err
+		}
 
+		shouldTail := tail || follow
+		if onPrem {
+			return getOnPremLogs(environmentType, serviceName, window, shouldTail)
+		}
+
+		// managed
 		if window != "" && tail {
 			fmt.Println("Ignoring provided window to tail")
 		}
 		if window == "" {
 			window = "15min"
 		}
-
 		if tail {
 			return liveTailLogs(environmentType, serviceName)
 		} else if allowedWindowValues(window) {
@@ -78,22 +86,53 @@ var logsCommand = &cobra.Command{
 	},
 }
 
+func getOnPremLogs(envType string, serviceName string, window string, shouldTail bool) error {
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), true)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
+	logStream, err := cliClient.GetServiceLogs(context.Background(), &svcmgmtv1alpha1.GetServiceLogsRequest{
+		EnvironmentType: envType,
+		ServiceName:     serviceName,
+		Window:          getLogWindow(window),
+		ShouldTail:      shouldTail,
+	})
+	if err != nil {
+		return err
+	}
+	for {
+		msg, err := logStream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			err2 := logStream.CloseSend()
+			if err2 != nil {
+				fmt.Println(err2)
+			}
+			return err
+		}
+		fmt.Println(msg.Log)
+	}
+	return logStream.CloseSend()
+}
+
 func staticLogs(environmentType string, serviceName string, window string) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), false)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
 	cliClient := pb.NewCliServiceClient(conn)
-	var trailer metadata.MD
 	logs, err := cliClient.Logs(context.Background(), &pb.LogsRequest{
 		EnvironmentType: environmentType,
 		ServiceName:     serviceName,
 		Window:          window,
-	},
-		grpc.Trailer(&trailer),
-	)
+	})
 	if err != nil && err != io.EOF {
 		return err
 	}
@@ -110,8 +149,21 @@ func staticLogs(environmentType string, serviceName string, window string) error
 	return nil
 }
 
+func getLogWindow(window string) svcmgmtv1alpha1.LogWindow {
+	switch window {
+	case "15m":
+		return svcmgmtv1alpha1.LogWindow_LOG_WINDOW_FIFTEEN_MIN
+	case "1h":
+		return svcmgmtv1alpha1.LogWindow_LOG_WINDOW_ONE_HOUR
+	case "1d":
+		return svcmgmtv1alpha1.LogWindow_LOG_WINDOW_ONE_DAY
+	default:
+		return svcmgmtv1alpha1.LogWindow_LOG_WINDOW_NO_TIME_UNSPECIFIED
+	}
+}
+
 func liveTailLogs(environmentType string, serviceName string) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), false)
 	if err != nil {
 		return err
 	}
@@ -119,14 +171,12 @@ func liveTailLogs(environmentType string, serviceName string) error {
 	defer conn.Close()
 
 	var timestamp string
-
 	cliClient := pb.NewCliServiceClient(conn)
-	var trailer metadata.MD
 	stream, err := cliClient.TailLogs(context.Background(), &pb.TailLogsRequest{
 		EnvironmentType: environmentType,
 		ServiceName:     serviceName,
 		Timestamp:       timestamp,
-	}, grpc.Trailer(&trailer))
+	})
 	if err != nil {
 		return err
 	}
@@ -154,6 +204,7 @@ func liveTailLogs(environmentType string, serviceName string) error {
 }
 
 func allowedWindowValues(window string) bool {
+
 	switch window {
 	case
 		"15min",
@@ -168,6 +219,7 @@ func init() {
 	rootCmd.AddCommand(logsCommand)
 	logsCommand.Flags().StringP("env", "e", "prod", "set the nucleus environment")
 	logsCommand.Flags().BoolP("tail", "t", false, "live log tail")
+	logsCommand.Flags().BoolP("follow", "f", false, "live log tail")
 	logsCommand.Flags().StringP("service", "s", "", "service name")
 	logsCommand.Flags().StringP("window", "w", "", "logging window allowed values: [15min, 1h, 1d]")
 }

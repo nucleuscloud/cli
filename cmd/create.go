@@ -13,6 +13,7 @@ import (
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/procfile"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/spf13/cobra"
 )
 
@@ -100,24 +101,35 @@ var createServiceCmd = &cobra.Command{
 				return err
 			}
 		} else if svcCommands.ServiceType != "python" {
-			conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+			conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
 			if err != nil {
 				return err
 			}
 			defer conn.Close()
 			//retrieve the default build and start commands based on runtime
-			cliClient := pb.NewCliServiceClient(conn)
-			defaultBuildStartCommands, err := cliClient.BuildStartCommands(context.Background(), &pb.DefaultBuildStartCommandsRequest{
-				Runtime: svcCommands.ServiceType,
-			},
-				utils.GetGrpcTrailer(),
-			)
-			if err != nil {
-				return err
+			var bc string
+			var sc string
+			if onPrem {
+				cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
+				defaultBuildStartCommands, err := cliClient.GetDefaultBuildStartCommands(context.Background(), &svcmgmtv1alpha1.GetDefaultBuildStartCommandsRequest{
+					Runtime: svcCommands.ServiceType,
+				})
+				if err != nil {
+					return err
+				}
+				bc = defaultBuildStartCommands.BuildCommand
+				sc = defaultBuildStartCommands.StartCommand
+			} else {
+				cliClient := pb.NewCliServiceClient(conn)
+				defaultBuildStartCommands, err := cliClient.BuildStartCommands(context.Background(), &pb.DefaultBuildStartCommandsRequest{
+					Runtime: svcCommands.ServiceType,
+				})
+				if err != nil {
+					return err
+				}
+				bc = defaultBuildStartCommands.BuildCommand
+				sc = defaultBuildStartCommands.StartCommand
 			}
-
-			bc := defaultBuildStartCommands.BuildCommand
-			sc := defaultBuildStartCommands.StartCommand
 
 			err = runtimeQuestions(&svcCommands, bc, sc)
 			if err != nil {

@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,7 @@ import (
 
 	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
 	"github.com/spf13/cobra"
 )
 
@@ -54,13 +55,20 @@ func init() {
 }
 
 func removeUser(email string) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
 	fmt.Println("Removing user...")
+	if onPrem {
+		cliClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
+		_, err = cliClient.RemoveUserFromAccount(context.Background(), &mgmtv1alpha1.RemoveUserFromAccountRequest{
+			Email: email,
+		})
+		return err
+	}
 	cliClient := pb.NewCliServiceClient(conn)
 	_, err = cliClient.RemoveUserFromAccount(context.Background(), &pb.RemoveUserFromAccountRequest{
 		Email: email,

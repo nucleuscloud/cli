@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -20,11 +19,10 @@ import (
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/secrets"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/spf13/cobra"
 	"github.com/vbauerster/mpb/v7"
 	"github.com/vbauerster/mpb/v7/decor"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 // deployCmd represents the deploy command
@@ -99,13 +97,14 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
-		conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+		conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
 
 		cliClient := pb.NewCliServiceClient(conn)
+		svcClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
 
 		ctx := context.Background()
 		req := deployRequest{
@@ -120,13 +119,14 @@ var deployCmd = &cobra.Command{
 			envVars:          deployConfig.Spec.Vars,
 			envSecrets:       envSecrets,
 		}
-		err = deploy(ctx, cliClient, req)
+		err = deploy(ctx, cliClient, svcClient, req)
 		if err != nil {
 			return err
 		}
 		return setAuthzPolicy(
 			ctx,
 			cliClient,
+			svcClient,
 			environmentType,
 			serviceName,
 			deployConfig.Spec.AllowedServices,
@@ -138,11 +138,24 @@ var deployCmd = &cobra.Command{
 func setAuthzPolicy(
 	ctx context.Context,
 	cliClient pb.CliServiceClient,
+	svcClient svcmgmtv1alpha1.ServiceMgmtServiceClient,
 	environmentType string,
 	serviceName string,
 	allowList []string,
 	denyList []string,
 ) error {
+	if onPrem {
+		_, err := svcClient.SetServiceMtlsPolicy(ctx, &svcmgmtv1alpha1.SetServiceMtlsPolicyRequest{
+			EnvironmentType:    environmentType,
+			ServiceName:        serviceName,
+			AllowedServices:    allowList,
+			DisallowedServices: denyList,
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 	_, err := cliClient.SetServiceMtlsPolicy(ctx, &pb.SetServiceMtlsPolicyRequest{
 		EnvironmentType:    environmentType,
 		ServiceName:        serviceName,
@@ -168,28 +181,25 @@ type deployRequest struct {
 	envSecrets       map[string]string
 }
 
-func deploy(ctx context.Context, cliClient pb.CliServiceClient, req deployRequest) error {
+func deploy(
+	ctx context.Context,
+	cliClient pb.CliServiceClient,
+	svcClient svcmgmtv1alpha1.ServiceMgmtServiceClient,
+	req deployRequest,
+) error {
 	fmt.Printf("\nGetting deployment ready: \n↪Service: %s \n↪Environment: %s \n↪Project Directory: %s \n\n", req.serviceName, req.environmentType, req.folderPath)
 
 	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
-	s1.Start()
 
-	// see https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
-	var trailer metadata.MD
-	_, err := cliClient.CreateEnvironment(ctx, &pb.CreateEnvironmentRequest{
-		EnvironmentType: req.environmentType,
-	},
-		grpc.Trailer(&trailer),
-	)
-	if err != nil {
-		return err
-	}
-	s1.Stop()
-
-	if verbose {
-		if len(trailer["x-request-id"]) == 1 {
-			fmt.Printf("request id: %s\n", trailer["x-request-id"][0])
+	if !onPrem {
+		s1.Start()
+		_, err := cliClient.CreateEnvironment(ctx, &pb.CreateEnvironmentRequest{
+			EnvironmentType: req.environmentType,
+		})
+		if err != nil {
+			return err
 		}
+		s1.Stop()
 	}
 
 	deployRequest := pb.DeployRequest{
@@ -200,15 +210,24 @@ func deploy(ctx context.Context, cliClient pb.CliServiceClient, req deployReques
 		Vars:            req.envVars,
 		Secrets:         req.envSecrets,
 	}
+	deployRequest2 := svcmgmtv1alpha1.DeployServiceRequest{
+		EnvironmentType: req.environmentType,
+		ServiceName:     req.serviceName,
+		ServiceType:     req.serviceType,
+		IsPrivate:       req.isPrivateService,
+		EnvVars:         req.envVars,
+		Secrets:         req.envSecrets,
+	}
 
 	if req.serviceType == "docker" {
 		if req.image == "" {
 			return fmt.Errorf("must provide image if service type is 'docker'")
 		}
 		deployRequest.Image = req.image
+		deployRequest2.DockerImage = req.image
 	} else {
 		s1.Start()
-		uploadKey, err := bundleAndUploadCode(ctx, cliClient, req.folderPath, req.environmentType, req.serviceName, &trailer)
+		uploadKey, err := bundleAndUploadCode(ctx, cliClient, svcClient, req.folderPath, req.environmentType, req.serviceName)
 		if err != nil {
 			s1.Stop()
 			return err
@@ -216,62 +235,121 @@ func deploy(ctx context.Context, cliClient pb.CliServiceClient, req deployReques
 		deployRequest.URL = uploadKey
 		deployRequest.BuildCommand = req.buildCommand
 		deployRequest.StartCommand = req.startCommand
+
+		deployRequest2.UploadedCodeUri = uploadKey
+		deployRequest2.BuildCommand = req.buildCommand
+		deployRequest2.StartCommand = req.startCommand
 	}
 
-	stream, err := cliClient.Deploy(ctx, &deployRequest)
-	if err != nil {
+	if onPrem {
+		stream, err := svcClient.DeployService(ctx, &deployRequest2)
+		if err != nil {
+			s1.Stop()
+			return err
+		}
 		s1.Stop()
-		return err
-	}
-	s1.Stop()
-	p := mpb.New(mpb.WithWidth(64))
-	bar := getProgressBar(p, "Deploying service...", 0)
-	var currCompleted int64 = 0
-	for {
-		update, err := stream.Recv()
-		if err == io.EOF {
-			bar.Abort(true)
-			break
-		} else if err != nil {
-			bar.Abort(true)
-			log.Fatalf("server side error: %s", err.Error())
-		}
-
-		deployUpdate := update.GetDeploymentUpdate()
-		if deployUpdate != nil {
-			if deployUpdate.GetIsFailure() {
+		p := mpb.New(mpb.WithWidth(64))
+		bar := getProgressBar(p, "Deploying service...", 0)
+		var currCompleted int64 = 0
+		for {
+			update, err := stream.Recv()
+			if err == io.EOF {
 				bar.Abort(true)
-				return fmt.Errorf(deployUpdate.GetMessage())
+				break
+			} else if err != nil {
+				bar.Abort(true)
+				log.Fatalf("server side error: %s", err.Error())
 			}
-			taskCount := deployUpdate.GetTaskStatusCount()
-			totalTasks := getTotalTasks(taskCount)
-			if taskCount != nil && totalTasks > 0 {
-				if bar.Current() == 0 {
-					bar.SetTotal(int64(totalTasks), false)
+
+			deployUpdate := update.GetDeploymentUpdate()
+			if deployUpdate != nil {
+				if deployUpdate.GetIsFailure() {
+					bar.Abort(true)
+					return fmt.Errorf(deployUpdate.GetMessage())
 				}
-				if taskCount.GetCompleted() != currCompleted {
-					bar.IncrInt64(taskCount.GetCompleted() - currCompleted)
-					currCompleted = taskCount.GetCompleted()
+				taskCount := deployUpdate.GetTaskStatusCount()
+				totalTasks := getTotalTasks2(taskCount)
+				if taskCount != nil && totalTasks > 0 {
+					if bar.Current() == 0 {
+						bar.SetTotal(int64(totalTasks), false)
+					}
+					if taskCount.GetCompleted() != currCompleted {
+						bar.IncrInt64(taskCount.GetCompleted() - currCompleted)
+						currCompleted = taskCount.GetCompleted()
+					}
 				}
+				continue
 			}
-			continue
+			// should have to do a final increment because once all 4 tasks are completed we just return the url
+			bar.Increment()
+			// For some reason the bar never completes without this call.
+			bar.EnableTriggerComplete()
+			p.Wait()
+
+			servUrl := update.GetServiceUrl()
+			if servUrl == "" {
+				fmt.Printf("Unable to retrieve URL..please try again")
+			} else {
+				fmt.Printf("\nService is deployed at: %s\n", servUrl)
+			}
+			break
 		}
-		// should have to do a final increment because once all 4 tasks are completed we just return the url
-		bar.Increment()
-		// For some reason the bar never completes without this call.
-		bar.EnableTriggerComplete()
 		p.Wait()
-
-		servUrl := update.GetURL()
-		if servUrl == "" {
-			fmt.Printf("Unable to retrieve URL..please try again")
-		} else {
-			fmt.Printf("\nService is deployed at: %s\n", servUrl)
+	} else {
+		stream, err := cliClient.Deploy(ctx, &deployRequest)
+		if err != nil {
+			s1.Stop()
+			return err
 		}
-		break
-	}
+		s1.Stop()
+		p := mpb.New(mpb.WithWidth(64))
+		bar := getProgressBar(p, "Deploying service...", 0)
+		var currCompleted int64 = 0
+		for {
+			update, err := stream.Recv()
+			if err == io.EOF {
+				bar.Abort(true)
+				break
+			} else if err != nil {
+				bar.Abort(true)
+				log.Fatalf("server side error: %s", err.Error())
+			}
 
-	p.Wait()
+			deployUpdate := update.GetDeploymentUpdate()
+			if deployUpdate != nil {
+				if deployUpdate.GetIsFailure() {
+					bar.Abort(true)
+					return fmt.Errorf(deployUpdate.GetMessage())
+				}
+				taskCount := deployUpdate.GetTaskStatusCount()
+				totalTasks := getTotalTasks(taskCount)
+				if taskCount != nil && totalTasks > 0 {
+					if bar.Current() == 0 {
+						bar.SetTotal(int64(totalTasks), false)
+					}
+					if taskCount.GetCompleted() != currCompleted {
+						bar.IncrInt64(taskCount.GetCompleted() - currCompleted)
+						currCompleted = taskCount.GetCompleted()
+					}
+				}
+				continue
+			}
+			// should have to do a final increment because once all 4 tasks are completed we just return the url
+			bar.Increment()
+			// For some reason the bar never completes without this call.
+			bar.EnableTriggerComplete()
+			p.Wait()
+
+			servUrl := update.GetURL()
+			if servUrl == "" {
+				fmt.Printf("Unable to retrieve URL..please try again")
+			} else {
+				fmt.Printf("\nService is deployed at: %s\n", servUrl)
+			}
+			break
+		}
+		p.Wait()
+	}
 
 	return nil
 }
@@ -283,8 +361,22 @@ func getTotalTasks(taskCount *pb.DeploymentTaskStatusCount) int {
 	return int(taskCount.Completed) + int(taskCount.Failed) + int(taskCount.Incomplete) + int(taskCount.Skipped)
 }
 
-func bundleAndUploadCode(ctx context.Context, cliClient pb.CliServiceClient, folderPath string, environmentType string, serviceName string, trailer *metadata.MD) (string, error) {
-	fd, err := ioutil.TempFile("", "nucleus-cli-")
+func getTotalTasks2(taskCount *svcmgmtv1alpha1.DeployServiceTaskStatusCount) int {
+	if taskCount == nil {
+		return 0
+	}
+	return int(taskCount.Completed) + int(taskCount.Failed) + int(taskCount.Incomplete) + int(taskCount.Skipped)
+}
+
+func bundleAndUploadCode(
+	ctx context.Context,
+	cliClient pb.CliServiceClient,
+	svcClient svcmgmtv1alpha1.ServiceMgmtServiceClient,
+	folderPath string,
+	environmentType string,
+	serviceName string,
+) (string, error) {
+	fd, err := os.CreateTemp("", "nucleus-cli-")
 	if err != nil {
 		return "", err
 	}
@@ -319,9 +411,7 @@ func bundleAndUploadCode(ctx context.Context, cliClient pb.CliServiceClient, fol
 	signedURL, err := cliClient.GetServiceUploadUrl(ctx, &pb.GetServiceUploadUrlRequest{
 		EnvironmentType: environmentType,
 		ServiceName:     serviceName,
-	},
-		grpc.Trailer(trailer),
-	)
+	})
 	if err != nil {
 		return "", err
 	}

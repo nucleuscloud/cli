@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/auth"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
 	"github.com/spf13/cobra"
 	"github.com/toqueteos/webbrowser"
 )
@@ -60,13 +60,13 @@ var auth0Cmd = &cobra.Command{
 
 		defer conn.Close()
 
-		nucleusClient := pb.NewCliServiceClient(conn)
+		nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
 
 		if verbose {
 			fmt.Println("Attempting to register user in Nucleus system...")
 		}
 
-		_, err = nucleusClient.ResolveUser(context.Background(), &pb.ResolveUserRequest{}, utils.GetGrpcTrailer())
+		_, err = nucleusClient.SetUser(context.Background(), &mgmtv1alpha1.SetUserRequest{}, utils.GetGrpcTrailer())
 		if err != nil {
 			return err
 		}

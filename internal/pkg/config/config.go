@@ -1,14 +1,10 @@
 package config
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
-	"github.com/nucleuscloud/cli/internal/pkg/auth"
 	"gopkg.in/yaml.v2"
 )
 
@@ -54,8 +50,7 @@ func DoesNucleusConfigExist() bool {
 
 // Retrieves the nucleus config defined by the user
 func GetNucleusConfig() (*NucleusConfig, error) {
-	// TODO(marco): make it so that parent dirs are recursively searched
-	yamlFile, err := ioutil.ReadFile(nucleusConfigPath)
+	yamlFile, err := os.ReadFile(nucleusConfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +72,7 @@ func SetNucleusConfig(config *NucleusConfig) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(nucleusConfigPath, yamlData, 0644)
+	err = os.WriteFile(nucleusConfigPath, yamlData, 0644)
 	if err != nil {
 		return fmt.Errorf("Unable to write data into the config file")
 	}
@@ -117,7 +112,7 @@ func GetNucleusAuthConfig() (*NucleusAuthConfig, error) {
 
 	fileName := dirPath + "/auth.yaml"
 
-	file, err := ioutil.ReadFile(fileName)
+	file, err := os.ReadFile(fileName)
 	if err != nil {
 		fmt.Println("Auth file doesnt exist. User has not logged in.\n", err)
 		return nil, ErrMustLogin
@@ -180,46 +175,4 @@ func ClearNucleusAuthFile() error {
 		return err
 	}
 	return nil
-}
-
-// Retrieves the access token from the config and validates it.
-func GetValidAccessTokenFromConfig(authClient auth.AuthClientInterface, nucleusClient pb.CliServiceClient) (string, error) {
-	config, err := GetNucleusAuthConfig()
-	if err != nil {
-		return "", err
-	}
-	ctx := context.Background()
-	err = authClient.ValidateToken(ctx, config.AccessToken)
-	if err != nil {
-		fmt.Println("Access token is no longer valid. Attempting to refresh...")
-		if config.RefreshToken != "" {
-			reply, err := nucleusClient.RefreshAccessToken(ctx, &pb.RefreshAccessTokenRequest{
-				RefreshToken: config.RefreshToken,
-			})
-			if err != nil {
-				err = ClearNucleusAuthFile()
-				if err != nil {
-					return "", err
-				}
-				return "", fmt.Errorf("unable to refresh token, please try logging in again.")
-			}
-			var newRefreshToken string
-			if reply.RefreshToken != "" {
-				newRefreshToken = reply.RefreshToken
-			} else {
-				newRefreshToken = config.RefreshToken
-			}
-			err = SetNucleusAuthFile(NucleusAuthConfig{
-				AccessToken:  reply.AccessToken,
-				RefreshToken: newRefreshToken,
-				IdToken:      reply.IdToken,
-			})
-			if err != nil {
-				fmt.Println("Successfully refreshed token, but was unable to update nucleus auth file")
-				return "", err
-			}
-			return reply.AccessToken, authClient.ValidateToken(ctx, reply.AccessToken)
-		}
-	}
-	return config.AccessToken, authClient.ValidateToken(ctx, config.AccessToken)
 }
