@@ -38,15 +38,6 @@ var envsLinkCmd = &cobra.Command{
 			return err
 		}
 
-		attachAll := false
-
-		if len(environmentTypes) == 0 {
-			attachAll, err = cmd.Flags().GetBool("all")
-			if err != nil {
-				return err
-			}
-		}
-
 		if len(args) == 0 {
 			return fmt.Errorf("must provide admission api url as argument")
 		}
@@ -57,7 +48,7 @@ var envsLinkCmd = &cobra.Command{
 			return err
 		}
 
-		if attachAll {
+		if len(environmentTypes) == 0 {
 			environmentTypes = utils.ValidEnvTypes
 		}
 
@@ -86,7 +77,6 @@ func init() {
 
 	envsLinkCmd.Flags().StringArrayP("env", "e", []string{}, "set the nucleus environment")
 	envsLinkCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
-	envsLinkCmd.Flags().BoolP("all", "", true, "add the admission api to all. only utilized if no env types are provided")
 }
 
 func linkAdmissionApi(environmentTypes []string, admissionApiUrl string) error {
