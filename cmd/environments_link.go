@@ -31,7 +31,7 @@ import (
 var envsLinkCmd = &cobra.Command{
 	Use:   "link",
 	Short: "Links an admission api to one or all environments",
-	Long:  "Call this command to list out the available services for a specific environment type",
+	Long:  "Call this command to link an admission api to one or all environments. Will default to all if no env type is provided.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		environmentTypes, err := cmd.Flags().GetStringArray("env")
 		if err != nil {
@@ -75,7 +75,7 @@ var envsLinkCmd = &cobra.Command{
 func init() {
 	environmentsCmd.AddCommand(envsLinkCmd)
 
-	envsLinkCmd.Flags().StringArrayP("env", "e", []string{}, "set the nucleus environment")
+	envsLinkCmd.Flags().StringArrayP("env", "e", []string{}, "set the nucleus environment. may provide multiple times to apply to one or more environments")
 	envsLinkCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
 }
 
