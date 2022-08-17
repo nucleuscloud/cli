@@ -44,7 +44,7 @@ var servicesListCmd = &cobra.Command{
 			return err
 		}
 
-		if utils.IsValidEnvironmentType(environmentType) {
+		if !utils.IsValidEnvironmentType(environmentType) {
 			return errors.New("invalid value for environment")
 		}
 

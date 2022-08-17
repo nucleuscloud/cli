@@ -13,6 +13,12 @@ import (
 var (
 	ErrInvalidServiceName = fmt.Errorf("invalid name")
 	validNameMatcher      = regexp.MustCompile("^[a-z][a-z1-9-]*$").MatchString
+
+	ValidEnvTypes = []string{
+		"dev",
+		"stage",
+		"prod",
+	}
 )
 
 // Auth Vars
@@ -39,7 +45,14 @@ func GetGrpcTrailer() grpc.CallOption {
 }
 
 func IsValidEnvironmentType(environmentType string) bool {
-	return environmentType != "dev" && environmentType != "stage" && environmentType != "prod"
+	isValid := false
+	for _, envType := range ValidEnvTypes {
+		if envType == environmentType {
+			isValid = true
+			break
+		}
+	}
+	return isValid
 }
 
 func PromptToProceed(cmd *cobra.Command, environmentType string, yesPromptFlagName string) error {
