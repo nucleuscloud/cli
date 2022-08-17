@@ -40,7 +40,7 @@ var servicesStopCmd = &cobra.Command{
 			return err
 		}
 
-		if utils.IsValidEnvironmentType(environmentType) {
+		if !utils.IsValidEnvironmentType(environmentType) {
 			return fmt.Errorf("invalid value for environment")
 		}
 
