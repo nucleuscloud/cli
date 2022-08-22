@@ -50,11 +50,17 @@ func GetEnv() string {
 	return val
 }
 
-func getApiUrl() string {
+func getApiUrl(isOnPrem bool) string {
 	if isDevEnv() {
 		return "localhost:50051"
 	} else if isStageEnv() {
+		if isOnPrem {
+			return "mgmt-api-nucleus.svcs.stage.usenucleus.cloud:443"
+		}
 		return "nucleus-api-nucleus-api.svcs.stage.usenucleus.cloud:443"
+	}
+	if isOnPrem {
+		return "mgmt-api-nucleus.svcs.prod.usenucleus.cloud:443"
 	}
 	return "nucleus-api-nucleus-api.svcs.prod.usenucleus.cloud:443"
 }
@@ -81,21 +87,21 @@ func getTransportCreds() (credentials.TransportCredentials, error) {
 	return creds, nil
 }
 
-func newAnonymousConnection() (*grpc.ClientConn, error) {
+func NewAnonymousConnection(isOnPrem bool) (*grpc.ClientConn, error) {
 	creds, err := getTransportCreds()
 	if err != nil {
 		return nil, err
 	}
-	return grpc.Dial(getApiUrl(), grpc.WithTransportCredentials(creds))
+	return grpc.Dial(getApiUrl(isOnPrem), grpc.WithTransportCredentials(creds))
 }
 
-func NewAuthenticatedConnection(accessToken string) (*grpc.ClientConn, error) {
+func NewAuthenticatedConnection(accessToken string, isOnPrem bool) (*grpc.ClientConn, error) {
 	creds, err := getTransportCreds()
 	if err != nil {
 		return nil, err
 	}
 	return grpc.Dial(
-		getApiUrl(),
+		getApiUrl(isOnPrem),
 		grpc.WithTransportCredentials(creds),
 		grpc.WithPerRPCCredentials(&loginCreds{
 			AccessToken: accessToken,
@@ -109,40 +115,38 @@ type ApiConnectionConfig struct {
 	ApiAudience  string
 }
 
-func newApiConnectionByEnvManaged(envType string) (*grpc.ClientConn, error) {
+func GetApiConnectionConfigByEnv(envType string) *ApiConnectionConfig {
 	switch envType {
 	case "prod", "":
-		return NewApiConnection(ApiConnectionConfig{
+		return &ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0ProdBaseUrl,
 			AuthClientId: auth.Auth0ProdClientId,
 			ApiAudience:  auth.ApiAudience,
-		}, false)
+		}
 	case "dev", "stage":
-		return NewApiConnection(ApiConnectionConfig{
+		return &ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0StageBaseUrl,
 			AuthClientId: auth.Auth0StageClientId,
 			ApiAudience:  auth.ApiAudience,
-		}, false)
+		}
 	}
-	return nil, fmt.Errorf("must provide valid env type")
+	return nil
+}
+
+func newApiConnectionByEnvManaged(envType string) (*grpc.ClientConn, error) {
+	cfg := GetApiConnectionConfigByEnv(envType)
+	if cfg == nil {
+		return nil, fmt.Errorf("must provide valid env type")
+	}
+	return NewApiConnection(cfg, false)
 }
 
 func newApiConnectionByEnvOnPrem(envType string) (*grpc.ClientConn, error) {
-	switch envType {
-	case "prod", "":
-		return NewApiConnection(ApiConnectionConfig{
-			AuthBaseUrl:  auth.Auth0ProdBaseUrl,
-			AuthClientId: auth.Auth0ProdClientId,
-			ApiAudience:  auth.ApiAudience,
-		}, true)
-	case "dev", "stage":
-		return NewApiConnection(ApiConnectionConfig{
-			AuthBaseUrl:  auth.Auth0StageBaseUrl,
-			AuthClientId: auth.Auth0StageClientId,
-			ApiAudience:  auth.ApiAudience,
-		}, true)
+	cfg := GetApiConnectionConfigByEnv(envType)
+	if cfg == nil {
+		return nil, fmt.Errorf("must provide valid env type")
 	}
-	return nil, fmt.Errorf("must provide valid env type")
+	return NewApiConnection(cfg, true)
 }
 
 func NewApiConnectionByEnv(envType string, isOnPrem bool) (*grpc.ClientConn, error) {
@@ -152,19 +156,19 @@ func NewApiConnectionByEnv(envType string, isOnPrem bool) (*grpc.ClientConn, err
 	return newApiConnectionByEnvManaged(envType)
 }
 
-func NewApiConnection(cfg ApiConnectionConfig, isOnPrem bool) (*grpc.ClientConn, error) {
+func NewApiConnection(cfg *ApiConnectionConfig, isOnPrem bool) (*grpc.ClientConn, error) {
 	if isOnPrem {
-		return NewApiConnectionOnPrem(cfg)
+		return NewApiConnectionOnPrem(cfg, isOnPrem)
 	}
-	return NewApiConnectionManaged(cfg)
+	return NewApiConnectionManaged(cfg, isOnPrem)
 }
 
-func NewApiConnectionOnPrem(cfg ApiConnectionConfig) (*grpc.ClientConn, error) {
+func NewApiConnectionOnPrem(cfg *ApiConnectionConfig, isOnPrem bool) (*grpc.ClientConn, error) {
 	authClient, err := auth.NewAuthClient(cfg.AuthBaseUrl, cfg.AuthClientId, cfg.ApiAudience)
 	if err != nil {
 		return nil, err
 	}
-	unAuthConn, err := newAnonymousConnection()
+	unAuthConn, err := NewAnonymousConnection(isOnPrem)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +179,7 @@ func NewApiConnectionOnPrem(cfg ApiConnectionConfig) (*grpc.ClientConn, error) {
 		return nil, err
 	}
 
-	conn, err := NewAuthenticatedConnection(accessToken)
+	conn, err := NewAuthenticatedConnection(accessToken, isOnPrem)
 	if err != nil {
 		return nil, err
 	}
@@ -183,13 +187,13 @@ func NewApiConnectionOnPrem(cfg ApiConnectionConfig) (*grpc.ClientConn, error) {
 }
 
 // Returns a GRPC client that has been authenticated for use with Nucleus API
-func NewApiConnectionManaged(cfg ApiConnectionConfig) (*grpc.ClientConn, error) {
+func NewApiConnectionManaged(cfg *ApiConnectionConfig, isOnPrem bool) (*grpc.ClientConn, error) {
 	//refactor these clients into a utils file later
 	authClient, err := auth.NewAuthClient(cfg.AuthBaseUrl, cfg.AuthClientId, cfg.ApiAudience)
 	if err != nil {
 		return nil, err
 	}
-	unAuthConn, err := newAnonymousConnection()
+	unAuthConn, err := NewAnonymousConnection(isOnPrem)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +204,7 @@ func NewApiConnectionManaged(cfg ApiConnectionConfig) (*grpc.ClientConn, error) 
 		return nil, err
 	}
 
-	conn, err := NewAuthenticatedConnection(accessToken)
+	conn, err := NewAuthenticatedConnection(accessToken, isOnPrem)
 	if err != nil {
 		return nil, err
 	}

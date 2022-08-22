@@ -24,13 +24,6 @@ make build
 ```
 This will output to `bin/nucleus`
 
-To build under multiple targets and architectures:
-```
-make build-release
-```
-This is made to be run under CI, but if running on a Mac, `sha256sum` must be installed.
-This can be done with `brew install coreutils`.
-
 ## Releasing
 To release a new version of the CLI for consumption, a new git tag must be created.
 
