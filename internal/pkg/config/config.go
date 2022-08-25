@@ -15,17 +15,28 @@ type NucleusConfig struct {
 
 type NucleusSecrets = map[string]map[string]string
 
+type ResourceRequirements struct {
+	Minimum ResourceList `yaml:"minimum,omitempty"`
+	Maximum ResourceList `yaml:"maximum,omitempty"`
+}
+
+type ResourceList struct {
+	Cpu    string `yaml:"cpu,omitempty"`
+	Memory string `yaml:"memory,omitempty"`
+}
+
 type SpecStruct struct {
-	ServiceName        string            `yaml:"serviceName"`
-	ServiceRunTime     string            `yaml:"serviceRuntime"`
-	Image              string            `yaml:"image,omitempty"`
-	BuildCommand       string            `yaml:"buildCommand,omitempty"`
-	StartCommand       string            `yaml:"startCommand,omitempty"`
-	IsPrivate          bool              `yaml:"isPrivate"`
-	Vars               map[string]string `yaml:"vars,omitempty"`
-	Secrets            NucleusSecrets    `yaml:"secrets,omitempty"`
-	AllowedServices    []string          `yaml:"allowedServices,omitempty"`
-	DisallowedServices []string          `yaml:"disallowedServices,omitempty"`
+	ServiceName        string               `yaml:"serviceName"`
+	ServiceRunTime     string               `yaml:"serviceRuntime"`
+	Image              string               `yaml:"image,omitempty"`
+	BuildCommand       string               `yaml:"buildCommand,omitempty"`
+	StartCommand       string               `yaml:"startCommand,omitempty"`
+	IsPrivate          bool                 `yaml:"isPrivate"`
+	Vars               map[string]string    `yaml:"vars,omitempty"`
+	Secrets            NucleusSecrets       `yaml:"secrets,omitempty"`
+	AllowedServices    []string             `yaml:"allowedServices,omitempty"`
+	DisallowedServices []string             `yaml:"disallowedServices,omitempty"`
+	Resources          ResourceRequirements `yaml:"resources,omitempty"`
 }
 
 type NucleusAuthConfig struct {

@@ -179,6 +179,7 @@ type deployRequest struct {
 	isPrivateService bool
 	envVars          map[string]string
 	envSecrets       map[string]string
+	resources        config.ResourceRequirements
 }
 
 func deploy(
@@ -217,6 +218,16 @@ func deploy(
 		IsPrivate:       req.isPrivateService,
 		EnvVars:         req.envVars,
 		Secrets:         req.envSecrets,
+		Resources: &svcmgmtv1alpha1.ResourceRequirements{
+			Minimum: &svcmgmtv1alpha1.ResourceList{
+				Cpu:    req.resources.Minimum.Cpu,
+				Memory: req.resources.Minimum.Memory,
+			},
+			Maximum: &svcmgmtv1alpha1.ResourceList{
+				Cpu:    req.resources.Maximum.Cpu,
+				Memory: req.resources.Maximum.Memory,
+			},
+		},
 	}
 
 	if req.serviceType == "docker" {
