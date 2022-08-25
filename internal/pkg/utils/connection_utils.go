@@ -115,18 +115,26 @@ type ApiConnectionConfig struct {
 	ApiAudience  string
 }
 
-func GetApiConnectionConfigByEnv(envType string) *ApiConnectionConfig {
+func GetApiConnectionConfigByEnv(envType string, isOnPrem bool) *ApiConnectionConfig {
 	switch envType {
 	case "prod", "":
+		clientId := auth.Auth0ProdClientId
+		if isOnPrem {
+			clientId = auth.Auth0ProdOnPremClientId
+		}
 		return &ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0ProdBaseUrl,
-			AuthClientId: auth.Auth0ProdClientId,
+			AuthClientId: clientId,
 			ApiAudience:  auth.ApiAudience,
 		}
 	case "dev", "stage":
+		clientId := auth.Auth0StageClientId
+		if isOnPrem {
+			clientId = auth.Auth0StageOnPremClientId
+		}
 		return &ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0StageBaseUrl,
-			AuthClientId: auth.Auth0StageClientId,
+			AuthClientId: clientId,
 			ApiAudience:  auth.ApiAudience,
 		}
 	}
@@ -134,7 +142,7 @@ func GetApiConnectionConfigByEnv(envType string) *ApiConnectionConfig {
 }
 
 func newApiConnectionByEnvManaged(envType string) (*grpc.ClientConn, error) {
-	cfg := GetApiConnectionConfigByEnv(envType)
+	cfg := GetApiConnectionConfigByEnv(envType, false)
 	if cfg == nil {
 		return nil, fmt.Errorf("must provide valid env type")
 	}
@@ -142,7 +150,7 @@ func newApiConnectionByEnvManaged(envType string) (*grpc.ClientConn, error) {
 }
 
 func newApiConnectionByEnvOnPrem(envType string) (*grpc.ClientConn, error) {
-	cfg := GetApiConnectionConfigByEnv(envType)
+	cfg := GetApiConnectionConfigByEnv(envType, true)
 	if cfg == nil {
 		return nil, fmt.Errorf("must provide valid env type")
 	}

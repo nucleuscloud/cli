@@ -16,11 +16,13 @@ import (
 )
 
 const (
-	Auth0StageClientId string = "IHJD9fSlrH4p9WhPYp6uJe0yFNr26ZLy"
-	Auth0StageBaseUrl  string = "https://auth.stage.usenucleus.cloud"
+	Auth0StageClientId       string = "VCsMBtKjUtPhLaIyyjwL7i0tjqlloPa6"
+	Auth0StageOnPremClientId string = "IHJD9fSlrH4p9WhPYp6uJe0yFNr26ZLy"
+	Auth0StageBaseUrl        string = "https://auth.stage.usenucleus.cloud"
 
-	Auth0ProdClientId string = "6zk97YDDj9YplY9jqOaHmKYojhEXquD8"
-	Auth0ProdBaseUrl  string = "https://auth.prod.usenucleus.cloud"
+	Auth0ProdClientId       string = "6zk97YDDj9YplY9jqOaHmKYojhEXquD8"
+	Auth0ProdOnPremClientId string = "7F4aiBQBZXUdy5KrF9IRwfOK0bo8xsZq"
+	Auth0ProdBaseUrl        string = "https://auth.prod.usenucleus.cloud"
 
 	ApiAudience string = "https://api.usenucleus.cloud"
 )
@@ -79,12 +81,18 @@ type authTokenErrorData struct {
 	ErrorDescription string `json:"error_description"`
 }
 
-func NewAuthClientByEnv(envType string) (AuthClientInterface, error) {
+func NewAuthClientByEnv(envType string, isOnPrem bool) (AuthClientInterface, error) {
 	switch envType {
 	case "prod", "":
+		if isOnPrem {
+			return NewAuthClient(Auth0ProdBaseUrl, Auth0ProdOnPremClientId, ApiAudience)
+		}
 		return NewAuthClient(Auth0ProdBaseUrl, Auth0ProdClientId, ApiAudience)
 
 	case "dev", "stage":
+		if isOnPrem {
+			return NewAuthClient(Auth0StageBaseUrl, Auth0StageOnPremClientId, ApiAudience)
+		}
 		return NewAuthClient(Auth0StageBaseUrl, Auth0StageClientId, ApiAudience)
 	}
 	return nil, fmt.Errorf("must provide valid env type")

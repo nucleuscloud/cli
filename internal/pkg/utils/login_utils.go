@@ -28,7 +28,7 @@ var (
 )
 
 func LoginManaged(verbose bool) error {
-	authClient, err := auth.NewAuthClientByEnv(GetEnv())
+	authClient, err := auth.NewAuthClientByEnv(GetEnv(), false)
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func LoginManaged(verbose bool) error {
 
 func LoginOnPrem() error {
 	ctx := context.Background()
-	authClient, err := auth.NewAuthClientByEnv(GetEnv())
+	authClient, err := auth.NewAuthClientByEnv(GetEnv(), true)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func LoginOnPrem() error {
 		if state != response.state {
 			return fmt.Errorf("State received from response was not what was sent")
 		}
-		return getAccessTokenAndSetUser(ctx, response.code, response.state, redirectUri)
+		return getAccessTokenAndSetUser(ctx, response.code, response.state, redirectUri, GetEnv(), true)
 	case err := <-errChan:
 		close(errChan)
 		close(codeChan)
@@ -138,15 +138,18 @@ func getAccessTokenAndSetUser(
 	code string,
 	state string,
 	redirectUri string,
+	envType string,
+	isOnPrem bool,
 ) error {
 	conn, err := NewAnonymousConnection(true)
 	if err != nil {
 		return err
 	}
 
+	apiCfg := GetApiConnectionConfigByEnv(envType, isOnPrem)
 	nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
 	tokenResponse, err := nucleusClient.GetAccessToken(ctx, &mgmtv1alpha1.GetAccessTokenRequest{
-		ClientId:    auth.Auth0StageClientId,
+		ClientId:    apiCfg.AuthClientId,
 		Code:        code,
 		RedirectUri: redirectUri,
 	})
@@ -164,7 +167,7 @@ func getAccessTokenAndSetUser(
 	}
 	conn.Close()
 
-	conn, err = NewAuthenticatedConnection(tokenResponse.AccessToken, true)
+	conn, err = NewAuthenticatedConnection(tokenResponse.AccessToken, isOnPrem)
 	if err != nil {
 		return err
 	}
