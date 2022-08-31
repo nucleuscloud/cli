@@ -95,9 +95,17 @@ func LoginOnPrem() error {
 	http.HandleFunc(callbackPath, func(w http.ResponseWriter, r *http.Request) {
 		resAuthCode := r.URL.Query().Get("code")
 		resAuthState := r.URL.Query().Get("state")
+		errorCode := r.URL.Query().Get("error")
+		errorMsg := r.URL.Query().Get("error_description")
+		if errorCode != "" || errorMsg != "" {
+			fmt.Fprintf(w, "Error Code: %s\nError Description: %s\n", errorCode, errorMsg)
+			errChan <- fmt.Errorf("unabe to finish login flow")
+			return
+		}
 		if resAuthCode == "" || resAuthState == "" {
 			fmt.Fprintf(w, "Missing required query parameters to finish logging in.")
-			errChan <- fmt.Errorf("Received invalid callback response")
+			errChan <- fmt.Errorf("received invalid callback response")
+			return
 		}
 		fmt.Fprintf(w, "Login success! You may now return to your CLI window.")
 		codeChan <- callbackResponse{resAuthCode, resAuthState}
@@ -143,6 +151,7 @@ func getAccessTokenAndSetUser(
 ) error {
 	conn, err := NewAnonymousConnection(true)
 	if err != nil {
+		fmt.Println("failed to create anonymous connection")
 		return err
 	}
 
@@ -154,6 +163,7 @@ func getAccessTokenAndSetUser(
 		RedirectUri: redirectUri,
 	})
 	if err != nil {
+		fmt.Println("failed to get access token from nucleus client")
 		return err
 	}
 
