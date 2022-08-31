@@ -16,7 +16,7 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.8.0
 	github.com/toqueteos/webbrowser v1.2.0
-	github.com/vbauerster/mpb/v7 v7.4.2
+	github.com/vbauerster/mpb/v7 v7.5.2
 	google.golang.org/grpc v1.49.0
 	gopkg.in/yaml.v2 v2.4.0
 )

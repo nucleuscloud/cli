@@ -234,8 +234,8 @@ github.com/subosito/gotenv v1.3.0 h1:mjC+YW8QpAdXibNi+vNWgzmgBH4+5l5dCXv8cNysBLI
 github.com/subosito/gotenv v1.3.0/go.mod h1:YzJjq/33h7nrwdY+iHMhEOEEbW0ovIz0tB6t6PwAXzs=
 github.com/toqueteos/webbrowser v1.2.0 h1:tVP/gpK69Fx+qMJKsLE7TD8LuGWPnEV71wBN9rrstGQ=
 github.com/toqueteos/webbrowser v1.2.0/go.mod h1:XWoZq4cyp9WeUeak7w7LXRUQf1F1ATJMir8RTqb4ayM=
-github.com/vbauerster/mpb/v7 v7.4.2 h1:n917F4d8EWdUKc9c81wFkksyG6P6Mg7IETfKCE1Xqng=
-github.com/vbauerster/mpb/v7 v7.4.2/go.mod h1:UmOiIUI8aPqWXIps0ciik3RKMdzx7+ooQpq+fBcXwBA=
+github.com/vbauerster/mpb/v7 v7.5.2 h1:Ph3JvpBcoIwzIG1QwbUq97KQifrTRbKcMXN9rN5BYAs=
+github.com/vbauerster/mpb/v7 v7.5.2/go.mod h1:UmOiIUI8aPqWXIps0ciik3RKMdzx7+ooQpq+fBcXwBA=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
