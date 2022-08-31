@@ -187,8 +187,8 @@ github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWb
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/nucleuscloud/api v0.0.0-20220802023115-7ff508b37cff h1:lI13Zn2jY4jvciu9bZIGy7kPI8sRQqP9p1CvwLIWMTs=
 github.com/nucleuscloud/api v0.0.0-20220802023115-7ff508b37cff/go.mod h1:LALuVYuOThvvIM3ELrfzFJ0rnMNtSYReGzDdIcekBK8=
-github.com/nucleuscloud/mgmt-api v0.0.13 h1:qdkOCdXZJXfkds8tDYJK2LguKzm5x4LeUPHyfO+XDdY=
-github.com/nucleuscloud/mgmt-api v0.0.13/go.mod h1:nY1WGd076xIb/er1jJw7GqU7cbmsLhu3konDEH88ru0=
+github.com/nucleuscloud/mgmt-api v0.0.15 h1:BS+hD/4fY8CRCWEmeIBDjN3sK+Thxq1bHrNuYipPNU0=
+github.com/nucleuscloud/mgmt-api v0.0.15/go.mod h1:nY1WGd076xIb/er1jJw7GqU7cbmsLhu3konDEH88ru0=
 github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3ve8=
 github.com/pelletier/go-toml v1.9.5/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/pelletier/go-toml/v2 v2.0.1 h1:8e3L2cCQzLFi2CR4g7vGFuFxX7Jl1kKX8gW+iV0GUKU=

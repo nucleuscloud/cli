@@ -10,7 +10,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
 	github.com/nucleuscloud/api v0.0.0-20220802023115-7ff508b37cff
-	github.com/nucleuscloud/mgmt-api v0.0.13
+	github.com/nucleuscloud/mgmt-api v0.0.15
 	github.com/rodaine/table v1.0.1
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
