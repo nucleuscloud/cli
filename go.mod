@@ -7,16 +7,17 @@ require (
 	github.com/auth0/go-jwt-middleware/v2 v2.0.1
 	github.com/briandowns/spinner v1.19.0
 	github.com/fatih/color v1.13.0
+	github.com/google/uuid v1.3.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
 	github.com/nucleuscloud/api v0.0.0-20220802023115-7ff508b37cff
-	github.com/nucleuscloud/mgmt-api v0.0.13-0.20220825164007-acf0054c1ac1
+	github.com/nucleuscloud/mgmt-api v0.0.13
 	github.com/rodaine/table v1.0.1
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.8.0
 	github.com/toqueteos/webbrowser v1.2.0
 	github.com/vbauerster/mpb/v7 v7.4.2
-	google.golang.org/grpc v1.48.0
+	google.golang.org/grpc v1.49.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 

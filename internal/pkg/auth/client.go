@@ -16,11 +16,13 @@ import (
 )
 
 const (
-	Auth0StageClientId string = "STljLBgOpW4fuwyKT30YWBsvnxyVAZkr"
-	Auth0StageBaseUrl  string = "https://auth.stage.usenucleus.cloud"
+	Auth0StageClientId       string = "VCsMBtKjUtPhLaIyyjwL7i0tjqlloPa6"
+	Auth0StageOnPremClientId string = "IHJD9fSlrH4p9WhPYp6uJe0yFNr26ZLy"
+	Auth0StageBaseUrl        string = "https://auth.stage.usenucleus.cloud"
 
-	Auth0ProdClientId string = "6zk97YDDj9YplY9jqOaHmKYojhEXquD8"
-	Auth0ProdBaseUrl  string = "https://auth.prod.usenucleus.cloud"
+	Auth0ProdClientId       string = "6zk97YDDj9YplY9jqOaHmKYojhEXquD8"
+	Auth0ProdOnPremClientId string = "7F4aiBQBZXUdy5KrF9IRwfOK0bo8xsZq"
+	Auth0ProdBaseUrl        string = "https://auth.prod.usenucleus.cloud"
 
 	ApiAudience string = "https://api.usenucleus.cloud"
 )
@@ -36,6 +38,7 @@ type AuthClientInterface interface {
 	PollDeviceAccessToken(deviceResponse *AuthDeviceResponse) (*AuthTokenResponseData, error)
 	ValidateToken(ctx context.Context, accessToken string) error
 	GetLogoutUrl() (string, error)
+	GetAuthorizeUrl(scopes []string, state string, redirectUri string) string
 }
 
 // Implements AuthClientInterface
@@ -43,9 +46,10 @@ type authClient struct {
 	clientId string
 	audience string
 
-	loginUrl  string
-	tokenUrl  string
-	logoutUrl string
+	loginUrl     string
+	authorizeUrl string
+	tokenUrl     string
+	logoutUrl    string
 
 	jwtValidator *validator.Validator
 }
@@ -77,12 +81,18 @@ type authTokenErrorData struct {
 	ErrorDescription string `json:"error_description"`
 }
 
-func NewAuthClientByEnv(envType string) (AuthClientInterface, error) {
+func NewAuthClientByEnv(envType string, isOnPrem bool) (AuthClientInterface, error) {
 	switch envType {
 	case "prod", "":
+		if isOnPrem {
+			return NewAuthClient(Auth0ProdBaseUrl, Auth0ProdOnPremClientId, ApiAudience)
+		}
 		return NewAuthClient(Auth0ProdBaseUrl, Auth0ProdClientId, ApiAudience)
 
 	case "dev", "stage":
+		if isOnPrem {
+			return NewAuthClient(Auth0StageBaseUrl, Auth0StageOnPremClientId, ApiAudience)
+		}
 		return NewAuthClient(Auth0StageBaseUrl, Auth0StageClientId, ApiAudience)
 	}
 	return nil, fmt.Errorf("must provide valid env type")
@@ -115,12 +125,25 @@ func NewAuthClient(tenantUrl, clientId, audience string) (AuthClientInterface, e
 		clientId: clientId,
 		audience: audience,
 
-		loginUrl:  fmt.Sprintf("%s/oauth/device/code", tenantUrl),
-		tokenUrl:  fmt.Sprintf("%s/oauth/token", tenantUrl),
-		logoutUrl: fmt.Sprintf("%s/v2/logout", tenantUrl),
+		loginUrl:     fmt.Sprintf("%s/oauth/device/code", tenantUrl),
+		authorizeUrl: fmt.Sprintf("%s/authorize", tenantUrl),
+		tokenUrl:     fmt.Sprintf("%s/oauth/token", tenantUrl),
+		logoutUrl:    fmt.Sprintf("%s/v2/logout", tenantUrl),
 
 		jwtValidator: jwtValidator,
 	}, nil
+}
+
+func (c *authClient) GetAuthorizeUrl(scopes []string, state string, redirectUri string) string {
+	params := url.Values{}
+	params.Add("audience", c.audience)
+	params.Add("scope", strings.Join(scopes, " "))
+	params.Add("response_type", "code")
+	params.Add("client_id", c.clientId)
+	params.Add("redirect_uri", redirectUri)
+	params.Add("state", state)
+
+	return fmt.Sprintf("%s?%s", c.authorizeUrl, params.Encode())
 }
 
 func (c *authClient) GetDeviceCode(scopes []string) (*AuthDeviceResponse, error) {
