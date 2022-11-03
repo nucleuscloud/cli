@@ -15,7 +15,6 @@ import (
 
 	"github.com/briandowns/spinner"
 	ga "github.com/mhelmich/go-archiver"
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/secrets"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
@@ -176,15 +175,7 @@ func deploy(
 
 	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
 
-	deployRequest := pb.DeployRequest{
-		EnvironmentType: req.environmentType,
-		ServiceName:     req.serviceName,
-		ServiceType:     req.serviceType,
-		IsPrivate:       req.isPrivateService,
-		Vars:            req.envVars,
-		Secrets:         req.envSecrets,
-	}
-	deployRequest2 := svcmgmtv1alpha1.DeployServiceRequest{
+	deployRequest := svcmgmtv1alpha1.DeployServiceRequest{
 		EnvironmentType: req.environmentType,
 		ServiceName:     req.serviceName,
 		ServiceType:     req.serviceType,
@@ -207,8 +198,7 @@ func deploy(
 		if req.image == "" {
 			return fmt.Errorf("must provide image if service type is 'docker'")
 		}
-		deployRequest.Image = req.image
-		deployRequest2.DockerImage = req.image
+		deployRequest.DockerImage = req.image
 	} else {
 		s1.Start()
 		uploadKey, err := bundleAndUploadCode(ctx, svcClient, req.folderPath, req.environmentType, req.serviceName)
@@ -216,16 +206,12 @@ func deploy(
 			s1.Stop()
 			return err
 		}
-		deployRequest.URL = uploadKey
+		deployRequest.UploadedCodeUri = uploadKey
 		deployRequest.BuildCommand = req.buildCommand
 		deployRequest.StartCommand = req.startCommand
-
-		deployRequest2.UploadedCodeUri = uploadKey
-		deployRequest2.BuildCommand = req.buildCommand
-		deployRequest2.StartCommand = req.startCommand
 	}
 
-	stream, err := svcClient.DeployService(ctx, &deployRequest2)
+	stream, err := svcClient.DeployService(ctx, &deployRequest)
 	if err != nil {
 		s1.Stop()
 		return err
