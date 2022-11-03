@@ -22,13 +22,10 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 var servicesListCmd = &cobra.Command{
@@ -39,6 +36,7 @@ var servicesListCmd = &cobra.Command{
 	Short: "List out available services in your environment.",
 	Long:  "Call this command to list out the available services for a specific environment type",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
@@ -48,7 +46,7 @@ var servicesListCmd = &cobra.Command{
 			return errors.New("invalid value for environment")
 		}
 
-		return listServices(environmentType)
+		return listServices(ctx, environmentType)
 	},
 }
 
@@ -58,8 +56,8 @@ func init() {
 	servicesListCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
 }
 
-func listServices(environmentType string) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
+func listServices(ctx context.Context, environmentType string) error {
+	conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 	if err != nil {
 		return err
 	}
@@ -71,41 +69,21 @@ func listServices(environmentType string) error {
 	tbl := table.New("Name", "Status", "Visibility", "Url")
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
-	if onPrem {
-		cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
-		serviceList, err := cliClient.GetServices(context.Background(), &svcmgmtv1alpha1.GetServicesRequest{
-			EnvironmentType: strings.TrimSpace(environmentType),
-		})
-		if err != nil {
-			return err
-		}
-		fmt.Printf("Services in environment: %s\n", environmentType)
-		for svcName, svcInfo := range serviceList.Services {
-			tbl.AddRow(
-				svcName,
-				getIsActiveLabel(svcInfo.IsActive),
-				getVisibilityLabel(svcInfo.IsPrivate),
-				getUrlLabel(svcInfo.IsPrivate, svcInfo.Url),
-			)
-		}
-	} else {
-		cliClient := pb.NewCliServiceClient(conn)
-		var trailer metadata.MD
-		serviceList, err := cliClient.ListServices(context.Background(), &pb.ListServicesRequest{
-			EnvironmentType: strings.TrimSpace(environmentType),
-		}, grpc.Trailer(&trailer))
-		if err != nil {
-			return err
-		}
-		fmt.Printf("Services in environment: %s\n", environmentType)
-		for svcName, svcInfo := range serviceList.InfoMap {
-			tbl.AddRow(
-				svcName,
-				getIsActiveLabel(svcInfo.IsActive),
-				getVisibilityLabel(svcInfo.IsPrivate),
-				getUrlLabel(svcInfo.IsPrivate, svcInfo.Url),
-			)
-		}
+	cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
+	serviceList, err := cliClient.GetServices(ctx, &svcmgmtv1alpha1.GetServicesRequest{
+		EnvironmentType: strings.TrimSpace(environmentType),
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Services in environment: %s\n", environmentType)
+	for svcName, svcInfo := range serviceList.Services {
+		tbl.AddRow(
+			svcName,
+			getIsActiveLabel(svcInfo.IsActive),
+			getVisibilityLabel(svcInfo.IsPrivate),
+			getUrlLabel(svcInfo.IsPrivate, svcInfo.Url),
+		)
 	}
 	tbl.Print()
 	return nil

@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
@@ -33,6 +32,7 @@ var servicesRemoveCmd = &cobra.Command{
 	Short:   "Remove a service from your environment.",
 	Long:    "Completely remove a service from your environment. This operation is destructive!",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
@@ -69,7 +69,7 @@ var servicesRemoveCmd = &cobra.Command{
 			return err
 		}
 
-		return removeService(environmentType, serviceName)
+		return removeService(ctx, environmentType, serviceName)
 	},
 }
 
@@ -81,30 +81,18 @@ func init() {
 	servicesRemoveCmd.Flags().StringP("service", "s", "", "set the service name, if not provided will pull from nucleus.yaml (if there is one)")
 }
 
-func removeService(environmentType string, serviceName string) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
+func removeService(ctx context.Context, environmentType string, serviceName string) error {
+	conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	if onPrem {
-		cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
-		_, err = cliClient.RemoveService(context.Background(), &svcmgmtv1alpha1.RemoveServiceRequest{
-			EnvironmentType: strings.TrimSpace(environmentType),
-			ServiceName:     serviceName,
-		})
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-
-	cliClient := pb.NewCliServiceClient(conn)
-	_, err = cliClient.RemoveService(context.Background(), &pb.RemoveServiceRequest{
+	cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
+	_, err = cliClient.RemoveService(ctx, &svcmgmtv1alpha1.RemoveServiceRequest{
 		EnvironmentType: strings.TrimSpace(environmentType),
 		ServiceName:     serviceName,
-	}, utils.GetGrpcTrailer())
+	})
 	if err != nil {
 		return err
 	}

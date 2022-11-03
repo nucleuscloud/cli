@@ -20,13 +20,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 var servicesStopCmd = &cobra.Command{
@@ -35,6 +32,7 @@ var servicesStopCmd = &cobra.Command{
 	Aliases: []string{"pause"},
 	Long:    "Call this command to stop a service. This will shut it down and no longer make it accessible.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
@@ -71,7 +69,7 @@ var servicesStopCmd = &cobra.Command{
 			}
 		}
 
-		return setServicePause(environmentType, serviceName, true)
+		return setServicePause(ctx, environmentType, serviceName, true)
 	},
 }
 
@@ -83,32 +81,19 @@ func init() {
 	servicesStopCmd.Flags().StringP("service", "s", "", "set the service name, if not provided will pull from nucleus.yaml (if there is one)")
 }
 
-func setServicePause(environmentType string, serviceName string, isPaused bool) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
+func setServicePause(ctx context.Context, environmentType string, serviceName string, isPaused bool) error {
+	conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	if onPrem {
-		cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
-		_, err = cliClient.SetServiceActiveStatus(context.Background(), &svcmgmtv1alpha1.SetServiceActiveStatusRequest{
-			EnvironmentType: strings.TrimSpace(environmentType),
-			ServiceName:     serviceName,
-			IsActive:        !isPaused,
-		})
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	cliClient := pb.NewCliServiceClient(conn)
-	var trailer metadata.MD
-	_, err = cliClient.SetServicePauseStatus(context.Background(), &pb.SetServicePauseStatusRequest{
+	cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
+	_, err = cliClient.SetServiceActiveStatus(ctx, &svcmgmtv1alpha1.SetServiceActiveStatusRequest{
 		EnvironmentType: strings.TrimSpace(environmentType),
 		ServiceName:     serviceName,
-		IsPaused:        isPaused,
-	}, grpc.Trailer(&trailer))
+		IsActive:        !isPaused,
+	})
 	if err != nil {
 		return err
 	}

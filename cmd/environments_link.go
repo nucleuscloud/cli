@@ -33,6 +33,7 @@ var envsLinkCmd = &cobra.Command{
 	Short: "Links an admission api to one or all environments",
 	Long:  "Call this command to link an admission api to one or all environments. Will default to all if no env type is provided.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		environmentTypes, err := cmd.Flags().GetStringArray("env")
 		if err != nil {
 			return err
@@ -68,7 +69,7 @@ var envsLinkCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Setting admission api to the following envs: %s\n", strings.Join(environmentTypes, ","))
-		return linkAdmissionApi(environmentTypes, admissionApiUrl)
+		return linkAdmissionApi(ctx, environmentTypes, admissionApiUrl)
 	},
 }
 
@@ -79,19 +80,12 @@ func init() {
 	envsLinkCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
 }
 
-func linkAdmissionApi(environmentTypes []string, admissionApiUrl string) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
+func linkAdmissionApi(ctx context.Context, environmentTypes []string, admissionApiUrl string) error {
+	conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-
-	if !onPrem {
-		fmt.Println("This feature is only available to cloud-prem deployments")
-		return nil
-	}
-
-	ctx := context.Background()
 
 	client := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
 

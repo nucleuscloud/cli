@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -9,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/procfile"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
@@ -41,8 +39,8 @@ var createServiceCmd = &cobra.Command{
 	Short: "Creates a yaml file that describes the service",
 	Long:  `Utility command that walks you through the creation of the Nucleus manifest file. This allows you to call nucleus deploy, among other commands, and gives you definitive documentation of the representation of your service.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		fmt.Print("This utility will walk you through creating a Nucleus service.\n\nIt creates a declarative configuration file that you can apply using Nucleus deploy once you're ready to deploy your service.\n\nSee `nucleus create help` for definitive documentation on these fields and exactly what they do.\n\nPress ^C at any time to quit.\n\n")
-
 		defaultSpec, err := getDefaultSpec()
 		if err != nil {
 			return err
@@ -101,7 +99,7 @@ var createServiceCmd = &cobra.Command{
 				return err
 			}
 		} else if svcCommands.ServiceType != "python" {
-			conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
+			conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 			if err != nil {
 				return err
 			}
@@ -109,27 +107,16 @@ var createServiceCmd = &cobra.Command{
 			//retrieve the default build and start commands based on runtime
 			var bc string
 			var sc string
-			if onPrem {
-				cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
-				defaultBuildStartCommands, err := cliClient.GetDefaultBuildStartCommands(context.Background(), &svcmgmtv1alpha1.GetDefaultBuildStartCommandsRequest{
-					Runtime: svcCommands.ServiceType,
-				})
-				if err != nil {
-					return err
-				}
-				bc = defaultBuildStartCommands.BuildCommand
-				sc = defaultBuildStartCommands.StartCommand
-			} else {
-				cliClient := pb.NewCliServiceClient(conn)
-				defaultBuildStartCommands, err := cliClient.BuildStartCommands(context.Background(), &pb.DefaultBuildStartCommandsRequest{
-					Runtime: svcCommands.ServiceType,
-				})
-				if err != nil {
-					return err
-				}
-				bc = defaultBuildStartCommands.BuildCommand
-				sc = defaultBuildStartCommands.StartCommand
+
+			cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
+			defaultBuildStartCommands, err := cliClient.GetDefaultBuildStartCommands(ctx, &svcmgmtv1alpha1.GetDefaultBuildStartCommandsRequest{
+				Runtime: svcCommands.ServiceType,
+			})
+			if err != nil {
+				return err
 			}
+			bc = defaultBuildStartCommands.BuildCommand
+			sc = defaultBuildStartCommands.StartCommand
 
 			err = runtimeQuestions(&svcCommands, bc, sc)
 			if err != nil {

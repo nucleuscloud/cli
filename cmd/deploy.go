@@ -15,7 +15,6 @@ import (
 
 	"github.com/briandowns/spinner"
 	ga "github.com/mhelmich/go-archiver"
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/secrets"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
@@ -32,6 +31,7 @@ var deployCmd = &cobra.Command{
 	Long:  `Deploys your service to Nucleus and returns an endpoint that you can use to communicate with your newly deployed service.`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		deployConfig, err := config.GetNucleusConfig()
 		if err != nil {
 			return err
@@ -97,16 +97,14 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
-		conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
+		conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
 
-		cliClient := pb.NewCliServiceClient(conn)
 		svcClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
 
-		ctx := context.Background()
 		req := deployRequest{
 			environmentType:  environmentType,
 			serviceName:      serviceName,
@@ -119,13 +117,12 @@ var deployCmd = &cobra.Command{
 			envVars:          deployConfig.Spec.Vars,
 			envSecrets:       envSecrets,
 		}
-		err = deploy(ctx, cliClient, svcClient, req)
+		err = deploy(ctx, svcClient, req)
 		if err != nil {
 			return err
 		}
 		return setAuthzPolicy(
 			ctx,
-			cliClient,
 			svcClient,
 			environmentType,
 			serviceName,
@@ -137,26 +134,13 @@ var deployCmd = &cobra.Command{
 
 func setAuthzPolicy(
 	ctx context.Context,
-	cliClient pb.CliServiceClient,
 	svcClient svcmgmtv1alpha1.ServiceMgmtServiceClient,
 	environmentType string,
 	serviceName string,
 	allowList []string,
 	denyList []string,
 ) error {
-	if onPrem {
-		_, err := svcClient.SetServiceMtlsPolicy(ctx, &svcmgmtv1alpha1.SetServiceMtlsPolicyRequest{
-			EnvironmentType:    environmentType,
-			ServiceName:        serviceName,
-			AllowedServices:    allowList,
-			DisallowedServices: denyList,
-		})
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	_, err := cliClient.SetServiceMtlsPolicy(ctx, &pb.SetServiceMtlsPolicyRequest{
+	_, err := svcClient.SetServiceMtlsPolicy(ctx, &svcmgmtv1alpha1.SetServiceMtlsPolicyRequest{
 		EnvironmentType:    environmentType,
 		ServiceName:        serviceName,
 		AllowedServices:    allowList,
@@ -184,7 +168,6 @@ type deployRequest struct {
 
 func deploy(
 	ctx context.Context,
-	cliClient pb.CliServiceClient,
 	svcClient svcmgmtv1alpha1.ServiceMgmtServiceClient,
 	req deployRequest,
 ) error {
@@ -192,26 +175,7 @@ func deploy(
 
 	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
 
-	if !onPrem {
-		s1.Start()
-		_, err := cliClient.CreateEnvironment(ctx, &pb.CreateEnvironmentRequest{
-			EnvironmentType: req.environmentType,
-		})
-		if err != nil {
-			return err
-		}
-		s1.Stop()
-	}
-
-	deployRequest := pb.DeployRequest{
-		EnvironmentType: req.environmentType,
-		ServiceName:     req.serviceName,
-		ServiceType:     req.serviceType,
-		IsPrivate:       req.isPrivateService,
-		Vars:            req.envVars,
-		Secrets:         req.envSecrets,
-	}
-	deployRequest2 := svcmgmtv1alpha1.DeployServiceRequest{
+	deployRequest := svcmgmtv1alpha1.DeployServiceRequest{
 		EnvironmentType: req.environmentType,
 		ServiceName:     req.serviceName,
 		ServiceType:     req.serviceType,
@@ -234,145 +198,77 @@ func deploy(
 		if req.image == "" {
 			return fmt.Errorf("must provide image if service type is 'docker'")
 		}
-		deployRequest.Image = req.image
-		deployRequest2.DockerImage = req.image
+		deployRequest.DockerImage = req.image
 	} else {
 		s1.Start()
-		uploadKey, err := bundleAndUploadCode(ctx, cliClient, svcClient, req.folderPath, req.environmentType, req.serviceName)
+		uploadKey, err := bundleAndUploadCode(ctx, svcClient, req.folderPath, req.environmentType, req.serviceName)
 		if err != nil {
 			s1.Stop()
 			return err
 		}
-		deployRequest.URL = uploadKey
+		deployRequest.UploadedCodeUri = uploadKey
 		deployRequest.BuildCommand = req.buildCommand
 		deployRequest.StartCommand = req.startCommand
-
-		deployRequest2.UploadedCodeUri = uploadKey
-		deployRequest2.BuildCommand = req.buildCommand
-		deployRequest2.StartCommand = req.startCommand
 	}
 
-	if onPrem {
-		stream, err := svcClient.DeployService(ctx, &deployRequest2)
-		if err != nil {
-			s1.Stop()
-			return err
-		}
+	stream, err := svcClient.DeployService(ctx, &deployRequest)
+	if err != nil {
 		s1.Stop()
-		p := mpb.New(mpb.WithWidth(64))
-		bar := getProgressBar(p, "Deploying service...", 0)
-		var currCompleted int64 = 0
-		for {
-			update, err := stream.Recv()
-			if err == io.EOF {
-				bar.Abort(true)
-				break
-			} else if err != nil {
-				bar.Abort(true)
-				log.Fatalf("server side error: %s", err.Error())
-			}
-
-			deployUpdate := update.GetDeploymentUpdate()
-			if deployUpdate != nil {
-				if deployUpdate.GetIsFailure() {
-					bar.Abort(true)
-					return fmt.Errorf(deployUpdate.GetMessage())
-				}
-				taskCount := deployUpdate.GetTaskStatusCount()
-				totalTasks := getTotalTasks2(taskCount)
-				if taskCount != nil && totalTasks > 0 {
-					if bar.Current() == 0 {
-						bar.SetTotal(int64(totalTasks), false)
-					}
-					if taskCount.GetCompleted() != currCompleted {
-						bar.IncrInt64(taskCount.GetCompleted() - currCompleted)
-						currCompleted = taskCount.GetCompleted()
-					}
-				}
-				continue
-			}
-			// should have to do a final increment because once all 4 tasks are completed we just return the url
-			bar.Increment()
-			// For some reason the bar never completes without this call.
-			bar.EnableTriggerComplete()
-			p.Wait()
-
-			servUrl := update.GetServiceUrl()
-			if servUrl == "" {
-				fmt.Printf("Unable to retrieve URL..please try again")
-			} else {
-				fmt.Printf("\nService is deployed at: %s\n", servUrl)
-			}
-			break
-		}
-		p.Wait()
-	} else {
-		stream, err := cliClient.Deploy(ctx, &deployRequest)
-		if err != nil {
-			s1.Stop()
-			return err
-		}
-		s1.Stop()
-		p := mpb.New(mpb.WithWidth(64))
-		bar := getProgressBar(p, "Deploying service...", 0)
-		var currCompleted int64 = 0
-		for {
-			update, err := stream.Recv()
-			if err == io.EOF {
-				bar.Abort(true)
-				break
-			} else if err != nil {
-				bar.Abort(true)
-				log.Fatalf("server side error: %s", err.Error())
-			}
-
-			deployUpdate := update.GetDeploymentUpdate()
-			if deployUpdate != nil {
-				if deployUpdate.GetIsFailure() {
-					bar.Abort(true)
-					return fmt.Errorf(deployUpdate.GetMessage())
-				}
-				taskCount := deployUpdate.GetTaskStatusCount()
-				totalTasks := getTotalTasks(taskCount)
-				if taskCount != nil && totalTasks > 0 {
-					if bar.Current() == 0 {
-						bar.SetTotal(int64(totalTasks), false)
-					}
-					if taskCount.GetCompleted() != currCompleted {
-						bar.IncrInt64(taskCount.GetCompleted() - currCompleted)
-						currCompleted = taskCount.GetCompleted()
-					}
-				}
-				continue
-			}
-			// should have to do a final increment because once all 4 tasks are completed we just return the url
-			bar.Increment()
-			// For some reason the bar never completes without this call.
-			bar.EnableTriggerComplete()
-			p.Wait()
-
-			servUrl := update.GetURL()
-			if servUrl == "" {
-				fmt.Printf("Unable to retrieve URL..please try again")
-			} else {
-				fmt.Printf("\nService is deployed at: %s\n", servUrl)
-			}
-			break
-		}
-		p.Wait()
+		return err
 	}
+	s1.Stop()
+	p := mpb.New(mpb.WithWidth(64))
+	bar := getProgressBar(p, "Deploying service...", 0)
+	var currCompleted int64 = 0
+	for {
+		update, err := stream.Recv()
+		if err == io.EOF {
+			bar.Abort(true)
+			break
+		} else if err != nil {
+			bar.Abort(true)
+			log.Fatalf("server side error: %s", err.Error())
+		}
+
+		deployUpdate := update.GetDeploymentUpdate()
+		if deployUpdate != nil {
+			if deployUpdate.GetIsFailure() {
+				bar.Abort(true)
+				return fmt.Errorf(deployUpdate.GetMessage())
+			}
+			taskCount := deployUpdate.GetTaskStatusCount()
+			totalTasks := getTotalTasks(taskCount)
+			if taskCount != nil && totalTasks > 0 {
+				if bar.Current() == 0 {
+					bar.SetTotal(int64(totalTasks), false)
+				}
+				if taskCount.GetCompleted() != currCompleted {
+					bar.IncrInt64(taskCount.GetCompleted() - currCompleted)
+					currCompleted = taskCount.GetCompleted()
+				}
+			}
+			continue
+		}
+		// should have to do a final increment because once all 4 tasks are completed we just return the url
+		bar.Increment()
+		// For some reason the bar never completes without this call.
+		bar.EnableTriggerComplete()
+		p.Wait()
+
+		servUrl := update.GetServiceUrl()
+		if servUrl == "" {
+			fmt.Printf("Unable to retrieve URL..please try again")
+		} else {
+			fmt.Printf("\nService is deployed at: %s\n", servUrl)
+		}
+		break
+	}
+	p.Wait()
 
 	return nil
 }
 
-func getTotalTasks(taskCount *pb.DeploymentTaskStatusCount) int {
-	if taskCount == nil {
-		return 0
-	}
-	return int(taskCount.Completed) + int(taskCount.Failed) + int(taskCount.Incomplete) + int(taskCount.Skipped)
-}
-
-func getTotalTasks2(taskCount *svcmgmtv1alpha1.DeployServiceTaskStatusCount) int {
+func getTotalTasks(taskCount *svcmgmtv1alpha1.DeployServiceTaskStatusCount) int {
 	if taskCount == nil {
 		return 0
 	}
@@ -381,7 +277,6 @@ func getTotalTasks2(taskCount *svcmgmtv1alpha1.DeployServiceTaskStatusCount) int
 
 func bundleAndUploadCode(
 	ctx context.Context,
-	cliClient pb.CliServiceClient,
 	svcClient svcmgmtv1alpha1.ServiceMgmtServiceClient,
 	folderPath string,
 	environmentType string,
@@ -419,7 +314,7 @@ func bundleAndUploadCode(
 		return "", err
 	}
 
-	signedURL, err := cliClient.GetServiceUploadUrl(ctx, &pb.GetServiceUploadUrlRequest{
+	signedResponse, err := svcClient.GetServiceUploadUrl(ctx, &svcmgmtv1alpha1.GetServiceUploadUrlRequest{
 		EnvironmentType: environmentType,
 		ServiceName:     serviceName,
 	})
@@ -427,11 +322,11 @@ func bundleAndUploadCode(
 		return "", err
 	}
 
-	err = uploadArchive(signedURL.URL, fd)
+	err = uploadArchive(signedResponse.Url, fd)
 	if err != nil {
 		return "", err
 	}
-	return signedURL.UploadKey, nil
+	return signedResponse.UploadKey, nil
 }
 
 func uploadArchive(signedURL string, r io.Reader) error {

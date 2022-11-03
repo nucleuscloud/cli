@@ -16,14 +16,12 @@ limitations under the License.
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/secrets"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
@@ -37,6 +35,7 @@ var setCmd = &cobra.Command{
 	Short: "Encrypts a secret and stores it for use in your nucleus manifest file.",
 	Long:  "Encrypts a secret and stores it for use in your nucleus manifest file.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		if len(args) == 0 {
 			return errors.New("must provide secret-name to set secret")
 		}
@@ -84,40 +83,27 @@ var setCmd = &cobra.Command{
 			}
 		}
 
-		conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
+		conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
 
-		cliClient := pb.NewCliServiceClient(conn)
 		svcClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
 
 		if verbose {
 			fmt.Println("Attempting to retrieve public key for encrypting secrets...")
 		}
 
-		// todo: cache this key
-		var publicKey []byte
-		if onPrem {
-			publicKeyReply, err := svcClient.GetPublicSecretKey(context.Background(), &svcmgmtv1alpha1.GetPublicSecretKeyRequest{
-				EnvironmentType: environmentType,
-				ServiceName:     deployConfig.Spec.ServiceName,
-			})
-			if err != nil {
-				return err
-			}
-			publicKey = publicKeyReply.PublicKey
-		} else {
-			publicKeyReply, err := cliClient.GetPublicSecretKey(context.Background(), &pb.GetPublicSecretKeyRequest{
-				EnvironmentType: environmentType,
-				ServiceName:     deployConfig.Spec.ServiceName,
-			}, utils.GetGrpcTrailer())
-			if err != nil {
-				return err
-			}
-			publicKey = publicKeyReply.PublicKey
+		publicKeyReply, err := svcClient.GetPublicSecretKey(ctx, &svcmgmtv1alpha1.GetPublicSecretKeyRequest{
+			EnvironmentType: environmentType,
+			ServiceName:     deployConfig.Spec.ServiceName,
+		})
+		if err != nil {
+			return err
 		}
+		// todo: this key should be cached
+		publicKey := publicKeyReply.PublicKey
 		if verbose {
 			fmt.Println("Retrieved public key!")
 		}
