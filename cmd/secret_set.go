@@ -16,7 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -36,6 +35,7 @@ var setCmd = &cobra.Command{
 	Short: "Encrypts a secret and stores it for use in your nucleus manifest file.",
 	Long:  "Encrypts a secret and stores it for use in your nucleus manifest file.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		if len(args) == 0 {
 			return errors.New("must provide secret-name to set secret")
 		}
@@ -83,7 +83,7 @@ var setCmd = &cobra.Command{
 			}
 		}
 
-		conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+		conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 		if err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ var setCmd = &cobra.Command{
 			fmt.Println("Attempting to retrieve public key for encrypting secrets...")
 		}
 
-		publicKeyReply, err := svcClient.GetPublicSecretKey(context.Background(), &svcmgmtv1alpha1.GetPublicSecretKeyRequest{
+		publicKeyReply, err := svcClient.GetPublicSecretKey(ctx, &svcmgmtv1alpha1.GetPublicSecretKeyRequest{
 			EnvironmentType: environmentType,
 			ServiceName:     deployConfig.Spec.ServiceName,
 		})

@@ -36,6 +36,7 @@ var servicesListCmd = &cobra.Command{
 	Short: "List out available services in your environment.",
 	Long:  "Call this command to list out the available services for a specific environment type",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
@@ -45,7 +46,7 @@ var servicesListCmd = &cobra.Command{
 			return errors.New("invalid value for environment")
 		}
 
-		return listServices(environmentType)
+		return listServices(ctx, environmentType)
 	},
 }
 
@@ -55,8 +56,8 @@ func init() {
 	servicesListCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
 }
 
-func listServices(environmentType string) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+func listServices(ctx context.Context, environmentType string) error {
+	conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 	if err != nil {
 		return err
 	}
@@ -69,7 +70,7 @@ func listServices(environmentType string) error {
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
-	serviceList, err := cliClient.GetServices(context.Background(), &svcmgmtv1alpha1.GetServicesRequest{
+	serviceList, err := cliClient.GetServices(ctx, &svcmgmtv1alpha1.GetServicesRequest{
 		EnvironmentType: strings.TrimSpace(environmentType),
 	})
 	if err != nil {

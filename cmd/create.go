@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -40,8 +39,8 @@ var createServiceCmd = &cobra.Command{
 	Short: "Creates a yaml file that describes the service",
 	Long:  `Utility command that walks you through the creation of the Nucleus manifest file. This allows you to call nucleus deploy, among other commands, and gives you definitive documentation of the representation of your service.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		fmt.Print("This utility will walk you through creating a Nucleus service.\n\nIt creates a declarative configuration file that you can apply using Nucleus deploy once you're ready to deploy your service.\n\nSee `nucleus create help` for definitive documentation on these fields and exactly what they do.\n\nPress ^C at any time to quit.\n\n")
-
 		defaultSpec, err := getDefaultSpec()
 		if err != nil {
 			return err
@@ -100,7 +99,7 @@ var createServiceCmd = &cobra.Command{
 				return err
 			}
 		} else if svcCommands.ServiceType != "python" {
-			conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+			conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 			if err != nil {
 				return err
 			}
@@ -110,7 +109,7 @@ var createServiceCmd = &cobra.Command{
 			var sc string
 
 			cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
-			defaultBuildStartCommands, err := cliClient.GetDefaultBuildStartCommands(context.Background(), &svcmgmtv1alpha1.GetDefaultBuildStartCommandsRequest{
+			defaultBuildStartCommands, err := cliClient.GetDefaultBuildStartCommands(ctx, &svcmgmtv1alpha1.GetDefaultBuildStartCommandsRequest{
 				Runtime: svcCommands.ServiceType,
 			})
 			if err != nil {

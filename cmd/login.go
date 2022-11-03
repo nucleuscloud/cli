@@ -6,16 +6,17 @@ import (
 )
 
 // loginCmd represents the login command
-var auth0Cmd = &cobra.Command{
+var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Logs a user into their Nucleus account.",
 	Long:  `Logs a user into their Nucleus account and stores an access token locally for later use.`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return utils.LoginOnPrem()
+		ctx := cmd.Context()
+		return utils.Login(ctx)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(auth0Cmd)
+	rootCmd.AddCommand(loginCmd)
 }

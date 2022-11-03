@@ -26,8 +26,7 @@ var (
 	redirectUri = fmt.Sprintf("http://%s%s", httpSrvBaseUrl, callbackPath)
 )
 
-func LoginOnPrem() error {
-	ctx := context.Background()
+func Login(ctx context.Context) error {
 	authClient, err := auth.NewAuthClientByEnv(GetEnv())
 	if err != nil {
 		return err

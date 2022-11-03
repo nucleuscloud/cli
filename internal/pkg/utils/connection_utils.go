@@ -113,36 +113,28 @@ func GetApiConnectionConfigByEnv(envType string) *ApiConnectionConfig {
 	case "prod", "":
 		return &ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0ProdBaseUrl,
-			AuthClientId: auth.Auth0ProdOnPremClientId,
+			AuthClientId: auth.Auth0ProdClientId,
 			ApiAudience:  auth.ApiAudience,
 		}
 	case "dev", "stage":
 		return &ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0StageBaseUrl,
-			AuthClientId: auth.Auth0StageOnPremClientId,
+			AuthClientId: auth.Auth0StageClientId,
 			ApiAudience:  auth.ApiAudience,
 		}
 	}
 	return nil
 }
 
-func newApiConnectionByEnvOnPrem(envType string) (*grpc.ClientConn, error) {
+func NewApiConnectionByEnv(ctx context.Context, envType string) (*grpc.ClientConn, error) {
 	cfg := GetApiConnectionConfigByEnv(envType)
 	if cfg == nil {
 		return nil, fmt.Errorf("must provide valid env type")
 	}
-	return NewApiConnection(cfg)
+	return NewApiConnection(ctx, cfg)
 }
 
-func NewApiConnectionByEnv(envType string) (*grpc.ClientConn, error) {
-	return newApiConnectionByEnvOnPrem(envType)
-}
-
-func NewApiConnection(cfg *ApiConnectionConfig) (*grpc.ClientConn, error) {
-	return NewApiConnectionOnPrem(cfg)
-}
-
-func NewApiConnectionOnPrem(cfg *ApiConnectionConfig) (*grpc.ClientConn, error) {
+func NewApiConnection(ctx context.Context, cfg *ApiConnectionConfig) (*grpc.ClientConn, error) {
 	authClient, err := auth.NewAuthClient(cfg.AuthBaseUrl, cfg.AuthClientId, cfg.ApiAudience)
 	if err != nil {
 		return nil, err
@@ -152,7 +144,7 @@ func NewApiConnectionOnPrem(cfg *ApiConnectionConfig) (*grpc.ClientConn, error) 
 		return nil, err
 	}
 	unAuthCliClient := mgmtv1alpha1.NewMgmtServiceClient(unAuthConn)
-	accessToken, err := getValidAccessTokenFromConfig(authClient, unAuthCliClient, cfg.AuthClientId)
+	accessToken, err := getValidAccessTokenFromConfig(ctx, authClient, unAuthCliClient, cfg.AuthClientId)
 	defer unAuthConn.Close()
 	if err != nil {
 		return nil, err
@@ -167,6 +159,7 @@ func NewApiConnectionOnPrem(cfg *ApiConnectionConfig) (*grpc.ClientConn, error) 
 
 // Retrieves the access token from the config and validates it.
 func getValidAccessTokenFromConfig(
+	ctx context.Context,
 	authClient auth.AuthClientInterface,
 	mgmtClient mgmtv1alpha1.MgmtServiceClient,
 	clientId string,
@@ -175,7 +168,6 @@ func getValidAccessTokenFromConfig(
 	if err != nil {
 		return "", err
 	}
-	ctx := context.Background()
 	err = authClient.ValidateToken(ctx, cfg.AccessToken)
 	if err != nil {
 		fmt.Println("Access token is no longer valid. Attempting to refresh...")

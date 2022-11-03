@@ -32,6 +32,7 @@ var deployCmd = &cobra.Command{
 	Long:  `Deploys your service to Nucleus and returns an endpoint that you can use to communicate with your newly deployed service.`,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		deployConfig, err := config.GetNucleusConfig()
 		if err != nil {
 			return err
@@ -97,7 +98,7 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
-		conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
+		conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 		if err != nil {
 			return err
 		}
@@ -105,7 +106,6 @@ var deployCmd = &cobra.Command{
 
 		svcClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
 
-		ctx := context.Background()
 		req := deployRequest{
 			environmentType:  environmentType,
 			serviceName:      serviceName,

@@ -30,6 +30,7 @@ var servicesStartCmd = &cobra.Command{
 	Aliases: []string{"unpause"},
 	Long:    "Call this command to start a service. This will make a service active and accessible.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
@@ -66,7 +67,7 @@ var servicesStartCmd = &cobra.Command{
 			}
 		}
 
-		return setServicePause(environmentType, serviceName, false)
+		return setServicePause(ctx, environmentType, serviceName, false)
 	},
 }
 
