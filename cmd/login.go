@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	"github.com/nucleuscloud/cli/internal/utils"
 	"github.com/spf13/cobra"
 )
 
