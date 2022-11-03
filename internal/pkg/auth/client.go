@@ -81,19 +81,12 @@ type authTokenErrorData struct {
 	ErrorDescription string `json:"error_description"`
 }
 
-func NewAuthClientByEnv(envType string, isOnPrem bool) (AuthClientInterface, error) {
+func NewAuthClientByEnv(envType string) (AuthClientInterface, error) {
 	switch envType {
 	case "prod", "":
-		if isOnPrem {
-			return NewAuthClient(Auth0ProdBaseUrl, Auth0ProdOnPremClientId, ApiAudience)
-		}
-		return NewAuthClient(Auth0ProdBaseUrl, Auth0ProdClientId, ApiAudience)
-
+		return NewAuthClient(Auth0ProdBaseUrl, Auth0ProdOnPremClientId, ApiAudience)
 	case "dev", "stage":
-		if isOnPrem {
-			return NewAuthClient(Auth0StageBaseUrl, Auth0StageOnPremClientId, ApiAudience)
-		}
-		return NewAuthClient(Auth0StageBaseUrl, Auth0StageClientId, ApiAudience)
+		return NewAuthClient(Auth0StageBaseUrl, Auth0StageOnPremClientId, ApiAudience)
 	}
 	return nil, fmt.Errorf("must provide valid env type")
 }

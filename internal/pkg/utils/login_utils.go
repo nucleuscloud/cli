@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/auth"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
@@ -27,64 +26,9 @@ var (
 	redirectUri = fmt.Sprintf("http://%s%s", httpSrvBaseUrl, callbackPath)
 )
 
-func LoginManaged(verbose bool) error {
-	authClient, err := auth.NewAuthClientByEnv(GetEnv(), false)
-	if err != nil {
-		return err
-	}
-
-	deviceResponse, err := authClient.GetDeviceCode(Scopes)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Your activation code is: ", deviceResponse.UserCode)
-
-	err = webbrowser.Open(deviceResponse.VerificationURIComplete)
-	if err != nil {
-		fmt.Println("There was an issue opening the web browser, proceed to the following URL to continue logging in: ", deviceResponse.VerificationURIComplete)
-	}
-
-	tokenResponse, err := authClient.PollDeviceAccessToken(deviceResponse)
-
-	if err != nil {
-		// handle expired token error by re-prompting
-		fmt.Println("There was an error. Please try logging in again")
-		return err
-	}
-	err = config.SetNucleusAuthFile(config.NucleusAuthConfig{
-		AccessToken:  tokenResponse.AccessToken,
-		RefreshToken: tokenResponse.RefreshToken,
-		IdToken:      tokenResponse.IdToken,
-	})
-
-	if err != nil {
-		return err
-	}
-
-	conn, err := NewAuthenticatedConnection(tokenResponse.AccessToken, false)
-	if err != nil {
-		return err
-	}
-
-	defer conn.Close()
-
-	if verbose {
-		fmt.Println("Attempting to register user in Nucleus system...")
-	}
-
-	nucleusClient := pb.NewCliServiceClient(conn)
-	_, err = nucleusClient.ResolveUser(context.Background(), &pb.ResolveUserRequest{})
-	if err != nil {
-		return err
-	}
-	fmt.Println("User successfully resolved in Nucleus system!")
-	return nil
-}
-
 func LoginOnPrem() error {
 	ctx := context.Background()
-	authClient, err := auth.NewAuthClientByEnv(GetEnv(), true)
+	authClient, err := auth.NewAuthClientByEnv(GetEnv())
 	if err != nil {
 		return err
 	}
@@ -133,7 +77,7 @@ func LoginOnPrem() error {
 		if state != response.state {
 			return fmt.Errorf("State received from response was not what was sent")
 		}
-		return getAccessTokenAndSetUser(ctx, response.code, response.state, redirectUri, GetEnv(), true)
+		return getAccessTokenAndSetUser(ctx, response.code, response.state, redirectUri, GetEnv())
 	case err := <-errChan:
 		close(errChan)
 		close(codeChan)
@@ -147,15 +91,14 @@ func getAccessTokenAndSetUser(
 	state string,
 	redirectUri string,
 	envType string,
-	isOnPrem bool,
 ) error {
-	conn, err := NewAnonymousConnection(true)
+	conn, err := NewAnonymousConnection()
 	if err != nil {
 		fmt.Println("failed to create anonymous connection")
 		return err
 	}
 
-	apiCfg := GetApiConnectionConfigByEnv(envType, isOnPrem)
+	apiCfg := GetApiConnectionConfigByEnv(envType)
 	nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
 	tokenResponse, err := nucleusClient.GetAccessToken(ctx, &mgmtv1alpha1.GetAccessTokenRequest{
 		ClientId:    apiCfg.AuthClientId,
@@ -177,7 +120,7 @@ func getAccessTokenAndSetUser(
 	}
 	conn.Close()
 
-	conn, err = NewAuthenticatedConnection(tokenResponse.AccessToken, isOnPrem)
+	conn, err = NewAuthenticatedConnection(tokenResponse.AccessToken)
 	if err != nil {
 		return err
 	}

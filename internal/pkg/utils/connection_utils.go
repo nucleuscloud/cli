@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/auth"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
@@ -50,19 +49,13 @@ func GetEnv() string {
 	return val
 }
 
-func getApiUrl(isOnPrem bool) string {
+func getApiUrl() string {
 	if isDevEnv() {
 		return "localhost:50051"
 	} else if isStageEnv() {
-		if isOnPrem {
-			return "mgmt-api-nucleus.svcs.stage.usenucleus.cloud:443"
-		}
-		return "nucleus-api-nucleus-api.svcs.stage.usenucleus.cloud:443"
+		return "mgmt-api-nucleus.svcs.stage.usenucleus.cloud:443"
 	}
-	if isOnPrem {
-		return "mgmt-api-nucleus.svcs.prod.usenucleus.cloud:443"
-	}
-	return "nucleus-api-nucleus-api.svcs.prod.usenucleus.cloud:443"
+	return "mgmt-api-nucleus.svcs.prod.usenucleus.cloud:443"
 }
 
 func isDevEnv() bool {
@@ -87,21 +80,21 @@ func getTransportCreds() (credentials.TransportCredentials, error) {
 	return creds, nil
 }
 
-func NewAnonymousConnection(isOnPrem bool) (*grpc.ClientConn, error) {
+func NewAnonymousConnection() (*grpc.ClientConn, error) {
 	creds, err := getTransportCreds()
 	if err != nil {
 		return nil, err
 	}
-	return grpc.Dial(getApiUrl(isOnPrem), grpc.WithTransportCredentials(creds))
+	return grpc.Dial(getApiUrl(), grpc.WithTransportCredentials(creds))
 }
 
-func NewAuthenticatedConnection(accessToken string, isOnPrem bool) (*grpc.ClientConn, error) {
+func NewAuthenticatedConnection(accessToken string) (*grpc.ClientConn, error) {
 	creds, err := getTransportCreds()
 	if err != nil {
 		return nil, err
 	}
 	return grpc.Dial(
-		getApiUrl(isOnPrem),
+		getApiUrl(),
 		grpc.WithTransportCredentials(creds),
 		grpc.WithPerRPCCredentials(&loginCreds{
 			AccessToken: accessToken,
@@ -115,130 +108,67 @@ type ApiConnectionConfig struct {
 	ApiAudience  string
 }
 
-func GetApiConnectionConfigByEnv(envType string, isOnPrem bool) *ApiConnectionConfig {
+func GetApiConnectionConfigByEnv(envType string) *ApiConnectionConfig {
 	switch envType {
 	case "prod", "":
-		clientId := auth.Auth0ProdClientId
-		if isOnPrem {
-			clientId = auth.Auth0ProdOnPremClientId
-		}
 		return &ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0ProdBaseUrl,
-			AuthClientId: clientId,
+			AuthClientId: auth.Auth0ProdOnPremClientId,
 			ApiAudience:  auth.ApiAudience,
 		}
 	case "dev", "stage":
-		clientId := auth.Auth0StageClientId
-		if isOnPrem {
-			clientId = auth.Auth0StageOnPremClientId
-		}
 		return &ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0StageBaseUrl,
-			AuthClientId: clientId,
+			AuthClientId: auth.Auth0StageOnPremClientId,
 			ApiAudience:  auth.ApiAudience,
 		}
 	}
 	return nil
 }
 
-func newApiConnectionByEnvManaged(envType string) (*grpc.ClientConn, error) {
-	cfg := GetApiConnectionConfigByEnv(envType, false)
-	if cfg == nil {
-		return nil, fmt.Errorf("must provide valid env type")
-	}
-	return NewApiConnection(cfg, false)
-}
-
 func newApiConnectionByEnvOnPrem(envType string) (*grpc.ClientConn, error) {
-	cfg := GetApiConnectionConfigByEnv(envType, true)
+	cfg := GetApiConnectionConfigByEnv(envType)
 	if cfg == nil {
 		return nil, fmt.Errorf("must provide valid env type")
 	}
-	return NewApiConnection(cfg, true)
+	return NewApiConnection(cfg)
 }
 
-func NewApiConnectionByEnv(envType string, isOnPrem bool) (*grpc.ClientConn, error) {
-	if isOnPrem {
-		return newApiConnectionByEnvOnPrem(envType)
-	}
-	return newApiConnectionByEnvManaged(envType)
+func NewApiConnectionByEnv(envType string) (*grpc.ClientConn, error) {
+	return newApiConnectionByEnvOnPrem(envType)
 }
 
-func NewApiConnection(cfg *ApiConnectionConfig, isOnPrem bool) (*grpc.ClientConn, error) {
-	if isOnPrem {
-		return NewApiConnectionOnPrem(cfg, isOnPrem)
-	}
-	return NewApiConnectionManaged(cfg, isOnPrem)
+func NewApiConnection(cfg *ApiConnectionConfig) (*grpc.ClientConn, error) {
+	return NewApiConnectionOnPrem(cfg)
 }
 
-func NewApiConnectionOnPrem(cfg *ApiConnectionConfig, isOnPrem bool) (*grpc.ClientConn, error) {
+func NewApiConnectionOnPrem(cfg *ApiConnectionConfig) (*grpc.ClientConn, error) {
 	authClient, err := auth.NewAuthClient(cfg.AuthBaseUrl, cfg.AuthClientId, cfg.ApiAudience)
 	if err != nil {
 		return nil, err
 	}
-	unAuthConn, err := NewAnonymousConnection(isOnPrem)
+	unAuthConn, err := NewAnonymousConnection()
 	if err != nil {
 		return nil, err
 	}
 	unAuthCliClient := mgmtv1alpha1.NewMgmtServiceClient(unAuthConn)
-	accessToken, err := getValidAccessTokenFromConfig(authClient, nil, unAuthCliClient, true, cfg.AuthClientId)
+	accessToken, err := getValidAccessTokenFromConfig(authClient, unAuthCliClient, cfg.AuthClientId)
 	defer unAuthConn.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	conn, err := NewAuthenticatedConnection(accessToken, isOnPrem)
+	conn, err := NewAuthenticatedConnection(accessToken)
 	if err != nil {
 		return nil, err
 	}
 	return conn, nil
-}
-
-// Returns a GRPC client that has been authenticated for use with Nucleus API
-func NewApiConnectionManaged(cfg *ApiConnectionConfig, isOnPrem bool) (*grpc.ClientConn, error) {
-	//refactor these clients into a utils file later
-	authClient, err := auth.NewAuthClient(cfg.AuthBaseUrl, cfg.AuthClientId, cfg.ApiAudience)
-	if err != nil {
-		return nil, err
-	}
-	unAuthConn, err := NewAnonymousConnection(isOnPrem)
-	if err != nil {
-		return nil, err
-	}
-	unAuthCliClient := pb.NewCliServiceClient(unAuthConn)
-	accessToken, err := getValidAccessTokenFromConfig(authClient, unAuthCliClient, nil, false, cfg.AuthClientId)
-	defer unAuthConn.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	conn, err := NewAuthenticatedConnection(accessToken, isOnPrem)
-	if err != nil {
-		return nil, err
-	}
-	return conn, nil
-}
-
-type loginCreds struct {
-	AccessToken string
-}
-
-func (c *loginCreds) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
-	return map[string]string{
-		"authorization": fmt.Sprintf("bearer %s", c.AccessToken),
-	}, nil
-}
-
-func (c *loginCreds) RequireTransportSecurity() bool {
-	return !isDevEnv()
 }
 
 // Retrieves the access token from the config and validates it.
 func getValidAccessTokenFromConfig(
 	authClient auth.AuthClientInterface,
-	cliClient pb.CliServiceClient,
 	mgmtClient mgmtv1alpha1.MgmtServiceClient,
-	isOnPrem bool,
 	clientId string,
 ) (string, error) {
 	cfg, err := config.GetNucleusAuthConfig()
@@ -250,7 +180,7 @@ func getValidAccessTokenFromConfig(
 	if err != nil {
 		fmt.Println("Access token is no longer valid. Attempting to refresh...")
 		if cfg.RefreshToken != "" {
-			res, err := getRefreshResponse(ctx, cliClient, mgmtClient, isOnPrem, clientId, cfg.RefreshToken)
+			res, err := getRefreshResponse(ctx, mgmtClient, clientId, cfg.RefreshToken)
 			if err != nil {
 				err2 := config.ClearNucleusAuthFile()
 				if err2 != nil {
@@ -288,27 +218,12 @@ type refreshResponse struct {
 
 func getRefreshResponse(
 	ctx context.Context,
-	cliClient pb.CliServiceClient,
 	mgmtClient mgmtv1alpha1.MgmtServiceClient,
-	isOnPrem bool,
 	clientId string,
 	refreshToken string,
 ) (*refreshResponse, error) {
-	if isOnPrem {
-		reply, err := mgmtClient.GetNewAccessToken(ctx, &mgmtv1alpha1.GetNewAccessTokenRequest{
-			ClientId:     clientId,
-			RefreshToken: refreshToken,
-		})
-		if err != nil {
-			return nil, err
-		}
-		return &refreshResponse{
-			AccessToken:  reply.AccessToken,
-			RefreshToken: reply.RefreshToken,
-			IdToken:      reply.IdToken,
-		}, nil
-	}
-	reply, err := cliClient.RefreshAccessToken(ctx, &pb.RefreshAccessTokenRequest{
+	reply, err := mgmtClient.GetNewAccessToken(ctx, &mgmtv1alpha1.GetNewAccessTokenRequest{
+		ClientId:     clientId,
 		RefreshToken: refreshToken,
 	})
 	if err != nil {

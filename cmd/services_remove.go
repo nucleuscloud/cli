@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/nucleuscloud/api/pkg/api/v1/pb"
 	"github.com/nucleuscloud/cli/internal/pkg/config"
 	"github.com/nucleuscloud/cli/internal/pkg/utils"
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
@@ -82,29 +81,17 @@ func init() {
 }
 
 func removeService(environmentType string, serviceName string) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	if onPrem {
-		cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
-		_, err = cliClient.RemoveService(context.Background(), &svcmgmtv1alpha1.RemoveServiceRequest{
-			EnvironmentType: strings.TrimSpace(environmentType),
-			ServiceName:     serviceName,
-		})
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-
-	cliClient := pb.NewCliServiceClient(conn)
-	_, err = cliClient.RemoveService(context.Background(), &pb.RemoveServiceRequest{
+	cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
+	_, err = cliClient.RemoveService(context.Background(), &svcmgmtv1alpha1.RemoveServiceRequest{
 		EnvironmentType: strings.TrimSpace(environmentType),
 		ServiceName:     serviceName,
-	}, utils.GetGrpcTrailer())
+	})
 	if err != nil {
 		return err
 	}

@@ -80,16 +80,11 @@ func init() {
 }
 
 func linkAdmissionApi(environmentTypes []string, admissionApiUrl string) error {
-	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv(), onPrem)
+	conn, err := utils.NewApiConnectionByEnv(utils.GetEnv())
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-
-	if !onPrem {
-		fmt.Println("This feature is only available to cloud-prem deployments")
-		return nil
-	}
 
 	ctx := context.Background()
 

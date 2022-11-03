@@ -26,7 +26,6 @@ import (
 
 var cfgFile string
 var verbose bool
-var onPrem bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -53,7 +52,6 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.nucleus-cli.yaml)")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
-	rootCmd.PersistentFlags().BoolVarP(&onPrem, "onprem", "", false, "Toggles on prem version of the cli")
 }
 
 // initConfig reads in config file and ENV variables if set.

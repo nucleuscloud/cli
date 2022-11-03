@@ -2,8 +2,12 @@ GO=go
 
 default: all
 
-all: lint build test
+all: lint vet build test
 .PHONY: all
+
+vet:
+	$(GO) vet ./...
+.PHONY: vet
 
 vendor:
 	$(GO) mod tidy -compat=1.17 && $(GO) mod vendor
