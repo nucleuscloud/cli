@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/nucleuscloud/cli/internal/pkg/auth"
-	"github.com/nucleuscloud/cli/internal/pkg/config"
+	"github.com/nucleuscloud/cli/internal/auth"
+	"github.com/nucleuscloud/cli/internal/config"
 	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

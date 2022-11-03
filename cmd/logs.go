@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/nucleuscloud/cli/internal/pkg/config"
-	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	"github.com/nucleuscloud/cli/internal/config"
+	"github.com/nucleuscloud/cli/internal/utils"
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/spf13/cobra"
 )

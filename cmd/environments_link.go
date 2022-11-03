@@ -22,7 +22,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	"github.com/nucleuscloud/cli/internal/utils"
 	"github.com/spf13/cobra"
 
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
