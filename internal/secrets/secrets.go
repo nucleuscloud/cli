@@ -9,7 +9,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/nucleuscloud/cli/internal/pkg/config"
+	"github.com/nucleuscloud/cli/internal/config"
 )
 
 func getSecretsFromSpec(spec *config.SpecStruct) config.NucleusSecrets {

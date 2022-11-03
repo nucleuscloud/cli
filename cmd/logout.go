@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/nucleuscloud/cli/internal/pkg/auth"
-	"github.com/nucleuscloud/cli/internal/pkg/config"
-	"github.com/nucleuscloud/cli/internal/pkg/utils"
+	"github.com/nucleuscloud/cli/internal/auth"
+	"github.com/nucleuscloud/cli/internal/config"
+	"github.com/nucleuscloud/cli/internal/utils"
 	"github.com/spf13/cobra"
 	"github.com/toqueteos/webbrowser"
 )
