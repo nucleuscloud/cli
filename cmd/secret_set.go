@@ -57,30 +57,9 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
-		if !utils.IsValidEnvironmentType(environmentType) {
-			return errors.New("invalid value for environment")
-		}
-
 		secretResult, err := getSecretValue()
 		if err != nil {
 			return err
-		}
-
-		if environmentType == "prod" {
-			if secretResult.isPiped {
-				yesPrompt, err := cmd.Flags().GetBool("yes")
-				if err != nil {
-					return err
-				}
-				if !yesPrompt {
-					return fmt.Errorf("must provide -y when piping in secret value to production environment")
-				}
-			} else {
-				err := utils.PromptToProceed(cmd, environmentType, "yes")
-				if err != nil {
-					return err
-				}
-			}
 		}
 
 		conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())

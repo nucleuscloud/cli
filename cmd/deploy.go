@@ -46,17 +46,6 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
-		if !utils.IsValidEnvironmentType(environmentType) {
-			return fmt.Errorf("invalid value for environment")
-		}
-
-		if environmentType == "prod" {
-			err := utils.PromptToProceed(cmd, environmentType, "yes")
-			if err != nil {
-				return err
-			}
-		}
-
 		serviceName := deployConfig.Spec.ServiceName
 		if serviceName == "" {
 			return fmt.Errorf("service name not provided")

@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -40,10 +39,6 @@ var servicesListCmd = &cobra.Command{
 		environmentType, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
-		}
-
-		if !utils.IsValidEnvironmentType(environmentType) {
-			return errors.New("invalid value for environment")
 		}
 
 		return listServices(ctx, environmentType)

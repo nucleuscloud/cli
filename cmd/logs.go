@@ -34,10 +34,6 @@ var logsCommand = &cobra.Command{
 			return err
 		}
 
-		if !utils.IsValidEnvironmentType(environmentType) {
-			return fmt.Errorf("invalid value for environment")
-		}
-
 		serviceName := strings.TrimSpace(sn)
 		if serviceName == "" {
 			if config.DoesNucleusConfigExist() {

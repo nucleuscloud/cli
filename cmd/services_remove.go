@@ -38,10 +38,6 @@ var servicesRemoveCmd = &cobra.Command{
 			return err
 		}
 
-		if !utils.IsValidEnvironmentType(environmentType) {
-			return fmt.Errorf("invalid value for environment")
-		}
-
 		serviceName, err := cmd.Flags().GetString("service")
 		if err != nil {
 			return err

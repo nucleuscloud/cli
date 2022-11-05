@@ -38,10 +38,6 @@ var servicesStopCmd = &cobra.Command{
 			return err
 		}
 
-		if !utils.IsValidEnvironmentType(environmentType) {
-			return fmt.Errorf("invalid value for environment")
-		}
-
 		serviceName, err := cmd.Flags().GetString("service")
 		if err != nil {
 			return err
@@ -60,13 +56,6 @@ var servicesStopCmd = &cobra.Command{
 
 		if !utils.IsValidName(serviceName) {
 			return utils.ErrInvalidServiceName
-		}
-
-		if environmentType == "prod" {
-			err := utils.PromptToProceed(cmd, environmentType, "yes")
-			if err != nil {
-				return err
-			}
 		}
 
 		return setServicePause(ctx, environmentType, serviceName, true)
