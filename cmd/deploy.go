@@ -45,16 +45,8 @@ var deployCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
-		if !utils.IsValidEnvironmentType(environmentType) {
-			return fmt.Errorf("invalid value for environment")
-		}
-
-		if environmentType == "prod" {
-			err := utils.PromptToProceed(cmd, environmentType, "yes")
-			if err != nil {
-				return err
-			}
+		if environmentType == "" {
+			return fmt.Errorf("must provide environment type")
 		}
 
 		serviceName := deployConfig.Spec.ServiceName
@@ -365,8 +357,7 @@ func uploadArchive(signedURL string, r io.Reader) error {
 func init() {
 	rootCmd.AddCommand(deployCmd)
 
-	deployCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
-	deployCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
+	deployCmd.Flags().StringP("env", "e", "", "set the nucleus environment")
 }
 
 func getProgressBar(progress *mpb.Progress, name string, total int) *mpb.Bar {

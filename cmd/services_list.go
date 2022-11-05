@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -42,8 +41,8 @@ var servicesListCmd = &cobra.Command{
 			return err
 		}
 
-		if !utils.IsValidEnvironmentType(environmentType) {
-			return errors.New("invalid value for environment")
+		if environmentType == "" {
+			return fmt.Errorf("must provide environment type")
 		}
 
 		return listServices(ctx, environmentType)
@@ -53,7 +52,7 @@ var servicesListCmd = &cobra.Command{
 func init() {
 	servicesCmd.AddCommand(servicesListCmd)
 
-	servicesListCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
+	servicesListCmd.Flags().StringP("env", "e", "", "set the nucleus environment")
 }
 
 func listServices(ctx context.Context, environmentType string) error {

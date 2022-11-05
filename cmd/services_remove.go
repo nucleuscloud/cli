@@ -38,8 +38,8 @@ var servicesRemoveCmd = &cobra.Command{
 			return err
 		}
 
-		if !utils.IsValidEnvironmentType(environmentType) {
-			return fmt.Errorf("invalid value for environment")
+		if environmentType == "" {
+			return fmt.Errorf("must provide environment type")
 		}
 
 		serviceName, err := cmd.Flags().GetString("service")
@@ -76,8 +76,7 @@ var servicesRemoveCmd = &cobra.Command{
 func init() {
 	servicesCmd.AddCommand(servicesRemoveCmd)
 
-	servicesRemoveCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
-	servicesRemoveCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prompt")
+	servicesRemoveCmd.Flags().StringP("env", "e", "", "set the nucleus environment")
 	servicesRemoveCmd.Flags().StringP("service", "s", "", "set the service name, if not provided will pull from nucleus.yaml (if there is one)")
 }
 
