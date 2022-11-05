@@ -38,6 +38,10 @@ var servicesStopCmd = &cobra.Command{
 			return err
 		}
 
+		if environmentType == "" {
+			return fmt.Errorf("must provide environment type")
+		}
+
 		serviceName, err := cmd.Flags().GetString("service")
 		if err != nil {
 			return err
@@ -65,8 +69,7 @@ var servicesStopCmd = &cobra.Command{
 func init() {
 	servicesCmd.AddCommand(servicesStopCmd)
 
-	servicesStopCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
-	servicesStopCmd.Flags().BoolP("yes", "y", false, "automatically answer yes to the prod prompt")
+	servicesStopCmd.Flags().StringP("env", "e", "", "set the nucleus environment")
 	servicesStopCmd.Flags().StringP("service", "s", "", "set the service name, if not provided will pull from nucleus.yaml (if there is one)")
 }
 

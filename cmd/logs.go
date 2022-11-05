@@ -23,6 +23,9 @@ var logsCommand = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		if environmentType == "" {
+			return fmt.Errorf("must provide environment type")
+		}
 
 		sn, err := cmd.Flags().GetString("service")
 		if err != nil {
@@ -112,7 +115,7 @@ func getLogWindow(window string) svcmgmtv1alpha1.LogWindow {
 
 func init() {
 	rootCmd.AddCommand(logsCommand)
-	logsCommand.Flags().StringP("env", "e", "prod", "set the nucleus environment")
+	logsCommand.Flags().StringP("env", "e", "", "set the nucleus environment")
 	logsCommand.Flags().BoolP("tail", "t", false, "live log tail")
 	logsCommand.Flags().BoolP("follow", "f", false, "live log tail")
 	logsCommand.Flags().StringP("service", "s", "", "service name")

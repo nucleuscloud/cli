@@ -41,6 +41,10 @@ var servicesListCmd = &cobra.Command{
 			return err
 		}
 
+		if environmentType == "" {
+			return fmt.Errorf("must provide environment type")
+		}
+
 		return listServices(ctx, environmentType)
 	},
 }
@@ -48,7 +52,7 @@ var servicesListCmd = &cobra.Command{
 func init() {
 	servicesCmd.AddCommand(servicesListCmd)
 
-	servicesListCmd.Flags().StringP("env", "e", "prod", "set the nucleus environment")
+	servicesListCmd.Flags().StringP("env", "e", "", "set the nucleus environment")
 }
 
 func listServices(ctx context.Context, environmentType string) error {
