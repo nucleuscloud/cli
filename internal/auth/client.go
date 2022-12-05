@@ -15,8 +15,8 @@ const (
 	Auth0StageClientId = "IHJD9fSlrH4p9WhPYp6uJe0yFNr26ZLy"
 	Auth0StageBaseUrl  = "https://auth.stage.usenucleus.cloud"
 
-	Auth0ProdClientId = "7F4aiBQBZXUdy5KrF9IRwfOK0bo8xsZq"
-	Auth0ProdBaseUrl  = "https://auth.prod.usenucleus.cloud"
+	Auth0ProdClientId = "6zk97YDDj9YplY9jqOaHmKYojhEXquD8"
+	Auth0ProdBaseUrl  = "https://auth.nucleuscloud.com"
 
 	ApiAudience = "https://api.usenucleus.cloud"
 )
