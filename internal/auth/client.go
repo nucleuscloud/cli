@@ -13,7 +13,7 @@ import (
 
 const (
 	Auth0StageClientId = "IHJD9fSlrH4p9WhPYp6uJe0yFNr26ZLy"
-	Auth0StageBaseUrl  = "https://auth.stage.usenucleus.cloud"
+	Auth0StageBaseUrl  = "https://auth.stage.nucleuscloud.com"
 
 	Auth0ProdClientId = "6zk97YDDj9YplY9jqOaHmKYojhEXquD8"
 	Auth0ProdBaseUrl  = "https://auth.nucleuscloud.com"
