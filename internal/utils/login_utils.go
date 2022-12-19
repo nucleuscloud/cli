@@ -138,7 +138,7 @@ func ClientLogin(ctx context.Context, clientId string, clientSecret string) erro
 	}
 
 	nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
-	tokenResponse, err := nucleusClient.GetClientAccessToken(ctx, &mgmtv1alpha1.GetClientAccessTokenRequest{
+	tokenResponse, err := nucleusClient.GetServiceAccountAccessToken(ctx, &mgmtv1alpha1.GetServiceAccountAccessTokenRequest{
 		ClientId:     clientId,
 		ClientSecret: clientSecret,
 	})
@@ -162,7 +162,7 @@ func ClientLogin(ctx context.Context, clientId string, clientSecret string) erro
 	defer conn.Close()
 
 	nucleusClient = mgmtv1alpha1.NewMgmtServiceClient(conn)
-	_, err = nucleusClient.SetAccount(ctx, &mgmtv1alpha1.SetAccountRequest{})
+	_, err = nucleusClient.GetAccountByServiceAccountClientId(ctx, &mgmtv1alpha1.GetAccountByServiceAccountClientIdRequest{})
 	return err
 
 }
