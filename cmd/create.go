@@ -8,11 +8,12 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
+	"github.com/spf13/cobra"
+
 	"github.com/nucleuscloud/cli/internal/config"
 	"github.com/nucleuscloud/cli/internal/procfile"
 	"github.com/nucleuscloud/cli/internal/utils"
-	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
-	"github.com/spf13/cobra"
 )
 
 type serviceCommands struct {
@@ -36,7 +37,7 @@ var createServiceCmd = &cobra.Command{
 	Aliases: []string{
 		"init",
 	},
-	Short: "Creates a yaml file that describes the service",
+	Short: "Creates a yaml configuration file required for deploying the service",
 	Long:  `Utility command that walks you through the creation of the Nucleus manifest file. This allows you to call nucleus deploy, among other commands, and gives you definitive documentation of the representation of your service.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
@@ -92,6 +93,16 @@ var createServiceCmd = &cobra.Command{
 					Name: "dockerImage",
 					Prompt: &survey.Input{
 						Message: "Docker Image URL:",
+					},
+					Validate: func(imageUrl interface{}) error {
+						imageUrl, ok := imageUrl.(string)
+						if !ok {
+							return err
+						}
+						if imageUrl == "" {
+							return fmt.Errorf("docker image URL must be specified")
+						}
+						return nil
 					},
 				},
 			}, &svcCommands, surveyIcons)
