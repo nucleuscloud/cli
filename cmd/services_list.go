@@ -81,7 +81,7 @@ func listServices(ctx context.Context, environmentType string) error {
 			svcName,
 			getIsActiveLabel(svcInfo.IsActive),
 			getVisibilityLabel(svcInfo.IsPrivate),
-			getUrlLabel(svcInfo.IsPrivate, svcInfo.Url),
+			getUrlLabel(svcInfo.IsPrivate, *svcInfo.Url),
 		)
 	}
 	tbl.Print()

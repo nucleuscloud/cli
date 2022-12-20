@@ -129,3 +129,40 @@ func getAccessTokenAndSetUser(
 	_, err = nucleusClient.SetUser(ctx, &mgmtv1alpha1.SetUserRequest{})
 	return err
 }
+
+func ClientLogin(ctx context.Context, clientId string, clientSecret string) error {
+	conn, err := NewAnonymousConnection()
+	if err != nil {
+		fmt.Println("failed to create anonymous connection")
+		return err
+	}
+
+	nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
+	tokenResponse, err := nucleusClient.GetServiceAccountAccessToken(ctx, &mgmtv1alpha1.GetServiceAccountAccessTokenRequest{
+		ClientId:     clientId,
+		ClientSecret: clientSecret,
+	})
+	if err != nil {
+		fmt.Println("failed to get client access token from nucleus client")
+		return err
+	}
+
+	err = config.SetNucleusAuthFile(config.NucleusAuthConfig{
+		AccessToken: tokenResponse.AccessToken,
+	})
+	if err != nil {
+		return err
+	}
+	conn.Close()
+
+	conn, err = NewAuthenticatedConnection(tokenResponse.AccessToken)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	nucleusClient = mgmtv1alpha1.NewMgmtServiceClient(conn)
+	_, err = nucleusClient.GetAccountByServiceAccountClientId(ctx, &mgmtv1alpha1.GetAccountByServiceAccountClientIdRequest{})
+	return err
+
+}
