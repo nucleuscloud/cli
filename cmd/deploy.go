@@ -101,6 +101,7 @@ var deployCmd = &cobra.Command{
 		svcClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
 
 		req := deployRequest{
+			cliVersion:       deployConfig.CliVersion,
 			environmentType:  environmentType,
 			serviceName:      serviceName,
 			serviceType:      serviceType,
@@ -148,6 +149,7 @@ func setAuthzPolicy(
 }
 
 type deployRequest struct {
+	cliVersion       string
 	environmentType  string
 	serviceName      string
 	serviceType      string
@@ -176,6 +178,7 @@ func deploy(
 	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
 
 	deployRequest := svcmgmtv1alpha1.DeployServiceRequest{
+		CliVersion:      req.cliVersion,
 		EnvironmentType: req.environmentType,
 		ServiceName:     req.serviceName,
 		ServiceType:     req.serviceType,
