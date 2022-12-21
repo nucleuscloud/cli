@@ -32,6 +32,59 @@ var (
 	})
 )
 
+func isGolang(dir string) bool {
+	if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+		return true
+	}
+	return false
+}
+
+func isNodejs(dir string) bool {
+	if _, err := os.Stat(filepath.Join(dir, "package.json")); err == nil {
+		return true
+	}
+	return false
+}
+
+func isPython(dir string) bool {
+	if _, err := os.Stat(filepath.Join(dir, "requirements.txt")); err == nil {
+		return true
+	}
+	// poetry and others
+	if _, err := os.Stat(filepath.Join(dir, "pyproject.toml")); err == nil {
+		return true
+	}
+	return false
+}
+
+func isDocker(dir string) bool {
+	if _, err := os.Stat(filepath.Join(dir, "Dockerfile")); err == nil {
+		return true
+	}
+	return false
+}
+
+func guessProjectType() string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return utils.GetSupportedRuntimes()[0]
+
+	}
+	if isGolang(cwd) {
+		return "go"
+	}
+	if isNodejs(cwd) {
+		return "nodejs"
+	}
+	if isPython(cwd) {
+		return "python"
+	}
+	if isDocker(cwd) {
+		return "docker"
+	}
+	return utils.GetSupportedRuntimes()[0]
+}
+
 var createServiceCmd = &cobra.Command{
 	Use: "create",
 	Aliases: []string{
@@ -68,6 +121,7 @@ var createServiceCmd = &cobra.Command{
 				Prompt: &survey.Select{
 					Message: "Select your service's runtime:",
 					Options: utils.GetSupportedRuntimes(),
+					Default: guessProjectType(),
 				},
 				Validate: survey.Required,
 			},
