@@ -194,8 +194,10 @@ var createServiceCmd = &cobra.Command{
 			}
 		}
 
+		cliVersion := "nucleus-cli/v1alpha1"
+
 		nucleusConfig := config.NucleusConfig{
-			CliVersion: "nucleus-cli/v1alpha1",
+			CliVersion: cliVersion,
 			Spec: config.SpecStruct{
 				ServiceName:    svcCommands.ServiceName,
 				ServiceRunTime: svcCommands.ServiceType,
