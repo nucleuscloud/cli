@@ -9,4 +9,4 @@ cmd/test.go
 dist/
 
 
-.cloud*
+*.icloud
