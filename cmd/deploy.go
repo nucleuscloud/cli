@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"io"
 	"log"
 	"net/http"
@@ -14,14 +15,16 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/fatih/color"
 	ga "github.com/mhelmich/go-archiver"
-	"github.com/nucleuscloud/cli/internal/config"
-	"github.com/nucleuscloud/cli/internal/secrets"
-	"github.com/nucleuscloud/cli/internal/utils"
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/spf13/cobra"
 	"github.com/vbauerster/mpb/v7"
 	"github.com/vbauerster/mpb/v7/decor"
+
+	"github.com/nucleuscloud/cli/internal/config"
+	"github.com/nucleuscloud/cli/internal/secrets"
+	"github.com/nucleuscloud/cli/internal/utils"
 )
 
 // deployCmd represents the deploy command
@@ -163,7 +166,12 @@ func deploy(
 	svcClient svcmgmtv1alpha1.ServiceMgmtServiceClient,
 	req deployRequest,
 ) error {
-	fmt.Printf("\nGetting deployment ready: \n↪Service: %s \n↪Environment: %s \n↪Project Directory: %s \n\n", req.serviceName, req.environmentType, req.folderPath)
+	green := color.New(color.FgGreen).SprintFunc()
+	fmt.Printf("\nGetting deployment ready: \n%sService: %s \n%sEnvironment: %s \n%sProject Directory: %s \n\n",
+		green("↪"), req.serviceName,
+		green("↪"), req.environmentType,
+		green("↪"), req.folderPath,
+	)
 
 	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
 
@@ -251,7 +259,7 @@ func deploy(
 		if servUrl == "" {
 			fmt.Printf("Unable to retrieve URL..please try again")
 		} else {
-			fmt.Printf("\nService is deployed at: %s\n", servUrl)
+			fmt.Printf("\nService is deployed at: %s\n", green(servUrl))
 		}
 		break
 	}
@@ -361,13 +369,25 @@ func init() {
 }
 
 func getProgressBar(progress *mpb.Progress, name string, total int) *mpb.Bar {
+	spinnerStyle := []string{
+		color.GreenString("⠋"),
+		color.GreenString("⠙"),
+		color.GreenString("⠹"),
+		color.GreenString("⠸"),
+		color.GreenString("⠼"),
+		color.GreenString("⠴"),
+		color.GreenString("⠦"),
+		color.GreenString("⠧"),
+		color.GreenString("⠇"),
+		color.GreenString("⠏"),
+	}
 	return progress.New(int64(total),
 		// BarFillerBuilder with custom style
 		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
 		mpb.PrependDecorators(
 			decor.Name(name, decor.WC{W: len(name) + 1, C: decor.DidentRight}),
 			decor.OnComplete(
-				decor.Spinner([]string{}),
+				decor.Spinner(spinnerStyle),
 				"",
 			),
 		),
