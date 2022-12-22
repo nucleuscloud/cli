@@ -7,3 +7,6 @@ bin
 cmd/test.go
 
 dist/
+
+
+*.icloud
