@@ -192,6 +192,8 @@ github.com/nucleuscloud/mgmt-api v0.0.64 h1:Ii9B0S94AQ5LoPap/xeiQyRRpW63/Owy/69n
 github.com/nucleuscloud/mgmt-api v0.0.64/go.mod h1:HG8YnbTsXrmyPiNDcsjgeGZaCJ8hGPqQyUsrdinWhQw=
 github.com/nucleuscloud/mgmt-api v0.0.68-0.20221221222313-6d3f86ff60ca h1:7HQNOzs63gJpUhXYYA/sti6YU5pPk5j4VmcJvwDKeYU=
 github.com/nucleuscloud/mgmt-api v0.0.68-0.20221221222313-6d3f86ff60ca/go.mod h1:9JJyqxzUq7Jmnde6hxbfv5/O+5yxQLRs5yPZWj7eL4k=
+github.com/nucleuscloud/mgmt-api v0.0.68-evis2 h1:YoMUwuAwenoguEGDX4jn8YdkS7v+as3OatDUbl2FqwY=
+github.com/nucleuscloud/mgmt-api v0.0.68-evis2/go.mod h1:9JJyqxzUq7Jmnde6hxbfv5/O+5yxQLRs5yPZWj7eL4k=
 github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3ve8=
 github.com/pelletier/go-toml v1.9.5/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/pelletier/go-toml/v2 v2.0.5 h1:ipoSadvV8oGUjnUbMub59IDPPwfxF694nG/jwbMiyQg=
