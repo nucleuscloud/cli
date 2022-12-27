@@ -21,14 +21,21 @@ var logoutCmd = &cobra.Command{
 			return err
 		}
 
-		logoutUrl, err := authClient.GetLogoutUrl()
+		serviceAccount, err := cmd.Flags().GetBool("service-account")
 		if err != nil {
 			return err
 		}
 
-		err = webbrowser.Open(logoutUrl)
-		if err != nil {
-			fmt.Println("There was an issue opening the web browser, proceed to the following url to fully logout of the system", logoutUrl)
+		if !serviceAccount {
+			logoutUrl, err := authClient.GetLogoutUrl()
+			if err != nil {
+				return err
+			}
+
+			err = webbrowser.Open(logoutUrl)
+			if err != nil {
+				fmt.Println("There was an issue opening the web browser, proceed to the following url to fully logout of the system", logoutUrl)
+			}
 		}
 
 		err = config.ClearNucleusAuthFile()
@@ -42,4 +49,5 @@ var logoutCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(logoutCmd)
+	logoutCmd.Flags().BoolP("service-account", "s", false, "logout service account")
 }
