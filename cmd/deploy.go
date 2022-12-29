@@ -79,9 +79,6 @@ var deployCmd = &cobra.Command{
 			}
 		}
 
-		buildCommand := deployConfig.Spec.BuildCommand
-		startCommand := deployConfig.Spec.StartCommand
-
 		directoryName, err := os.Getwd()
 		if err != nil {
 			return err
@@ -107,8 +104,6 @@ var deployCmd = &cobra.Command{
 			serviceType:      serviceType,
 			image:            deployConfig.Spec.Image,
 			folderPath:       directoryName,
-			buildCommand:     buildCommand,
-			startCommand:     startCommand,
 			isPrivateService: deployConfig.Spec.IsPrivate,
 			envVars:          deployConfig.Spec.Vars,
 			envSecrets:       envSecrets,
@@ -155,8 +150,6 @@ type deployRequest struct {
 	serviceType      string
 	image            string
 	folderPath       string
-	buildCommand     string
-	startCommand     string
 	isPrivateService bool
 	envVars          map[string]string
 	envSecrets       map[string]string
@@ -210,8 +203,6 @@ func deploy(
 			return err
 		}
 		deployRequest.UploadedCodeUri = uploadKey
-		deployRequest.BuildCommand = req.buildCommand
-		deployRequest.StartCommand = req.startCommand
 	}
 
 	stream, err := svcClient.DeployService(ctx, &deployRequest)

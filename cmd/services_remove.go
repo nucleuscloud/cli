@@ -78,6 +78,7 @@ func init() {
 
 	servicesRemoveCmd.Flags().StringP("env", "e", "", "set the nucleus environment")
 	servicesRemoveCmd.Flags().StringP("service", "s", "", "set the service name, if not provided will pull from nucleus.yaml (if there is one)")
+	servicesRemoveCmd.Flags().BoolP("yes", "y", false, "automatically proceed with removal")
 }
 
 func removeService(ctx context.Context, environmentType string, serviceName string) error {
