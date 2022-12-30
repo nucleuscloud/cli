@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/google/uuid v1.3.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
-	github.com/nucleuscloud/mgmt-api v0.0.70-0.20221229212125-55cf955f1623
+	github.com/nucleuscloud/mgmt-api v0.0.70
 	github.com/rodaine/table v1.1.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.14.0
@@ -49,7 +49,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/net v0.3.1-0.20221206200815-1e63c2f08a10 // indirect
+	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/term v0.3.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
