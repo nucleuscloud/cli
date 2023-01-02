@@ -10,9 +10,13 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func AttachProgressFlag(cmd *cobra.Command) {
-	cmd.Flags().StringP("progress", "p", "auto", "Set type of progress output (auto, plain).")
-}
+var (
+	progressMap = map[string]ProgressType{
+		"auto":  autoProgress,
+		"plain": PlainProgress,
+		"fancy": FancyProgress,
+	}
+)
 
 type ProgressType string
 
@@ -22,13 +26,19 @@ const (
 	FancyProgress ProgressType = "fancy"
 )
 
-var (
-	progressMap = map[string]ProgressType{
-		"auto":  autoProgress,
-		"plain": PlainProgress,
-		"fancy": FancyProgress,
+func AttachProgressFlag(cmd *cobra.Command) {
+	progressVals := []string{}
+	for progressType := range progressMap {
+		progressVals = append(progressVals, progressType)
 	}
-)
+
+	cmd.Flags().StringP(
+		"progress",
+		"p",
+		string(autoProgress),
+		fmt.Sprintf("Set type of progress output (%s).", strings.Join(progressVals, ", ")),
+	)
+}
 
 func ValidateAndRetrieveProgressFlag(cmd *cobra.Command) (ProgressType, error) {
 	if cmd == nil {
