@@ -79,15 +79,16 @@ func isGithubAction() bool {
 	return val == "true"
 }
 
-func GetProgressBarWidth(desiredSize int) (int, error) {
+// Returns -1 if unable to compute terminal width
+func GetProgressBarWidth(desiredSize int) int {
 	termW, _, err := getTerminalSize(getStdoutFd())
 	if err != nil {
-		return -1, err
+		return -1
 	}
 	if termW < desiredSize {
-		return termW, nil
+		return termW
 	}
-	return desiredSize, nil
+	return desiredSize
 }
 
 func getTerminalSize(fd int) (width, height int, err error) {

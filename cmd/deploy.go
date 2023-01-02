@@ -216,11 +216,7 @@ func deploy(
 		return err
 	}
 
-	termWidth, err := progress.GetProgressBarWidth(50)
-	if err != nil {
-		return err
-	}
-
+	termWidth := progress.GetProgressBarWidth(50)
 	progressContainer := mpb.NewWithContext(
 		ctx,
 		mpb.WithWidth(termWidth),
