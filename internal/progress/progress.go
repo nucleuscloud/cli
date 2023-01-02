@@ -11,16 +11,16 @@ import (
 )
 
 const (
-	autoProgress   ProgressType = "auto"
-	PlainProgress  ProgressType = "plain"
-	SimpleProgress ProgressType = "simple"
+	autoProgress  ProgressType = "auto"
+	PlainProgress ProgressType = "plain"
+	TtyProgress   ProgressType = "tty"
 )
 
 var (
 	progressMap = map[string]ProgressType{
-		string(autoProgress):   autoProgress,
-		string(PlainProgress):  PlainProgress,
-		string(SimpleProgress): SimpleProgress,
+		string(autoProgress):  autoProgress,
+		string(PlainProgress): PlainProgress,
+		string(TtyProgress):   TtyProgress,
 	}
 )
 
@@ -59,7 +59,7 @@ func ValidateAndRetrieveProgressFlag(cmd *cobra.Command) (ProgressType, error) {
 	if isGithubAction() || !isTerminal(getStdoutFd()) {
 		return PlainProgress, nil
 	}
-	return SimpleProgress, nil
+	return TtyProgress, nil
 }
 
 func parseProgressString(str string) (ProgressType, bool) {

@@ -192,7 +192,7 @@ func deploy(
 	} else {
 		uploadSpinner := spinner.New(spinner.CharSets[35], 100*time.Millisecond)
 		uploadSpinner.Suffix = "  Bundling and uploading code..."
-		if progressType == progress.SimpleProgress {
+		if progressType == progress.TtyProgress {
 			uploadSpinner.Start()
 		} else {
 			fmt.Println("Bundling and uploading code...")
@@ -207,7 +207,7 @@ func deploy(
 
 	deployInitSpinner := spinner.New(spinner.CharSets[35], 100*time.Millisecond)
 	deployInitSpinner.Suffix = "  Initiating deployment request"
-	if progressType == progress.SimpleProgress {
+	if progressType == progress.TtyProgress {
 		deployInitSpinner.Start()
 	}
 	stream, err := svcClient.DeployService(ctx, &deployRequest)
