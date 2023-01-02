@@ -10,7 +10,6 @@ import (
 )
 
 func CheckErr(err error) {
-	// fmt.Println("hit check err", err.Error())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, getErrMessage(err))
 		os.Exit(1)
