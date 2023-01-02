@@ -53,13 +53,13 @@ func ValidateAndRetrieveProgressFlag(cmd *cobra.Command) (ProgressType, error) {
 	if !ok {
 		return "", fmt.Errorf("must provide valid progress type")
 	}
+	if p != autoProgress {
+		return p, nil
+	}
 	if isGithubAction() || !IsTerminal(getStdoutFd()) {
 		return PlainProgress, nil
 	}
-	if p == autoProgress {
-		return FancyProgress, nil
-	}
-	return p, nil
+	return FancyProgress, nil
 }
 
 func parseProgressString(str string) (ProgressType, bool) {
