@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/nucleuscloud/cli/internal/utils"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -56,7 +57,7 @@ func ValidateAndRetrieveProgressFlag(cmd *cobra.Command) (ProgressType, error) {
 	if p != autoProgress {
 		return p, nil
 	}
-	if isGithubAction() || !term.IsTerminal(getStdoutFd()) {
+	if isGithubAction() || !utils.IsTerminal() {
 		return PlainProgress, nil
 	}
 	return TtyProgress, nil
@@ -71,7 +72,7 @@ func SProgressPrint(progressType ProgressType, colorAttr color.Attribute) func(a
 	if progressType == PlainProgress {
 		return fmt.Sprint
 	}
-	return color.New(colorAttr).SprintFunc()
+	return utils.GetColoredSprintFunc(colorAttr)
 }
 
 func isGithubAction() bool {
@@ -81,7 +82,7 @@ func isGithubAction() bool {
 
 // Returns -1 if unable to compute terminal width
 func GetProgressBarWidth(desiredSize int) int {
-	termW, _, err := term.GetSize(getStdoutFd())
+	termW, _, err := term.GetSize(utils.GetStdoutFd())
 	if err != nil {
 		return -1
 	}
@@ -89,8 +90,4 @@ func GetProgressBarWidth(desiredSize int) int {
 		return termW
 	}
 	return desiredSize
-}
-
-func getStdoutFd() int {
-	return int(os.Stdout.Fd())
 }

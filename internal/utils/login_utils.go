@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/google/uuid"
 	"github.com/nucleuscloud/cli/internal/auth"
@@ -133,7 +134,7 @@ func getAccessTokenAndSetUser(
 func ClientLogin(ctx context.Context, clientId string, clientSecret string) error {
 	conn, err := NewAnonymousConnection()
 	if err != nil {
-		fmt.Println("failed to create anonymous connection")
+		fmt.Fprintln(os.Stderr, "failed to create anonymous connection")
 		return err
 	}
 
@@ -143,7 +144,7 @@ func ClientLogin(ctx context.Context, clientId string, clientSecret string) erro
 		ClientSecret: clientSecret,
 	})
 	if err != nil {
-		fmt.Println("failed to get client access token from nucleus client")
+		fmt.Fprintln(os.Stderr, "failed to get client access token from nucleus client")
 		return err
 	}
 

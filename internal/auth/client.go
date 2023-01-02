@@ -85,7 +85,6 @@ func NewAuthClient(tenantUrl, clientId, audience string) (AuthClientInterface, e
 		validator.WithAllowedClockSkew(time.Minute),
 	)
 	if err != nil {
-		fmt.Printf("Failed to set up the jwt validator")
 		return nil, err
 	}
 	return &authClient{

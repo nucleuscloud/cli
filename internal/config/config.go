@@ -123,14 +123,14 @@ func GetNucleusAuthConfig() (*NucleusAuthConfig, error) {
 
 	file, err := os.ReadFile(fileName)
 	if err != nil {
-		fmt.Println("Auth file doesnt exist. User has not logged in.\n", err)
+		fmt.Fprintln(os.Stderr, "Auth file doesnt exist. User has not logged in.\n", err)
 		return nil, ErrMustLogin
 	}
 
 	var auth *NucleusAuthConfig
 	err = yaml.Unmarshal(file, &auth)
 	if err != nil {
-		fmt.Println("Auth config is not in correct format.\n", err)
+		fmt.Fprintln(os.Stderr, "Auth config is not in correct format.\n", err)
 		return nil, ErrMustLogin
 	}
 	return auth, nil

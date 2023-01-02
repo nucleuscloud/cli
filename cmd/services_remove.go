@@ -18,6 +18,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/nucleuscloud/cli/internal/config"
@@ -51,7 +52,7 @@ var servicesRemoveCmd = &cobra.Command{
 			if config.DoesNucleusConfigExist() {
 				cfg, err := config.GetNucleusConfig()
 				if err != nil {
-					fmt.Println("Did not provide service name and could not find nucleus config")
+					fmt.Fprintln(os.Stderr, fmt.Errorf("Did not provide service name and could not find nucleus config"))
 					return err
 				}
 				serviceName = cfg.Spec.ServiceName
