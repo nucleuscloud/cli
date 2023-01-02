@@ -176,7 +176,7 @@ func getValidAccessTokenFromConfig(
 			if err != nil {
 				err2 := config.ClearNucleusAuthFile()
 				if err2 != nil {
-					fmt.Println("unable to remove nucleus auth file", err2)
+					fmt.Fprintln(os.Stderr, "unable to remove nucleus auth file", err2)
 				}
 				fmt.Println(err)
 				return "", fmt.Errorf("unable to refresh token, please try logging in again.")

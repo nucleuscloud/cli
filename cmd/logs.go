@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/nucleuscloud/cli/internal/config"
@@ -91,7 +92,7 @@ func getLogs(ctx context.Context, envType string, serviceName string, window str
 			}
 			err2 := logStream.CloseSend()
 			if err2 != nil {
-				fmt.Println(err2)
+				fmt.Fprintln(os.Stderr, err2)
 			}
 			return err
 		}
