@@ -7,7 +7,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"golang.org/x/sys/unix"
+	"golang.org/x/term"
 )
 
 const (
@@ -56,7 +56,7 @@ func ValidateAndRetrieveProgressFlag(cmd *cobra.Command) (ProgressType, error) {
 	if p != autoProgress {
 		return p, nil
 	}
-	if isGithubAction() || !isTerminal(getStdoutFd()) {
+	if isGithubAction() || !term.IsTerminal(getStdoutFd()) {
 		return PlainProgress, nil
 	}
 	return TtyProgress, nil
@@ -81,7 +81,7 @@ func isGithubAction() bool {
 
 // Returns -1 if unable to compute terminal width
 func GetProgressBarWidth(desiredSize int) int {
-	termW, _, err := getTerminalSize(getStdoutFd())
+	termW, _, err := term.GetSize(getStdoutFd())
 	if err != nil {
 		return -1
 	}
@@ -89,19 +89,6 @@ func GetProgressBarWidth(desiredSize int) int {
 		return termW
 	}
 	return desiredSize
-}
-
-func getTerminalSize(fd int) (width, height int, err error) {
-	ws, err := unix.IoctlGetWinsize(fd, unix.TIOCGWINSZ)
-	if err != nil {
-		return -1, -1, err
-	}
-	return int(ws.Col), int(ws.Row), nil
-}
-
-func isTerminal(fd int) bool {
-	_, err := unix.IoctlGetTermios(fd, unix.TIOCGETA)
-	return err == nil
 }
 
 func getStdoutFd() int {
