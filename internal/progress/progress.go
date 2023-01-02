@@ -58,10 +58,10 @@ func parseProgressString(str string) (ProgressType, bool) {
 }
 
 func GetColor(progressType ProgressType, colorAttr color.Attribute) func(a ...interface{}) string {
-	if progressType == autoProgress || progressType == FancyProgress {
-		return color.New(colorAttr).SprintFunc()
+	if progressType == PlainProgress {
+		return fmt.Sprint
 	}
-	return fmt.Sprint
+	return color.New(colorAttr).SprintFunc()
 }
 
 func isGithubAction() bool {
