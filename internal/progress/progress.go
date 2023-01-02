@@ -10,21 +10,21 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const (
+	autoProgress   ProgressType = "auto"
+	PlainProgress  ProgressType = "plain"
+	SimpleProgress ProgressType = "simple"
+)
+
 var (
 	progressMap = map[string]ProgressType{
-		"auto":  autoProgress,
-		"plain": PlainProgress,
-		"fancy": FancyProgress,
+		string(autoProgress):   autoProgress,
+		string(PlainProgress):  PlainProgress,
+		string(SimpleProgress): SimpleProgress,
 	}
 )
 
 type ProgressType string
-
-const (
-	autoProgress  ProgressType = "auto"
-	PlainProgress ProgressType = "plain"
-	FancyProgress ProgressType = "fancy"
-)
 
 func AttachProgressFlag(cmd *cobra.Command) {
 	progressVals := []string{}
@@ -59,7 +59,7 @@ func ValidateAndRetrieveProgressFlag(cmd *cobra.Command) (ProgressType, error) {
 	if isGithubAction() || !isTerminal(getStdoutFd()) {
 		return PlainProgress, nil
 	}
-	return FancyProgress, nil
+	return SimpleProgress, nil
 }
 
 func parseProgressString(str string) (ProgressType, bool) {
