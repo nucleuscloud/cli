@@ -56,7 +56,7 @@ func ValidateAndRetrieveProgressFlag(cmd *cobra.Command) (ProgressType, error) {
 	if p != autoProgress {
 		return p, nil
 	}
-	if isGithubAction() || !IsTerminal(getStdoutFd()) {
+	if isGithubAction() || !isTerminal(getStdoutFd()) {
 		return PlainProgress, nil
 	}
 	return FancyProgress, nil
@@ -67,7 +67,7 @@ func parseProgressString(str string) (ProgressType, bool) {
 	return p, ok
 }
 
-func GetColor(progressType ProgressType, colorAttr color.Attribute) func(a ...interface{}) string {
+func SProgressPrint(progressType ProgressType, colorAttr color.Attribute) func(a ...interface{}) string {
 	if progressType == PlainProgress {
 		return fmt.Sprint
 	}
@@ -80,7 +80,7 @@ func isGithubAction() bool {
 }
 
 func GetProgressBarWidth(desiredSize int) (int, error) {
-	termW, _, err := GetTerminalSize(getStdoutFd())
+	termW, _, err := getTerminalSize(getStdoutFd())
 	if err != nil {
 		return -1, err
 	}
@@ -90,7 +90,7 @@ func GetProgressBarWidth(desiredSize int) (int, error) {
 	return desiredSize, nil
 }
 
-func GetTerminalSize(fd int) (width, height int, err error) {
+func getTerminalSize(fd int) (width, height int, err error) {
 	ws, err := unix.IoctlGetWinsize(fd, unix.TIOCGWINSZ)
 	if err != nil {
 		return -1, -1, err
@@ -98,7 +98,7 @@ func GetTerminalSize(fd int) (width, height int, err error) {
 	return int(ws.Col), int(ws.Row), nil
 }
 
-func IsTerminal(fd int) bool {
+func isTerminal(fd int) bool {
 	_, err := unix.IoctlGetTermios(fd, unix.TIOCGETA)
 	return err == nil
 }

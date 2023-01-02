@@ -157,7 +157,7 @@ func deploy(
 	req deployRequest,
 	progressType progress.ProgressType,
 ) error {
-	green := progress.GetColor(progressType, color.FgGreen)
+	green := progress.SProgressPrint(progressType, color.FgGreen)
 	fmt.Printf("\nGetting deployment ready: \n%sService: %s \n%sEnvironment: %s \n%sProject Directory: %s \n\n",
 		green("↪"), req.serviceName,
 		green("↪"), req.environmentType,
