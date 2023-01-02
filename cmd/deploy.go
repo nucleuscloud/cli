@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -19,10 +18,11 @@ import (
 	ga "github.com/mhelmich/go-archiver"
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/spf13/cobra"
-	"github.com/vbauerster/mpb/v7"
-	"github.com/vbauerster/mpb/v7/decor"
+	"github.com/vbauerster/mpb/v8"
+	"github.com/vbauerster/mpb/v8/decor"
 
 	"github.com/nucleuscloud/cli/internal/config"
+	"github.com/nucleuscloud/cli/internal/progress"
 	"github.com/nucleuscloud/cli/internal/secrets"
 	"github.com/nucleuscloud/cli/internal/utils"
 )
@@ -62,21 +62,16 @@ var deployCmd = &cobra.Command{
 			return fmt.Errorf("service type not provided")
 		}
 
-		// convert fastapi to python
-		if serviceType == "fastapi" {
-			serviceType = "python"
-			deployConfig.Spec.ServiceRunTime = "python"
-			err = config.SetNucleusConfig(deployConfig)
-			if err != nil {
-				return fmt.Errorf("unable to convert fastapi project to python")
-			}
-		}
-
 		if serviceType == "python" {
 			err = ensureProcfileExists()
 			if err != nil {
 				return err
 			}
+		}
+
+		progressType, err := progress.ValidateAndRetrieveProgressFlag(cmd)
+		if err != nil {
+			return err
 		}
 
 		directoryName, err := os.Getwd()
@@ -108,7 +103,7 @@ var deployCmd = &cobra.Command{
 			envVars:          deployConfig.Spec.Vars,
 			envSecrets:       envSecrets,
 		}
-		err = deploy(ctx, svcClient, req)
+		err = deploy(ctx, svcClient, req, progressType)
 		if err != nil {
 			return err
 		}
@@ -160,15 +155,14 @@ func deploy(
 	ctx context.Context,
 	svcClient svcmgmtv1alpha1.ServiceMgmtServiceClient,
 	req deployRequest,
+	progressType progress.ProgressType,
 ) error {
-	green := color.New(color.FgGreen).SprintFunc()
+	green := progress.SProgressPrint(progressType, color.FgGreen)
 	fmt.Printf("\nGetting deployment ready: \n%sService: %s \n%sEnvironment: %s \n%sProject Directory: %s \n\n",
 		green("↪"), req.serviceName,
 		green("↪"), req.environmentType,
 		green("↪"), req.folderPath,
 	)
-
-	s1 := spinner.New(spinner.CharSets[26], 100*time.Millisecond)
 
 	deployRequest := svcmgmtv1alpha1.DeployServiceRequest{
 		CliVersion:      req.cliVersion,
@@ -196,84 +190,143 @@ func deploy(
 		}
 		deployRequest.DockerImage = req.image
 	} else {
-		s1.Start()
+		uploadSpinner := spinner.New(spinner.CharSets[35], 100*time.Millisecond)
+		uploadSpinner.Suffix = "  Bundling and uploading code..."
+		if progressType == progress.TtyProgress {
+			uploadSpinner.Start()
+		} else {
+			fmt.Println("Bundling and uploading code...")
+		}
 		uploadKey, err := bundleAndUploadCode(ctx, svcClient, req.folderPath, req.environmentType, req.serviceName)
+		uploadSpinner.Stop()
 		if err != nil {
-			s1.Stop()
 			return err
 		}
 		deployRequest.UploadedCodeUri = uploadKey
 	}
 
+	deployInitSpinner := spinner.New(spinner.CharSets[35], 100*time.Millisecond)
+	deployInitSpinner.Suffix = "  Initiating deployment request"
+	if progressType == progress.TtyProgress {
+		deployInitSpinner.Start()
+	}
 	stream, err := svcClient.DeployService(ctx, &deployRequest)
+	deployInitSpinner.Stop()
 	if err != nil {
-		s1.Stop()
 		return err
 	}
-	s1.Stop()
-	p := mpb.New(mpb.WithWidth(64))
-	bar := getProgressBar(p, "Deploying service...", 0)
-	var currCompleted int64 = 0
+
+	termWidth := progress.GetProgressBarWidth(50)
+	progressContainer := mpb.NewWithContext(
+		ctx,
+		mpb.WithWidth(termWidth),
+	)
+
+	mainBar := getProgressBar(progressContainer, "Deploying your service...", 100)
+	printPlainOutput := getPlainOutput()
+
 	for {
-		update, err := stream.Recv()
-		if err == io.EOF {
-			bar.Abort(true)
-			break
-		} else if err != nil {
-			bar.Abort(true)
-			log.Fatalf("server side error: %s", err.Error())
+		response, err := stream.Recv()
+		if err != nil {
+			mainBar.Abort(true)
+			return err
 		}
 
-		deployUpdate := update.GetDeploymentUpdate()
-		if deployUpdate != nil {
-			if deployUpdate.GetIsFailure() {
-				bar.Abort(true)
-				return fmt.Errorf(deployUpdate.GetMessage())
-			}
-			taskCount := deployUpdate.GetTaskStatusCount()
-			totalTasks := getTotalTasks(taskCount)
-			if taskCount != nil && totalTasks > 0 {
-				if bar.Current() == 0 {
-					bar.SetTotal(int64(totalTasks), false)
-				}
-				if taskCount.GetCompleted() != currCompleted {
-					bar.IncrInt64(taskCount.GetCompleted() - currCompleted)
-					currCompleted = taskCount.GetCompleted()
-				}
-			}
+		if response.GetServiceUrl() != "" {
+			mainBar.SetCurrent(100)
+			progressContainer.Wait()
+			fmt.Printf("\nService is deployed at: %s\n", green(response.GetServiceUrl()))
+			break
+		}
+
+		deployStatus := response.GetDeployStatus()
+		if deployStatus == nil {
 			continue
 		}
-		// should have to do a final increment because once all 4 tasks are completed we just return the url
-		bar.Increment()
-		// For some reason the bar never completes without this call.
-		bar.EnableTriggerComplete()
-		p.Wait()
 
-		servUrl := update.GetServiceUrl()
-		if servUrl == "" {
-			fmt.Printf("Unable to retrieve URL..please try again")
+		if progressType == progress.PlainProgress {
+			// plain output
+			printPlainOutput(deployStatus)
 		} else {
-			fmt.Printf("\nService is deployed at: %s\n", green(servUrl))
+			mainBar.SetCurrent(int64(getCompletionPercentage(deployStatus)))
 		}
-		break
 	}
-	p.Wait()
 
 	return nil
 }
 
-func getTotalTasks(taskCount *svcmgmtv1alpha1.DeployServiceTaskStatusCount) int {
-	if taskCount == nil {
-		return 0
+func getCompletionPercentage(deployStatus *svcmgmtv1alpha1.DeployStatus) float64 {
+	maxComplete := 0.
+
+	numStages := float64(len(deployStatus.DeployTaskStatus))
+
+	for tsIdx, taskStatus := range deployStatus.DeployTaskStatus {
+		floorVal := float64(tsIdx) / numStages
+		ceilVal := float64((tsIdx + 1)) / numStages
+		if taskStatus.StartTime == nil {
+			continue
+		}
+
+		numSteps := len(taskStatus.Steps)
+		for stepIdx, step := range taskStatus.Steps {
+			currstep := stepIdx + 1
+			subCeil := getPercentageComplete(ceilVal, floorVal, currstep, numSteps)
+			totalSubSteps := 3 // waiting, running, terminated
+
+			if step.GetWaiting() != nil {
+				maxComplete = getPercentageComplete(subCeil, floorVal, 1, totalSubSteps)
+			}
+			if step.GetRunning() != nil {
+				maxComplete = getPercentageComplete(subCeil, floorVal, 2, totalSubSteps)
+			}
+			if step.GetTerminated() != nil {
+				// equivalent to: getPercentageComplete(subCeil, floorVal, 3, 3)
+				maxComplete = subCeil
+			}
+		}
 	}
-	return int(taskCount.Completed) + int(taskCount.Failed) + int(taskCount.Incomplete) + int(taskCount.Skipped)
+	return maxComplete * 100
+}
+
+func getPercentageComplete(ceilVal float64, floorVal float64, currStep int, numSteps int) float64 {
+	return ((ceilVal-floorVal)*(float64(currStep)/float64(numSteps)) + floorVal)
+}
+
+func getPlainOutput() func(deployStatus *svcmgmtv1alpha1.DeployStatus) {
+
+	return func(deployStatus *svcmgmtv1alpha1.DeployStatus) {
+		plainOutput(deployStatus)
+	}
+}
+
+func plainOutput(deployUpdate *svcmgmtv1alpha1.DeployStatus) {
+	fmt.Println("====================")
+	if deployUpdate.Succeeded != nil {
+		fmt.Println("Status Message", deployUpdate.Succeeded.Message)
+	}
+	for _, taskStatus := range deployUpdate.DeployTaskStatus {
+		fmt.Printf("    Task Name: '%s'\n    Start Time: '%s'\n    Complete Time: '%s'\n    Num Steps: '%d'\n", taskStatus.Name, taskStatus.GetStartTime(), taskStatus.GetCompletionTime(), len(taskStatus.Steps))
+		for _, step := range taskStatus.Steps {
+			fmt.Printf("        Task Step: '%s'\n", step.Name)
+			waiting := step.GetWaiting()
+			terminating := step.GetTerminated()
+			running := step.GetRunning()
+			if waiting != nil {
+				fmt.Printf("            Waiting: Reason: '%s' Message: '%s'\n", waiting.Reason, waiting.Message)
+			} else if running != nil {
+				fmt.Printf("            Running: '%s'\n", running.StartedAt)
+			} else if terminating != nil {
+				fmt.Printf("            Terminated: Reason: '%s' Message: '%s' Started At: '%s' Finished At: '%s'\n", terminating.Reason, terminating.Message, terminating.StartedAt, terminating.FinishedAt)
+			}
+		}
+	}
 }
 
 func bundleAndUploadCode(
 	ctx context.Context,
 	svcClient svcmgmtv1alpha1.ServiceMgmtServiceClient,
 	folderPath string,
-	environmentType string,
+	environmentName string,
 	serviceName string,
 ) (string, error) {
 	fd, err := os.CreateTemp("", "nucleus-cli-")
@@ -309,7 +362,7 @@ func bundleAndUploadCode(
 	}
 
 	signedResponse, err := svcClient.GetServiceUploadUrl(ctx, &svcmgmtv1alpha1.GetServiceUploadUrlRequest{
-		EnvironmentType: environmentType,
+		EnvironmentType: environmentName,
 		ServiceName:     serviceName,
 	})
 	if err != nil {
@@ -360,6 +413,7 @@ func init() {
 	rootCmd.AddCommand(deployCmd)
 
 	deployCmd.Flags().StringP("env", "e", "", "set the nucleus environment")
+	progress.AttachProgressFlag(deployCmd)
 }
 
 func getProgressBar(progress *mpb.Progress, name string, total int) *mpb.Bar {
