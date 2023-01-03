@@ -18,7 +18,7 @@ const (
 	Auth0ProdClientId = "6zk97YDDj9YplY9jqOaHmKYojhEXquD8"
 	Auth0ProdBaseUrl  = "https://auth.nucleuscloud.com"
 
-	ApiAudience = "https://api.usenucleus.cloud"
+	ApiAudience = "https://api.nucleuscloud.com"
 
 	logoutReturnTo = "https://nucleuscloud.com"
 )
