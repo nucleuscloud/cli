@@ -9,14 +9,13 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/google/uuid v1.3.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
-	github.com/nucleuscloud/mgmt-api v0.0.73
+	github.com/nucleuscloud/mgmt-api v0.0.74
 	github.com/rodaine/table v1.1.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
 	github.com/toqueteos/webbrowser v1.2.0
 	github.com/vbauerster/mpb/v8 v8.1.4
-	golang.org/x/sync v0.1.0
 	golang.org/x/term v0.3.0
 	google.golang.org/grpc v1.51.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -27,6 +26,7 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/envoyproxy/protoc-gen-validate v0.9.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.12.0 // indirect
