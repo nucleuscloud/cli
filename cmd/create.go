@@ -43,6 +43,13 @@ func isNodejs(dir string) bool {
 	return false
 }
 
+func isRuby(dir string) bool {
+	if _, err := os.Stat(filepath.Join(dir, "Gemfile")); err == nil {
+		return true
+	}
+	return true
+}
+
 func isPython(dir string) bool {
 	if _, err := os.Stat(filepath.Join(dir, "requirements.txt")); err == nil {
 		return true
@@ -51,6 +58,19 @@ func isPython(dir string) bool {
 	if _, err := os.Stat(filepath.Join(dir, "pyproject.toml")); err == nil {
 		return true
 	}
+	// pipenv
+	if _, err := os.Stat(filepath.Join(dir, "Pipfile")); err == nil {
+		return true
+	}
+	// miniconda
+	if _, err := os.Stat(filepath.Join(dir, "environment.yml")); err == nil {
+		return true
+	}
+	// miniconda
+	if _, err := os.Stat(filepath.Join(dir, "package-list.txt")); err == nil {
+		return true
+	}
+
 	return false
 }
 
@@ -78,6 +98,9 @@ func guessProjectType() string {
 	}
 	if isDocker(cwd) {
 		return "docker"
+	}
+	if isRuby(cwd) {
+		return "ruby"
 	}
 	return utils.GetSupportedRuntimes()[0]
 }
