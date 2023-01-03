@@ -13,7 +13,7 @@ import (
 	"github.com/toqueteos/webbrowser"
 )
 
-type callbackResponse struct {
+type oauthCallbackResponse struct {
 	code  string
 	state string
 }
@@ -27,13 +27,13 @@ var (
 	redirectUri = fmt.Sprintf("http://%s%s", httpSrvBaseUrl, callbackPath)
 )
 
-func Login(ctx context.Context) error {
+func OAuthLogin(ctx context.Context) error {
 	authClient, err := auth.NewAuthClientByEnv(GetEnv())
 	if err != nil {
 		return err
 	}
 
-	codeChan := make(chan callbackResponse)
+	codeChan := make(chan oauthCallbackResponse)
 	errChan := make(chan error)
 
 	http.HandleFunc(callbackPath, func(w http.ResponseWriter, r *http.Request) {
@@ -42,17 +42,36 @@ func Login(ctx context.Context) error {
 		errorCode := r.URL.Query().Get("error")
 		errorMsg := r.URL.Query().Get("error_description")
 		if errorCode != "" || errorMsg != "" {
-			fmt.Fprintf(w, "Error Code: %s\nError Description: %s\n", errorCode, errorMsg)
+			err := RenderLoginErrorPage(w, LoginPageErrorData{
+				Title:            "Login Failed",
+				ErrorCode:        errorCode,
+				ErrorDescription: errorMsg,
+			})
+			if err != nil {
+				errChan <- err
+				return
+			}
 			errChan <- fmt.Errorf("unabe to finish login flow")
 			return
 		}
 		if resAuthCode == "" || resAuthState == "" {
-			fmt.Fprintf(w, "Missing required query parameters to finish logging in.")
+			err := RenderLoginErrorPage(w, LoginPageErrorData{
+				Title:            "Login Failed",
+				ErrorCode:        "BadRequest",
+				ErrorDescription: "Missing required query parameters to finish logging in.",
+			})
+			if err != nil {
+				errChan <- err
+				return
+			}
 			errChan <- fmt.Errorf("received invalid callback response")
 			return
 		}
-		fmt.Fprintf(w, "Login success! You may now return to your CLI window.")
-		codeChan <- callbackResponse{resAuthCode, resAuthState}
+		err := RenderLoginSuccessPage(w, LoginPageData{Title: "Success"})
+		if err != nil {
+			errChan <- fmt.Errorf("unable to write to login page")
+		}
+		codeChan <- oauthCallbackResponse{resAuthCode, resAuthState}
 	})
 
 	go func() {
