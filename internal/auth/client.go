@@ -19,6 +19,8 @@ const (
 	Auth0ProdBaseUrl  = "https://auth.nucleuscloud.com"
 
 	ApiAudience = "https://api.usenucleus.cloud"
+
+	logoutReturnTo = "https://nucleuscloud.com"
 )
 
 type AuthClientInterface interface {
@@ -133,6 +135,7 @@ func (c *authClient) GetLogoutUrl() (string, error) {
 
 	queryParams := url.Values{}
 	queryParams.Add("client_id", c.clientId)
+	queryParams.Add("returnTo", logoutReturnTo)
 	base.RawQuery = queryParams.Encode()
 	return base.String(), nil
 }
