@@ -37,7 +37,7 @@ var loginCmd = &cobra.Command{
 
 			return utils.ClientLogin(ctx, clientId, secretResult.value)
 		}
-		return utils.Login(ctx)
+		return utils.OAuthLogin(ctx)
 	},
 }
 
