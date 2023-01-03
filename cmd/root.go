@@ -25,7 +25,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
 var verbose bool
 
 // rootCmd represents the base command when called without any subcommands
@@ -45,7 +44,8 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	var cfgFile string
+	cobra.OnInitialize(getInitConfigFn(&cfgFile))
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -55,11 +55,17 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 }
 
+func getInitConfigFn(cfgFilePath *string) func() {
+	return func() {
+		initConfig(cfgFilePath)
+	}
+}
+
 // initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" {
+func initConfig(cfgFilePath *string) {
+	if cfgFilePath != nil && *cfgFilePath != "" {
 		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
+		viper.SetConfigFile(*cfgFilePath)
 	} else {
 		// Find home directory.
 		home, err := os.UserHomeDir()
