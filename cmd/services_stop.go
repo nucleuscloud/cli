@@ -33,13 +33,13 @@ var servicesStopCmd = &cobra.Command{
 	Long:    "Call this command to stop a service. This will shut it down and no longer make it accessible.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
-		environmentType, err := cmd.Flags().GetString("env")
+		environmentName, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
 		}
 
-		if environmentType == "" {
-			return fmt.Errorf("must provide environment type")
+		if environmentName == "" {
+			return fmt.Errorf("must provide environment name")
 		}
 
 		serviceName, err := cmd.Flags().GetString("service")
@@ -62,7 +62,7 @@ var servicesStopCmd = &cobra.Command{
 			return utils.ErrInvalidServiceName
 		}
 
-		return setServicePause(ctx, environmentType, serviceName, true)
+		return setServicePause(ctx, environmentName, serviceName, true)
 	},
 }
 
@@ -73,7 +73,7 @@ func init() {
 	servicesStopCmd.Flags().StringP("service", "s", "", "set the service name, if not provided will pull from nucleus.yaml (if there is one)")
 }
 
-func setServicePause(ctx context.Context, environmentType string, serviceName string, isPaused bool) error {
+func setServicePause(ctx context.Context, environmentName string, serviceName string, isPaused bool) error {
 	conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func setServicePause(ctx context.Context, environmentType string, serviceName st
 
 	cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
 	_, err = cliClient.SetServiceActiveStatus(ctx, &svcmgmtv1alpha1.SetServiceActiveStatusRequest{
-		EnvironmentType: strings.TrimSpace(environmentType),
+		EnvironmentName: strings.TrimSpace(environmentName),
 		ServiceName:     serviceName,
 		IsActive:        !isPaused,
 	})

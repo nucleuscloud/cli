@@ -20,12 +20,12 @@ var logsCommand = &cobra.Command{
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
-		environmentType, err := cmd.Flags().GetString("env")
+		environmentName, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
 		}
-		if environmentType == "" {
-			return fmt.Errorf("must provide environment type")
+		if environmentName == "" {
+			return fmt.Errorf("must provide environment name")
 		}
 
 		sn, err := cmd.Flags().GetString("service")
@@ -63,11 +63,11 @@ var logsCommand = &cobra.Command{
 		}
 
 		shouldTail := tail || follow
-		return getLogs(ctx, environmentType, serviceName, window, shouldTail)
+		return getLogs(ctx, environmentName, serviceName, window, shouldTail)
 	},
 }
 
-func getLogs(ctx context.Context, envType string, serviceName string, window string, shouldTail bool) error {
+func getLogs(ctx context.Context, envName string, serviceName string, window string, shouldTail bool) error {
 	conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func getLogs(ctx context.Context, envType string, serviceName string, window str
 
 	cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
 	logStream, err := cliClient.GetServiceLogs(ctx, &svcmgmtv1alpha1.GetServiceLogsRequest{
-		EnvironmentType: envType,
+		EnvironmentName: envName,
 		ServiceName:     serviceName,
 		Window:          getLogWindow(window),
 		ShouldTail:      shouldTail,

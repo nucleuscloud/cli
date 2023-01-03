@@ -44,12 +44,12 @@ var deployCmd = &cobra.Command{
 			return utils.ErrInvalidServiceName
 		}
 
-		environmentType, err := cmd.Flags().GetString("env")
+		environmentName, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
 		}
-		if environmentType == "" {
-			return fmt.Errorf("must provide environment type")
+		if environmentName == "" {
+			return fmt.Errorf("must provide environment name")
 		}
 
 		serviceName := deployConfig.Spec.ServiceName
@@ -79,7 +79,7 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
-		envSecrets := secrets.GetSecretsByEnvType(&deployConfig.Spec, environmentType)
+		envSecrets := secrets.GetSecretsByEnvName(&deployConfig.Spec, environmentName)
 		if err != nil {
 			return err
 		}
@@ -94,7 +94,7 @@ var deployCmd = &cobra.Command{
 
 		req := deployRequest{
 			cliVersion:       deployConfig.CliVersion,
-			environmentType:  environmentType,
+			environmentName:  environmentName,
 			serviceName:      serviceName,
 			serviceType:      serviceType,
 			image:            deployConfig.Spec.Image,
@@ -110,7 +110,7 @@ var deployCmd = &cobra.Command{
 		return setAuthzPolicy(
 			ctx,
 			svcClient,
-			environmentType,
+			environmentName,
 			serviceName,
 			deployConfig.Spec.AllowedServices,
 			deployConfig.Spec.DisallowedServices,
@@ -121,13 +121,13 @@ var deployCmd = &cobra.Command{
 func setAuthzPolicy(
 	ctx context.Context,
 	svcClient svcmgmtv1alpha1.ServiceMgmtServiceClient,
-	environmentType string,
+	environmentName string,
 	serviceName string,
 	allowList []string,
 	denyList []string,
 ) error {
 	_, err := svcClient.SetServiceMtlsPolicy(ctx, &svcmgmtv1alpha1.SetServiceMtlsPolicyRequest{
-		EnvironmentType:    environmentType,
+		EnvironmentName:    environmentName,
 		ServiceName:        serviceName,
 		AllowedServices:    allowList,
 		DisallowedServices: denyList,
@@ -140,7 +140,7 @@ func setAuthzPolicy(
 
 type deployRequest struct {
 	cliVersion       string
-	environmentType  string
+	environmentName  string
 	serviceName      string
 	serviceType      string
 	image            string
@@ -160,13 +160,13 @@ func deploy(
 	green := progress.SProgressPrint(progressType, color.FgGreen)
 	fmt.Printf("\nGetting deployment ready: \n%sService: %s \n%sEnvironment: %s \n%sProject Directory: %s \n\n",
 		green("↪"), req.serviceName,
-		green("↪"), req.environmentType,
+		green("↪"), req.environmentName,
 		green("↪"), req.folderPath,
 	)
 
 	deployRequest := svcmgmtv1alpha1.DeployServiceRequest{
 		CliVersion:      req.cliVersion,
-		EnvironmentType: req.environmentType,
+		EnvironmentName: req.environmentName,
 		ServiceName:     req.serviceName,
 		ServiceType:     req.serviceType,
 		IsPrivate:       req.isPrivateService,
@@ -197,7 +197,7 @@ func deploy(
 		} else {
 			fmt.Println("Bundling and uploading code...")
 		}
-		uploadKey, err := bundleAndUploadCode(ctx, svcClient, req.folderPath, req.environmentType, req.serviceName)
+		uploadKey, err := bundleAndUploadCode(ctx, svcClient, req.folderPath, req.environmentName, req.serviceName)
 		uploadSpinner.Stop()
 		if err != nil {
 			return err
@@ -362,7 +362,7 @@ func bundleAndUploadCode(
 	}
 
 	signedResponse, err := svcClient.GetServiceUploadUrl(ctx, &svcmgmtv1alpha1.GetServiceUploadUrlRequest{
-		EnvironmentType: environmentName,
+		EnvironmentName: environmentName,
 		ServiceName:     serviceName,
 	})
 	if err != nil {

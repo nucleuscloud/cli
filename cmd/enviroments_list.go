@@ -146,7 +146,7 @@ func filterEnvforServicesCount(envName string, config []*EnvironmentConfig) int3
 
 func getServicesCount(ctx context.Context, envName string, client svcmgmtv1alpha1.ServiceMgmtServiceClient) (int32, error) {
 
-	svcs, err := client.GetServices(ctx, &svcmgmtv1alpha1.GetServicesRequest{EnvironmentType: envName})
+	svcs, err := client.GetServices(ctx, &svcmgmtv1alpha1.GetServicesRequest{EnvironmentName: envName})
 	if err != nil {
 		return 0, err
 	}

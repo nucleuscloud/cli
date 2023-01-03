@@ -38,7 +38,7 @@ func GetGrpcTrailer() grpc.CallOption {
 	return grpc.Trailer(&trailer)
 }
 
-func PromptToProceed(cmd *cobra.Command, environmentType string, yesPromptFlagName string) error {
+func PromptToProceed(cmd *cobra.Command, environmentName string, yesPromptFlagName string) error {
 	yesPrompt, err := cmd.Flags().GetBool(yesPromptFlagName)
 	if err != nil {
 		return err
@@ -46,14 +46,14 @@ func PromptToProceed(cmd *cobra.Command, environmentType string, yesPromptFlagNa
 	if !yesPrompt {
 		shouldProceed := false
 		err = survey.AskOne(&survey.Confirm{
-			Message: fmt.Sprintf("Are you sure you want to invoke this command in %s?", environmentType),
+			Message: fmt.Sprintf("Are you sure you want to invoke this command in %s?", environmentName),
 		}, &shouldProceed)
 		if err != nil {
 			return err
 		}
 
 		if !shouldProceed {
-			return fmt.Errorf("exiting %s deployment", environmentType)
+			return fmt.Errorf("exiting %s deployment", environmentName)
 		}
 	}
 	return nil
