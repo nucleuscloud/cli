@@ -52,13 +52,13 @@ var setCmd = &cobra.Command{
 			return utils.ErrInvalidServiceName
 		}
 
-		environmentType, err := cmd.Flags().GetString("env")
+		environmentName, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
 		}
 
-		if environmentType == "" {
-			return fmt.Errorf("must provide environment type")
+		if environmentName == "" {
+			return fmt.Errorf("must provide environment name")
 		}
 
 		secretResult, err := getSecretValue()
@@ -79,7 +79,7 @@ var setCmd = &cobra.Command{
 		}
 
 		publicKeyReply, err := svcClient.GetPublicSecretKey(ctx, &svcmgmtv1alpha1.GetPublicSecretKeyRequest{
-			EnvironmentType: environmentType,
+			EnvironmentName: environmentName,
 			ServiceName:     deployConfig.Spec.ServiceName,
 		})
 		if err != nil {
@@ -94,7 +94,7 @@ var setCmd = &cobra.Command{
 		if verbose {
 			fmt.Println("Encrypting secret...")
 		}
-		err = secrets.StoreSecret(&deployConfig.Spec, publicKey, secretKey, secretResult.value, environmentType)
+		err = secrets.StoreSecret(&deployConfig.Spec, publicKey, secretKey, secretResult.value, environmentName)
 		if err != nil {
 			return err
 		}

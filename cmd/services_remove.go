@@ -34,13 +34,13 @@ var servicesRemoveCmd = &cobra.Command{
 	Long:    "Completely remove a service from your environment. This operation is destructive!",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
-		environmentType, err := cmd.Flags().GetString("env")
+		environmentName, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
 		}
 
-		if environmentType == "" {
-			return fmt.Errorf("must provide environment type")
+		if environmentName == "" {
+			return fmt.Errorf("must provide environment name")
 		}
 
 		serviceName, err := cmd.Flags().GetString("service")
@@ -63,14 +63,14 @@ var servicesRemoveCmd = &cobra.Command{
 			return utils.ErrInvalidServiceName
 		}
 
-		fmt.Printf("Service to delete: \n↪Environment: %s\n↪Service: %s\n", environmentType, serviceName)
+		fmt.Printf("Service to delete: \n↪Environment: %s\n↪Service: %s\n", environmentName, serviceName)
 
-		err = utils.PromptToProceed(cmd, environmentType, "yes")
+		err = utils.PromptToProceed(cmd, environmentName, "yes")
 		if err != nil {
 			return err
 		}
 
-		return removeService(ctx, environmentType, serviceName)
+		return removeService(ctx, environmentName, serviceName)
 	},
 }
 
@@ -82,7 +82,7 @@ func init() {
 	servicesRemoveCmd.Flags().BoolP("yes", "y", false, "automatically proceed with removal")
 }
 
-func removeService(ctx context.Context, environmentType string, serviceName string) error {
+func removeService(ctx context.Context, environmentName string, serviceName string) error {
 	conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
 	if err != nil {
 		return err
@@ -91,7 +91,7 @@ func removeService(ctx context.Context, environmentType string, serviceName stri
 
 	cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
 	_, err = cliClient.RemoveService(ctx, &svcmgmtv1alpha1.RemoveServiceRequest{
-		EnvironmentType: strings.TrimSpace(environmentType),
+		EnvironmentName: strings.TrimSpace(environmentName),
 		ServiceName:     serviceName,
 	})
 	if err != nil {
