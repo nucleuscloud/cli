@@ -104,6 +104,7 @@ func RenderLoginErrorPage(wr io.Writer, data LoginPageErrorData) error {
 	return pageTmpl.ExecuteTemplate(wr, "login", data)
 }
 
+// returns a template with the header and footer templates added in
 func getHtmlPage() (*template.Template, error) {
 	templ, err := template.New("header").Parse(header)
 	if err != nil {
