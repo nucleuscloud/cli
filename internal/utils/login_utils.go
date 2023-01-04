@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/nucleuscloud/cli/internal/auth"
@@ -37,7 +36,6 @@ func OAuthLogin(ctx context.Context) error {
 		return err
 	}
 
-	codeChan := make(chan oauthCallbackResponse)
 	orgCodeChan := make(chan oauthCallbackResponse)
 	errChan := make(chan error)
 
@@ -75,52 +73,66 @@ func OAuthLogin(ctx context.Context) error {
 			errChan <- fmt.Errorf("received invalid callback response")
 			return
 		}
-		//////
+		if state != resAuthState {
+			err := RenderLoginErrorPage(w, LoginPageErrorData{
+				Title:            "Login Failed",
+				ErrorCode:        "BadRequest",
+				ErrorDescription: "Received invalid state in response",
+			})
+			if err != nil {
+				errChan <- err
+				return
+			}
+			errChan <- fmt.Errorf("received invalid state in response")
+			return
+		}
+
 		accessTokenRes, err := getAccessToken(ctx, resAuthCode, resAuthState, redirectUri, clienv.GetEnv())
 		if err != nil {
 			errChan <- err
+			err := RenderLoginErrorPage(w, LoginPageErrorData{
+				Title:            "Login Failed",
+				ErrorCode:        "Internal",
+				ErrorDescription: "Unable to get access token to continue logging in",
+			})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return
+			}
 			return
 		}
 
-		conn, err := NewAuthenticatedConnection(accessTokenRes.AccessToken)
+		orgIds, err := getUsersOrganizations(ctx, accessTokenRes.AccessToken)
 		if err != nil {
 			errChan <- err
+			err := RenderLoginErrorPage(w, LoginPageErrorData{
+				Title:            "Login Failed",
+				ErrorCode:        "Internal",
+				ErrorDescription: "Unable to retrieve your organizations.",
+			})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return
+			}
 			return
 		}
-		defer conn.Close()
-
-		nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
-		_, err = nucleusClient.SetUser(ctx, &mgmtv1alpha1.SetUserRequest{})
-		if err != nil {
-			errChan <- err
-			return
-		}
-
-		orgRes, err := nucleusClient.GetUserOrganizations(ctx, &mgmtv1alpha1.GetUserOrganizationsRequest{})
-		if err != nil {
-			errChan <- err
-			return
-		}
-		fmt.Println("Found Org Ids: ", strings.Join(orgRes.OrgIds, ", "))
-
-		if len(orgRes.OrgIds) > 0 {
-			orgId := orgRes.OrgIds[0]
+		if len(orgIds) > 0 {
+			orgId := orgIds[0]
 			authorizeUrl := authClient.GetAuthorizeUrl(Scopes, orgState, redirectOrgUri, &orgId)
 			http.Redirect(w, r, authorizeUrl, 301)
-			return
 		} else {
 			errChan <- fmt.Errorf("must have an organization in order to login to CLI")
-			// todo
+			err := RenderLoginErrorPage(w, LoginPageErrorData{
+				Title:            "Login Failed",
+				ErrorCode:        "Internal",
+				ErrorDescription: "Must have an organization to login to CLI. Login through the https://nucleuscloud.com and create an organization to continue.",
+			})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return
+			}
 			return
 		}
-
-		//////
-		// err = RenderLoginSuccessPage(w, LoginPageData{Title: "Success"})
-		// if err != nil {
-		// 	errChan <- fmt.Errorf("unable to write to login page")
-		// 	return
-		// }
-		// codeChan <- oauthCallbackResponse{resAuthCode, resAuthState}
 	})
 
 	http.HandleFunc(orgCallbackPath, func(w http.ResponseWriter, r *http.Request) {
@@ -157,6 +169,7 @@ func OAuthLogin(ctx context.Context) error {
 		err := RenderLoginSuccessPage(w, LoginPageData{Title: "Success"})
 		if err != nil {
 			errChan <- fmt.Errorf("unable to write to login page")
+			return
 		}
 		orgCodeChan <- oauthCallbackResponse{resAuthCode, resAuthState}
 	})
@@ -174,57 +187,9 @@ func OAuthLogin(ctx context.Context) error {
 		return err
 	}
 
-	// select {
-	// case response := <-codeChan:
-	// 	close(codeChan)
-	// 	if state != response.state {
-	// 		return fmt.Errorf("State received from response was not what was sent")
-	// 	}
-	// 	accessTokenRes, err := getAccessToken(ctx, response.code, response.state, redirectUri, clienv.GetEnv())
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	conn, err := NewAuthenticatedConnection(accessTokenRes.AccessToken)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	defer conn.Close()
-
-	// 	nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
-	// 	_, err = nucleusClient.SetUser(ctx, &mgmtv1alpha1.SetUserRequest{})
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	orgRes, err := nucleusClient.GetUserOrganizations(ctx, &mgmtv1alpha1.GetUserOrganizationsRequest{})
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	fmt.Println("Found Org Ids: ", strings.Join(orgRes.OrgIds, ", "))
-
-	// 	if len(orgRes.OrgIds) > 0 {
-	// 		orgId := orgRes.OrgIds[0]
-	// 		authorizeUrl := authClient.GetAuthorizeUrl(Scopes, orgState, redirectOrgUri, &orgId)
-	// 		err = webbrowser.Open(authorizeUrl)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	} else {
-	// 		return fmt.Errorf("must have an organization in order to login to CLI")
-	// 	}
-
-	// case err := <-errChan:
-	// 	close(errChan)
-	// 	close(codeChan)
-	// 	close(orgCodeChan)
-	// 	return err
-	// }
-
 	select {
 	case err := <-errChan:
 		close(errChan)
-		close(codeChan)
 		close(orgCodeChan)
 		return err
 	case response := <-orgCodeChan:
@@ -288,40 +253,31 @@ func getAccessToken(
 		fmt.Fprintln(os.Stderr, err)
 	}
 	return tokenResponse, nil
+}
 
-	// err = config.SetNucleusAuthFile(config.NucleusAuthConfig{
-	// 	AccessToken:  tokenResponse.AccessToken,
-	// 	RefreshToken: tokenResponse.RefreshToken,
-	// 	IdToken:      tokenResponse.IdToken,
-	// })
-	// if err != nil {
-	// 	return err
-	// }
-	// conn.Close()
+func getUsersOrganizations(
+	ctx context.Context,
+	accessToken string,
+) ([]string, error) {
 
-	// conn, err = NewAuthenticatedConnection(tokenResponse.AccessToken)
-	// if err != nil {
-	// 	return err
-	// }
-	// defer conn.Close()
+	conn, err := NewAuthenticatedConnection(accessToken)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
 
-	// nucleusClient = mgmtv1alpha1.NewMgmtServiceClient(conn)
-	// _, err = nucleusClient.SetUser(ctx, &mgmtv1alpha1.SetUserRequest{})
+	nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
+	_, err = nucleusClient.SetUser(ctx, &mgmtv1alpha1.SetUserRequest{})
+	if err != nil {
+		return nil, err
+	}
 
-	// orgRes, err := nucleusClient.GetUserOrganizations(ctx, &mgmtv1alpha1.GetUserOrganizationsRequest{})
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Println("Found Org Ids: ", strings.Join(orgRes.OrgIds, ", "))
+	orgRes, err := nucleusClient.GetUserOrganizations(ctx, &mgmtv1alpha1.GetUserOrganizationsRequest{})
+	if err != nil {
+		return nil, err
+	}
 
-	// if len(orgRes.OrgIds) > 0 {
-	// 	orgId := orgRes.OrgIds[0]
-	// 	authorizeUrl := authClient.GetAuthorizeUrl(Scopes, state, redirectUri, &orgId)
-	// 	err = webbrowser.Open(authorizeUrl)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
+	return orgRes.OrgIds, nil
 }
 
 func ClientLogin(ctx context.Context, clientId string, clientSecret string) error {
