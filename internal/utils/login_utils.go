@@ -67,8 +67,7 @@ func OAuthLogin(ctx context.Context) error {
 				ErrorDescription: "Missing required query parameters to finish logging in.",
 			})
 			if err != nil {
-				errChan <- err
-				return
+				fmt.Fprintln(os.Stderr, err)
 			}
 			errChan <- fmt.Errorf("received invalid callback response")
 			return
@@ -80,8 +79,7 @@ func OAuthLogin(ctx context.Context) error {
 				ErrorDescription: "Received invalid state in response",
 			})
 			if err != nil {
-				errChan <- err
-				return
+				fmt.Fprintln(os.Stderr, err)
 			}
 			errChan <- fmt.Errorf("received invalid state in response")
 			return
@@ -97,7 +95,6 @@ func OAuthLogin(ctx context.Context) error {
 			})
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
-				return
 			}
 			return
 		}
@@ -112,7 +109,6 @@ func OAuthLogin(ctx context.Context) error {
 			})
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
-				return
 			}
 			return
 		}
