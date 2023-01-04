@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/nucleuscloud/cli/internal/config"
+	clienv "github.com/nucleuscloud/cli/internal/env"
 	"github.com/nucleuscloud/cli/internal/utils"
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/spf13/cobra"
@@ -68,7 +69,7 @@ var logsCommand = &cobra.Command{
 }
 
 func getLogs(ctx context.Context, envName string, serviceName string, window string, shouldTail bool) error {
-	conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
+	conn, err := utils.NewApiConnectionByEnv(ctx, clienv.GetEnv())
 	if err != nil {
 		return err
 	}

@@ -18,9 +18,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/fatih/color"
+	clienv "github.com/nucleuscloud/cli/internal/env"
 	"github.com/nucleuscloud/cli/internal/utils"
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/rodaine/table"
@@ -56,7 +58,7 @@ func init() {
 }
 
 func listServices(ctx context.Context, environmentName string) error {
-	conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
+	conn, err := utils.NewApiConnectionByEnv(ctx, clienv.GetEnv())
 	if err != nil {
 		return err
 	}
@@ -75,10 +77,14 @@ func listServices(ctx context.Context, environmentName string) error {
 	if err != nil {
 		return err
 	}
+	services := getServicesSlice(serviceList.Services)
+	sort.Slice(services, func(i, j int) bool {
+		return services[i].ServiceName < services[j].ServiceName
+	})
 	fmt.Printf("Services in environment: %s\n", environmentName)
-	for svcName, svcInfo := range serviceList.Services {
+	for _, svcInfo := range services {
 		tbl.AddRow(
-			svcName,
+			svcInfo.ServiceName,
 			getIsActiveLabel(svcInfo.IsActive),
 			getVisibilityLabel(svcInfo.IsPrivate),
 			getUrlLabel(svcInfo.IsPrivate, svcInfo.Url),
@@ -86,6 +92,24 @@ func listServices(ctx context.Context, environmentName string) error {
 	}
 	tbl.Print()
 	return nil
+}
+
+type ServiceInfo struct {
+	ServiceName string
+	*svcmgmtv1alpha1.ServiceInfo
+}
+
+func getServicesSlice(serviceMap map[string]*svcmgmtv1alpha1.ServiceInfo) []*ServiceInfo {
+	output := []*ServiceInfo{}
+
+	for svcName, svcInfo := range serviceMap {
+		output = append(output, &ServiceInfo{
+			ServiceName: svcName,
+			ServiceInfo: svcInfo,
+		})
+	}
+
+	return output
 }
 
 func getIsActiveLabel(isActive bool) string {

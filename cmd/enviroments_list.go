@@ -19,6 +19,7 @@ import (
 	"context"
 
 	"github.com/fatih/color"
+	clienv "github.com/nucleuscloud/cli/internal/env"
 	"github.com/nucleuscloud/cli/internal/utils"
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/rodaine/table"
@@ -55,7 +56,7 @@ func init() {
 }
 
 func listEnvironments(ctx context.Context) error {
-	conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
+	conn, err := utils.NewApiConnectionByEnv(ctx, clienv.GetEnv())
 	if err != nil {
 		return err
 	}

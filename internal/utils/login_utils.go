@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nucleuscloud/cli/internal/auth"
 	"github.com/nucleuscloud/cli/internal/config"
+	clienv "github.com/nucleuscloud/cli/internal/env"
 	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
 	"github.com/toqueteos/webbrowser"
 )
@@ -19,24 +20,118 @@ type oauthCallbackResponse struct {
 }
 
 const (
-	httpSrvBaseUrl = "localhost:4242"
-	callbackPath   = "/api/auth/callback"
+	httpSrvBaseUrl  = "localhost:4242"
+	callbackPath    = "/api/auth/callback"
+	orgCallbackPath = "/api/auth/org/callback"
 )
 
 var (
-	redirectUri = fmt.Sprintf("http://%s%s", httpSrvBaseUrl, callbackPath)
+	redirectUri    = fmt.Sprintf("http://%s%s", httpSrvBaseUrl, callbackPath)
+	redirectOrgUri = fmt.Sprintf("http://%s%s", httpSrvBaseUrl, orgCallbackPath)
 )
 
 func OAuthLogin(ctx context.Context) error {
-	authClient, err := auth.NewAuthClientByEnv(GetEnv())
+	authClient, err := auth.NewAuthClientByEnv(clienv.GetEnv())
 	if err != nil {
 		return err
 	}
 
-	codeChan := make(chan oauthCallbackResponse)
+	orgCodeChan := make(chan oauthCallbackResponse)
 	errChan := make(chan error)
 
+	state := uuid.NewString()
+	orgState := uuid.NewString()
+
 	http.HandleFunc(callbackPath, func(w http.ResponseWriter, r *http.Request) {
+		resAuthCode := r.URL.Query().Get("code")
+		resAuthState := r.URL.Query().Get("state")
+		errorCode := r.URL.Query().Get("error")
+		errorMsg := r.URL.Query().Get("error_description")
+		if errorCode != "" || errorMsg != "" {
+			err := RenderLoginErrorPage(w, LoginPageErrorData{
+				Title:            "Login Failed",
+				ErrorCode:        errorCode,
+				ErrorDescription: errorMsg,
+			})
+			if err != nil {
+				errChan <- err
+				return
+			}
+			errChan <- fmt.Errorf("unabe to finish login flow")
+			return
+		}
+		if resAuthCode == "" || resAuthState == "" {
+			err := RenderLoginErrorPage(w, LoginPageErrorData{
+				Title:            "Login Failed",
+				ErrorCode:        "BadRequest",
+				ErrorDescription: "Missing required query parameters to finish logging in.",
+			})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			errChan <- fmt.Errorf("received invalid callback response")
+			return
+		}
+		if state != resAuthState {
+			err := RenderLoginErrorPage(w, LoginPageErrorData{
+				Title:            "Login Failed",
+				ErrorCode:        "BadRequest",
+				ErrorDescription: "Received invalid state in response",
+			})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			errChan <- fmt.Errorf("received invalid state in response")
+			return
+		}
+
+		accessTokenRes, err := getAccessToken(ctx, resAuthCode, resAuthState, redirectUri, clienv.GetEnv())
+		if err != nil {
+			errChan <- err
+			err := RenderLoginErrorPage(w, LoginPageErrorData{
+				Title:            "Login Failed",
+				ErrorCode:        "Internal",
+				ErrorDescription: "Unable to get access token to continue logging in",
+			})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			return
+		}
+
+		orgIds, err := getUsersOrganizations(ctx, accessTokenRes.AccessToken)
+		if err != nil {
+			errChan <- err
+			err := RenderLoginErrorPage(w, LoginPageErrorData{
+				Title:            "Login Failed",
+				ErrorCode:        "Internal",
+				ErrorDescription: "Unable to retrieve your organizations.",
+			})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			return
+		}
+		if len(orgIds) > 0 {
+			orgId := orgIds[0]
+			authorizeUrl := authClient.GetAuthorizeUrl(Scopes, orgState, redirectOrgUri, &orgId)
+			http.Redirect(w, r, authorizeUrl, 301)
+		} else {
+			errChan <- fmt.Errorf("must have an organization in order to login to CLI")
+			err := RenderLoginErrorPage(w, LoginPageErrorData{
+				Title:            "Login Failed",
+				ErrorCode:        "Internal",
+				ErrorDescription: "Must have an organization to login to CLI. Login through the https://nucleuscloud.com and create an organization to continue.",
+			})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return
+			}
+			return
+		}
+	})
+
+	http.HandleFunc(orgCallbackPath, func(w http.ResponseWriter, r *http.Request) {
 		resAuthCode := r.URL.Query().Get("code")
 		resAuthState := r.URL.Query().Get("state")
 		errorCode := r.URL.Query().Get("error")
@@ -70,8 +165,9 @@ func OAuthLogin(ctx context.Context) error {
 		err := RenderLoginSuccessPage(w, LoginPageData{Title: "Success"})
 		if err != nil {
 			errChan <- fmt.Errorf("unable to write to login page")
+			return
 		}
-		codeChan <- oauthCallbackResponse{resAuthCode, resAuthState}
+		orgCodeChan <- oauthCallbackResponse{resAuthCode, resAuthState}
 	})
 
 	go func() {
@@ -81,40 +177,60 @@ func OAuthLogin(ctx context.Context) error {
 		}
 	}()
 
-	state := uuid.NewString()
-
-	authorizeUrl := authClient.GetAuthorizeUrl(Scopes, state, redirectUri)
+	authorizeUrl := authClient.GetAuthorizeUrl(Scopes, state, redirectUri, nil)
 	err = webbrowser.Open(authorizeUrl)
 	if err != nil {
 		return err
 	}
 
 	select {
-	case response := <-codeChan:
-		close(errChan)
-		close(codeChan)
-		if state != response.state {
-			return fmt.Errorf("State received from response was not what was sent")
-		}
-		return getAccessTokenAndSetUser(ctx, response.code, response.state, redirectUri, GetEnv())
 	case err := <-errChan:
 		close(errChan)
-		close(codeChan)
+		close(orgCodeChan)
 		return err
+	case response := <-orgCodeChan:
+		close(orgCodeChan)
+		if orgState != response.state {
+			return fmt.Errorf("state received from response was not what was sent")
+		}
+		accessTokenRes, err := getAccessToken(ctx, response.code, response.state, redirectOrgUri, clienv.GetEnv())
+		if err != nil {
+			return err
+		}
+		conn, err := NewAuthenticatedConnection(accessTokenRes.AccessToken)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
+		nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
+		_, err = nucleusClient.SetUser(ctx, &mgmtv1alpha1.SetUserRequest{})
+		if err != nil {
+			return err
+		}
+		err = config.SetNucleusAuthFile(config.NucleusAuthConfig{
+			AccessToken:  accessTokenRes.AccessToken,
+			RefreshToken: accessTokenRes.RefreshToken,
+			IdToken:      accessTokenRes.IdToken,
+		})
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 }
 
-func getAccessTokenAndSetUser(
+func getAccessToken(
 	ctx context.Context,
 	code string,
 	state string,
 	redirectUri string,
-	envType string,
-) error {
+	envType clienv.NucleusEnv,
+) (*mgmtv1alpha1.GetAccessTokenResponse, error) {
 	conn, err := NewAnonymousConnection()
 	if err != nil {
-		fmt.Println("failed to create anonymous connection")
-		return err
+		fmt.Fprintln(os.Stderr, "failed to create anonymous connection")
+		return nil, err
 	}
 
 	apiCfg := GetApiConnectionConfigByEnv(envType)
@@ -125,29 +241,39 @@ func getAccessTokenAndSetUser(
 		RedirectUri: redirectUri,
 	})
 	if err != nil {
-		fmt.Println("failed to get access token from nucleus client")
-		return err
+		fmt.Fprintln(os.Stderr, "failed to get access token from nucleus client")
+		return nil, err
 	}
-
-	err = config.SetNucleusAuthFile(config.NucleusAuthConfig{
-		AccessToken:  tokenResponse.AccessToken,
-		RefreshToken: tokenResponse.RefreshToken,
-		IdToken:      tokenResponse.IdToken,
-	})
+	err = conn.Close()
 	if err != nil {
-		return err
+		fmt.Fprintln(os.Stderr, err)
 	}
-	conn.Close()
+	return tokenResponse, nil
+}
 
-	conn, err = NewAuthenticatedConnection(tokenResponse.AccessToken)
+func getUsersOrganizations(
+	ctx context.Context,
+	accessToken string,
+) ([]string, error) {
+
+	conn, err := NewAuthenticatedConnection(accessToken)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer conn.Close()
 
-	nucleusClient = mgmtv1alpha1.NewMgmtServiceClient(conn)
+	nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
 	_, err = nucleusClient.SetUser(ctx, &mgmtv1alpha1.SetUserRequest{})
-	return err
+	if err != nil {
+		return nil, err
+	}
+
+	orgRes, err := nucleusClient.GetUserOrganizations(ctx, &mgmtv1alpha1.GetUserOrganizationsRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return orgRes.OrgIds, nil
 }
 
 func ClientLogin(ctx context.Context, clientId string, clientSecret string) error {
