@@ -204,7 +204,7 @@ func OAuthLogin(ctx context.Context) error {
 		defer conn.Close()
 
 		nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
-		_, err = nucleusClient.SetUser(ctx, &mgmtv1alpha1.SetUserRequest{})
+		_, err = nucleusClient.GetUser(ctx, &mgmtv1alpha1.GetUserRequest{})
 		if err != nil {
 			return err
 		}
@@ -263,11 +263,6 @@ func getUsersOrganizations(
 	defer conn.Close()
 
 	nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
-	_, err = nucleusClient.SetUser(ctx, &mgmtv1alpha1.SetUserRequest{})
-	if err != nil {
-		return nil, err
-	}
-
 	orgRes, err := nucleusClient.GetUserOrganizations(ctx, &mgmtv1alpha1.GetUserOrganizationsRequest{})
 	if err != nil {
 		return nil, err
