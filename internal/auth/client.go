@@ -28,7 +28,7 @@ const (
 type AuthClientInterface interface {
 	ValidateToken(ctx context.Context, accessToken string) error
 	GetLogoutUrl() (string, error)
-	GetAuthorizeUrl(scopes []string, state string, redirectUri string) string
+	GetAuthorizeUrl(scopes []string, state string, redirectUri string, org *string) string
 }
 
 // Implements AuthClientInterface
@@ -102,7 +102,7 @@ func NewAuthClient(tenantUrl, clientId, audience string) (AuthClientInterface, e
 	}, nil
 }
 
-func (c *authClient) GetAuthorizeUrl(scopes []string, state string, redirectUri string) string {
+func (c *authClient) GetAuthorizeUrl(scopes []string, state string, redirectUri string, org *string) string {
 	params := url.Values{}
 	params.Add("audience", c.audience)
 	params.Add("scope", strings.Join(scopes, " "))
@@ -110,6 +110,10 @@ func (c *authClient) GetAuthorizeUrl(scopes []string, state string, redirectUri 
 	params.Add("client_id", c.clientId)
 	params.Add("redirect_uri", redirectUri)
 	params.Add("state", state)
+
+	if org != nil && *org != "" {
+		params.Add("organization", *org)
+	}
 
 	return fmt.Sprintf("%s?%s", c.authorizeUrl, params.Encode())
 }
