@@ -23,6 +23,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/nucleuscloud/cli/internal/config"
+	clienv "github.com/nucleuscloud/cli/internal/env"
 	"github.com/nucleuscloud/cli/internal/secrets"
 	"github.com/nucleuscloud/cli/internal/utils"
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
@@ -66,7 +67,7 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
-		conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
+		conn, err := utils.NewApiConnectionByEnv(ctx, clienv.GetEnv())
 		if err != nil {
 			return err
 		}

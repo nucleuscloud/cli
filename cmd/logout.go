@@ -5,7 +5,7 @@ import (
 
 	"github.com/nucleuscloud/cli/internal/auth"
 	"github.com/nucleuscloud/cli/internal/config"
-	"github.com/nucleuscloud/cli/internal/utils"
+	clienv "github.com/nucleuscloud/cli/internal/env"
 	"github.com/spf13/cobra"
 	"github.com/toqueteos/webbrowser"
 )
@@ -16,7 +16,7 @@ var logoutCmd = &cobra.Command{
 	Long:  "Logs a user out of their Nucleus account.",
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		authClient, err := auth.NewAuthClientByEnv(utils.GetEnv())
+		authClient, err := auth.NewAuthClientByEnv(clienv.GetEnv())
 		if err != nil {
 			return err
 		}

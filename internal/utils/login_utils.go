@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nucleuscloud/cli/internal/auth"
 	"github.com/nucleuscloud/cli/internal/config"
+	clienv "github.com/nucleuscloud/cli/internal/env"
 	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
 	"github.com/toqueteos/webbrowser"
 )
@@ -28,7 +29,7 @@ var (
 )
 
 func OAuthLogin(ctx context.Context) error {
-	authClient, err := auth.NewAuthClientByEnv(GetEnv())
+	authClient, err := auth.NewAuthClientByEnv(clienv.GetEnv())
 	if err != nil {
 		return err
 	}
@@ -96,7 +97,7 @@ func OAuthLogin(ctx context.Context) error {
 		if state != response.state {
 			return fmt.Errorf("State received from response was not what was sent")
 		}
-		return getAccessTokenAndSetUser(ctx, response.code, response.state, redirectUri, GetEnv())
+		return getAccessTokenAndSetUser(ctx, response.code, response.state, redirectUri, clienv.GetEnv())
 	case err := <-errChan:
 		close(errChan)
 		close(codeChan)
@@ -109,7 +110,7 @@ func getAccessTokenAndSetUser(
 	code string,
 	state string,
 	redirectUri string,
-	envType string,
+	envType clienv.NucleusEnv,
 ) error {
 	conn, err := NewAnonymousConnection()
 	if err != nil {

@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -23,6 +24,12 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/spf13/viper"
+)
+
+const (
+	nucleusDirName           = ".nucleus"
+	cliSettingsFileNameNoExt = ".nucleus-cli"
+	cliSettingsFileExt       = "yaml"
 )
 
 var verbose bool
@@ -48,7 +55,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.nucleus-cli.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is $HOME/%s.%s)", cliSettingsFileNameNoExt, cliSettingsFileExt))
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 }
 
@@ -62,16 +69,30 @@ func initConfig(cfgFilePath string) {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
+		fullNucluesSettingsDir := fmt.Sprintf("%s/%s", home, nucleusDirName)
+
 		// Search config in home directory with name ".nucleus-cli" (without extension).
+		// Higher priority is first. (which seems like the opposite to me, but that is how it works ¯\_(ツ)_/¯)
+		viper.AddConfigPath(".")
+		viper.AddConfigPath(fullNucluesSettingsDir)
 		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".nucleus-cli")
+		viper.SetConfigType(cliSettingsFileExt)
+		viper.SetConfigName(cliSettingsFileNameNoExt)
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	err := viper.ReadInConfig()
+	if err != nil {
+		if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+			return
+		}
+	}
+	cfgUsed := viper.ConfigFileUsed()
+	if cfgUsed != "" {
+		fmt.Println("Using config file:", cfgUsed)
 	}
 }

@@ -5,8 +5,9 @@ import (
 	"os"
 
 	"github.com/fatih/color"
-	"golang.org/x/term"
 	"google.golang.org/grpc/status"
+
+	"github.com/nucleuscloud/cli/internal/term"
 )
 
 func CheckErr(err error) {
@@ -30,22 +31,6 @@ func getStatusMessage(s *status.Status) string {
 	if s == nil {
 		return ""
 	}
-	red := GetColoredSprintFunc(color.FgRed)
+	red := term.GetColoredSprintFunc(color.FgRed)
 	return red(fmt.Sprintf("[%s] %s", s.Code(), s.Message()))
-}
-
-func IsTerminal() bool {
-	return term.IsTerminal(GetStdoutFd())
-}
-
-func GetStdoutFd() int {
-	return int(os.Stdout.Fd())
-}
-
-// Returns a color if in tty, otherwise returns plain sprint
-func GetColoredSprintFunc(colorAttr ...color.Attribute) func(a ...interface{}) string {
-	if IsTerminal() {
-		return color.New(colorAttr...).SprintFunc()
-	}
-	return fmt.Sprint
 }

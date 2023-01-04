@@ -22,6 +22,7 @@ import (
 	"github.com/vbauerster/mpb/v8/decor"
 
 	"github.com/nucleuscloud/cli/internal/config"
+	clienv "github.com/nucleuscloud/cli/internal/env"
 	"github.com/nucleuscloud/cli/internal/progress"
 	"github.com/nucleuscloud/cli/internal/secrets"
 	"github.com/nucleuscloud/cli/internal/utils"
@@ -84,7 +85,7 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
-		conn, err := utils.NewApiConnectionByEnv(ctx, utils.GetEnv())
+		conn, err := utils.NewApiConnectionByEnv(ctx, clienv.GetEnv())
 		if err != nil {
 			return err
 		}

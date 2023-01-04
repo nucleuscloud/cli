@@ -6,67 +6,27 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/nucleuscloud/cli/internal/auth"
 	"github.com/nucleuscloud/cli/internal/config"
+	clienv "github.com/nucleuscloud/cli/internal/env"
 	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-const (
-	nucleusDebugEnvKey = "NUCLEUS_DEBUG_ENV"
-)
-
-var (
-	allowedDebugVals = []string{
-		"dev",
-		"stage",
-	}
-	hasLoggedAboutEnvType bool = false
-)
-
-func GetEnv() string {
-	val := os.Getenv(nucleusDebugEnvKey)
-	if val == "" {
-		return val
-	}
-	var isValid bool = false
-	for _, allowedVal := range allowedDebugVals {
-		if allowedVal == val {
-			isValid = true
-		}
-	}
-	if !isValid {
-		panic(fmt.Errorf("%s can only be one of %s", nucleusDebugEnvKey, strings.Join(allowedDebugVals, ",")))
-	}
-	if !hasLoggedAboutEnvType {
-		fmt.Printf("%s=%s\n", nucleusDebugEnvKey, val)
-		hasLoggedAboutEnvType = true
-	}
-	return val
-}
-
 func getApiUrl() string {
-	if isDevEnv() {
+	if clienv.IsDevEnv() {
 		return "localhost:50051"
-	} else if isStageEnv() {
+	} else if clienv.IsStageEnv() {
 		return "mgmt-api-nucleus.svcs.stage.nucleuscloud.com:443"
 	}
 	return "mgmt-api-nucleus.svcs.nucleuscloud.com:443"
 }
 
-func isDevEnv() bool {
-	return GetEnv() == "dev"
-}
-func isStageEnv() bool {
-	return GetEnv() == "stage"
-}
-
 func getTransportCreds() (credentials.TransportCredentials, error) {
-	if isDevEnv() {
+	if clienv.IsDevEnv() {
 		return insecure.NewCredentials(), nil
 	}
 	systemRoots, err := x509.SystemCertPool()
@@ -108,15 +68,15 @@ type ApiConnectionConfig struct {
 	ApiAudience  string
 }
 
-func GetApiConnectionConfigByEnv(envType string) *ApiConnectionConfig {
+func GetApiConnectionConfigByEnv(envType clienv.NucleusEnv) *ApiConnectionConfig {
 	switch envType {
-	case "prod", "":
+	case clienv.ProdEnv, "":
 		return &ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0ProdBaseUrl,
 			AuthClientId: auth.Auth0ProdClientId,
 			ApiAudience:  auth.ApiAudience,
 		}
-	case "dev", "stage":
+	case clienv.StageEnv, clienv.DevEnv:
 		return &ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0StageBaseUrl,
 			AuthClientId: auth.Auth0StageClientId,
@@ -126,7 +86,7 @@ func GetApiConnectionConfigByEnv(envType string) *ApiConnectionConfig {
 	return nil
 }
 
-func NewApiConnectionByEnv(ctx context.Context, envType string) (*grpc.ClientConn, error) {
+func NewApiConnectionByEnv(ctx context.Context, envType clienv.NucleusEnv) (*grpc.ClientConn, error) {
 	cfg := GetApiConnectionConfigByEnv(envType)
 	if cfg == nil {
 		return nil, fmt.Errorf("must provide valid env type")

@@ -3,6 +3,8 @@ package utils
 import (
 	"context"
 	"fmt"
+
+	clienv "github.com/nucleuscloud/cli/internal/env"
 )
 
 type loginCreds struct {
@@ -16,5 +18,5 @@ func (c *loginCreds) GetRequestMetadata(context.Context, ...string) (map[string]
 }
 
 func (c *loginCreds) RequireTransportSecurity() bool {
-	return !isDevEnv()
+	return !clienv.IsDevEnv()
 }

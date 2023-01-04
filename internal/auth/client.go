@@ -9,6 +9,8 @@ import (
 
 	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
+
+	clienv "github.com/nucleuscloud/cli/internal/env"
 )
 
 const (
@@ -57,7 +59,7 @@ type AuthTokenResponseData struct {
 	ExpiresIn    int    `json:"expires_in"`
 }
 
-func NewAuthClientByEnv(envType string) (AuthClientInterface, error) {
+func NewAuthClientByEnv(envType clienv.NucleusEnv) (AuthClientInterface, error) {
 	switch envType {
 	case "prod", "":
 		return NewAuthClient(Auth0ProdBaseUrl, Auth0ProdClientId, ApiAudience)
