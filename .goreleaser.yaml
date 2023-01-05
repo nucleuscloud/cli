@@ -10,6 +10,9 @@ builds:
       - windows
       - darwin
 
+    ldflags:
+      - -s -w -X 'github.com/nucleuscloud/cli/internal/version.buildDate={{.Date}}' -X 'github.com/nucleuscloud/cli/internal/version.gitCommit={{.Commit}}' -X 'github.com/nucleuscloud/cli/internal/version.gitVersion={{.Version}}'
+
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -25,7 +28,7 @@ brews:
       owner: nucleuscloud
       name: homebrew-tap
     folder: Formula
-    homepage: https://usenucleus.cloud
+    homepage: https://nucleuscloud.com
     description: CLI for interfacing with Nucleus
     license: MIT
 signs:

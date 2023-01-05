@@ -22,11 +22,9 @@ lint:
 .PHONY: lint
 
 build:
-	$(GO) build -o bin/nucleus
+	# Note the ldflags here are used for local builds only. To see the ldflags at release time, check the .goreleaser.yaml file
+	$(GO) build -o bin/nucleus -ldflags="-X 'github.com/nucleuscloud/cli/internal/version.buildDate=${BUILD_DATE}' -X 'github.com/nucleuscloud/cli/internal/version.gitCommit=${GIT_COMMIT}' -X 'github.com/nucleuscloud/cli/internal/version.gitVersion=${VERSION}'"
 .PHONY: build
-
-build-ci:
-	$(GO) build -o bin/nucleus -ldflags="-X 'github.com/nucleuscloud/cli/internal/version.gitVersion=v1.0.0' -X 'github.com/nucleuscloud/cli/internal/version.buildDate=${BUILD_DATE}' -X 'github.com/nucleuscloud/cli/internal/version.gitCommit=${GIT_COMMIT}' -X 'github.com/nucleuscloud/cli/internal/version.gitVersion=${VERSION}'"
 
 test:
 	$(GO) test ./... -race -v
