@@ -18,19 +18,12 @@ var versionCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if output != "" && output != "wide" && output != "json" && output != "yaml" {
+		if output != "" && output != "json" && output != "yaml" {
 			return fmt.Errorf("must provide valid output")
 		}
 		versionInfo := version.Get()
 
-		if output == "wide" {
-			fmt.Println("Git Version:", versionInfo.GitVersion)
-			fmt.Println("Git Commit:", versionInfo.GitCommit)
-			fmt.Println("Build Date:", versionInfo.BuildDate)
-			fmt.Println("Go Version:", versionInfo.GoVersion)
-			fmt.Println("Compiler:", versionInfo.Compiler)
-			fmt.Println("Platform:", versionInfo.Platform)
-		} else if output == "json" {
+		if output == "json" {
 			marshalled, err := json.MarshalIndent(&versionInfo, "", "  ")
 			if err != nil {
 				return err
@@ -44,6 +37,11 @@ var versionCmd = &cobra.Command{
 			fmt.Println(string(marshalled))
 		} else {
 			fmt.Println("Git Version:", versionInfo.GitVersion)
+			fmt.Println("Git Commit:", versionInfo.GitCommit)
+			fmt.Println("Build Date:", versionInfo.BuildDate)
+			fmt.Println("Go Version:", versionInfo.GoVersion)
+			fmt.Println("Compiler:", versionInfo.Compiler)
+			fmt.Println("Platform:", versionInfo.Platform)
 		}
 		return nil
 	},
