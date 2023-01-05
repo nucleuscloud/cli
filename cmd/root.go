@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/nucleuscloud/cli/internal/utils"
+	"github.com/nucleuscloud/cli/internal/version"
 	"github.com/spf13/cobra"
 
 	"github.com/spf13/viper"
@@ -60,6 +61,9 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is $HOME/%s.%s)", cliSettingsFileNameNoExt, cliSettingsFileExt))
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
+
+	rootCmd.Version = version.Get().GitVersion
+	rootCmd.SetVersionTemplate(`{{printf "%s\n" .Version}}`)
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -93,9 +97,5 @@ func initConfig(cfgFilePath string) {
 			os.Exit(1)
 			return
 		}
-	}
-	cfgUsed := viper.ConfigFileUsed()
-	if cfgUsed != "" {
-		fmt.Println("Using config file:", cfgUsed)
 	}
 }
