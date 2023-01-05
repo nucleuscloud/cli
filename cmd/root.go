@@ -21,7 +21,9 @@ import (
 	"os"
 
 	"github.com/nucleuscloud/cli/internal/utils"
+	"github.com/nucleuscloud/cli/internal/version"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/spf13/viper"
 )
@@ -41,6 +43,14 @@ var rootCmd = &cobra.Command{
 	Long:  "Terminal UI that allows authenticated access to the Nucleus system.\nThis CLI allows you to deploy and manage all of the environments and services within your Nucleus account or accounts.",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		cmd.SilenceErrors = true
+
+		versionInfo := version.Get()
+		md := metadata.New(map[string]string{
+			"cliVersion":  versionInfo.GitVersion,
+			"cliPlatform": versionInfo.Platform,
+			"cliCommit":   versionInfo.GitCommit,
+		})
+		cmd.SetContext(metadata.NewOutgoingContext(cmd.Context(), md))
 	},
 }
 
@@ -60,6 +70,9 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is $HOME/%s.%s)", cliSettingsFileNameNoExt, cliSettingsFileExt))
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
+
+	rootCmd.Version = version.Get().GitVersion
+	rootCmd.SetVersionTemplate(`{{printf "%s\n" .Version}}`)
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -93,9 +106,5 @@ func initConfig(cfgFilePath string) {
 			os.Exit(1)
 			return
 		}
-	}
-	cfgUsed := viper.ConfigFileUsed()
-	if cfgUsed != "" {
-		fmt.Println("Using config file:", cfgUsed)
 	}
 }
