@@ -39,6 +39,9 @@ var rootCmd = &cobra.Command{
 	Use:   "nucleus",
 	Short: "Terminal UI that interfaces with the Nucleus system.",
 	Long:  "Terminal UI that allows authenticated access to the Nucleus system.\nThis CLI allows you to deploy and manage all of the environments and services within your Nucleus account or accounts.",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		cmd.SilenceErrors = true
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -57,9 +60,6 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is $HOME/%s.%s)", cliSettingsFileNameNoExt, cliSettingsFileExt))
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
-
-	// Silences errors because we print them in Execute()
-	rootCmd.SilenceErrors = true
 }
 
 // initConfig reads in config file and ENV variables if set.
