@@ -57,6 +57,9 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is $HOME/%s.%s)", cliSettingsFileNameNoExt, cliSettingsFileExt))
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
+
+	// Silences errors because we print them in Execute()
+	rootCmd.SilenceErrors = true
 }
 
 // initConfig reads in config file and ENV variables if set.
