@@ -62,6 +62,9 @@ var setCmd = &cobra.Command{
 			return fmt.Errorf("must provide environment name")
 		}
 
+		// Set this after ensuring flags are correct
+		cmd.SilenceUsage = true
+
 		secretResult, err := getSecretValue()
 		if err != nil {
 			return err

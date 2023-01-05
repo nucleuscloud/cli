@@ -59,6 +59,9 @@ var servicesStopCmd = &cobra.Command{
 			}
 		}
 
+		// Set this after ensuring flags are correct
+		cmd.SilenceUsage = true
+
 		if !utils.IsValidName(serviceName) {
 			return utils.ErrInvalidServiceName
 		}

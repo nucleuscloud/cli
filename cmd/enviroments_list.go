@@ -45,8 +45,10 @@ var environmentsListCmd = &cobra.Command{
 	Short: "List out available environments in your account.",
 	Long:  "Call this command to list out all of the environments in your account",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
+		// Set this after ensuring flags are correct
+		cmd.SilenceUsage = true
 
+		ctx := cmd.Context()
 		return listEnvironments(ctx)
 	},
 }
