@@ -229,6 +229,9 @@ func deploy(
 	for {
 		response, err := stream.Recv()
 		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
 			mainBar.Abort(true)
 			return err
 		}
@@ -245,6 +248,13 @@ func deploy(
 			continue
 		}
 
+		if didPipelineFail(deployStatus) {
+			mainBar.Abort(true)
+			progressContainer.Wait()
+			printPlainOutput(deployStatus)
+			return fmt.Errorf("pipeline failed with error")
+		}
+
 		if progressType == progress.PlainProgress {
 			// plain output
 			printPlainOutput(deployStatus)
@@ -254,6 +264,10 @@ func deploy(
 	}
 
 	return nil
+}
+
+func didPipelineFail(deployStatus *svcmgmtv1alpha1.DeployStatus) bool {
+	return deployStatus != nil && deployStatus.Succeeded != nil && deployStatus.Succeeded.Status == "False"
 }
 
 func getCompletionPercentage(deployStatus *svcmgmtv1alpha1.DeployStatus) float64 {
