@@ -62,6 +62,9 @@ var deployCmd = &cobra.Command{
 		if serviceType == "" {
 			return fmt.Errorf("service type not provided")
 		}
+		if !utils.IsValidRuntime(serviceType) {
+			return fmt.Errorf("must provide valid service runtime")
+		}
 
 		// Set this after ensuring flags are correct
 		cmd.SilenceUsage = true

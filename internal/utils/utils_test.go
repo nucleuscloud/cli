@@ -22,10 +22,14 @@ func TestIsValidName(t *testing.T) {
 
 // Service Types
 func TestValidateRuntime(t *testing.T) {
-	assert.False(t, isValidRuntime(""))
-	assert.False(t, isValidRuntime("not_supported"))
-	assert.False(t, isValidRuntime("fastapi"))
-	assert.True(t, isValidRuntime("go"))
-	assert.True(t, isValidRuntime("nodejs"))
-	assert.True(t, isValidRuntime("python"))
+	assert.False(t, IsValidRuntime(""))
+	assert.False(t, IsValidRuntime("not_supported"))
+	assert.False(t, IsValidRuntime("fastapi"))
+	assert.True(t, IsValidRuntime("go"))
+	assert.True(t, IsValidRuntime("nodejs"))
+	assert.True(t, IsValidRuntime("python"))
+	assert.True(t, IsValidRuntime("docker"))
+	assert.True(t, IsValidRuntime("ruby"))
+	assert.True(t, IsValidRuntime("java"))
+	assert.True(t, IsValidRuntime("dotnet"))
 }
