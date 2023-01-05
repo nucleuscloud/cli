@@ -44,5 +44,5 @@ jobs:
           version: latest
           args: release --rm-dist
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_PAT }}
+          GITHUB_TOKEN: ${{ secrets.REPO_PAT }} # needs to be a user's token because this also pushes to the homebrew repo
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
