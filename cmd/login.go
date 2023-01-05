@@ -29,6 +29,8 @@ var loginCmd = &cobra.Command{
 			if clientId == "" {
 				return fmt.Errorf("must provide client id")
 			}
+			// Set this after ensuring flags are correct
+			cmd.SilenceUsage = true
 
 			secretResult, err := getSecretValue()
 			if err != nil {
@@ -36,7 +38,8 @@ var loginCmd = &cobra.Command{
 			}
 
 			return utils.ClientLogin(ctx, clientId, secretResult.value)
-		}
+		} // Set this after ensuring flags are correct
+		cmd.SilenceUsage = true
 		return utils.OAuthLogin(ctx)
 	},
 }

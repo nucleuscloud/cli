@@ -16,6 +16,9 @@ var logoutCmd = &cobra.Command{
 	Long:  "Logs a user out of their Nucleus account.",
 
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Set this after ensuring flags are correct
+		cmd.SilenceUsage = true
+
 		authClient, err := auth.NewAuthClientByEnv(clienv.GetEnv())
 		if err != nil {
 			return err

@@ -63,6 +63,9 @@ var logsCommand = &cobra.Command{
 			return err
 		}
 
+		// Set this after ensuring flags are correct
+		cmd.SilenceUsage = true
+
 		shouldTail := tail || follow
 		return getLogs(ctx, environmentName, serviceName, window, shouldTail)
 	},

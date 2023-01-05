@@ -24,7 +24,8 @@ func getErrMessage(err error) string {
 	if e, ok := status.FromError(err); ok {
 		return getStatusMessage(e)
 	}
-	return err.Error()
+	red := term.GetColoredSprintFunc(color.FgRed)
+	return red(err.Error())
 }
 
 func getStatusMessage(s *status.Status) string {

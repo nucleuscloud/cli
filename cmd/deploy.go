@@ -63,6 +63,9 @@ var deployCmd = &cobra.Command{
 			return fmt.Errorf("service type not provided")
 		}
 
+		// Set this after ensuring flags are correct
+		cmd.SilenceUsage = true
+
 		if serviceType == "python" {
 			err = ensureProcfileExists()
 			if err != nil {
