@@ -50,5 +50,5 @@ var versionCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(versionCmd)
 
-	versionCmd.Flags().StringP("output", "o", "", "wide|json|yaml")
+	versionCmd.Flags().StringP("output", "o", "", "json|yaml")
 }
