@@ -17,14 +17,10 @@ var (
 
 // Auth Vars
 var (
-	Scopes []string = []string{
+	Scopes = []string{
 		"openid",
 		"profile",
 		"offline_access",
-
-		// custom
-		"deploy:service",
-		"read:service",
 	}
 )
 
@@ -59,19 +55,21 @@ func PromptToProceed(cmd *cobra.Command, environmentName string, yesPromptFlagNa
 	return nil
 }
 
-// Runtimes
 var supportedRuntimes = []string{
 	"go",
 	"nodejs",
-	"docker",
 	"python",
+	"docker",
+	"ruby",
+	"java",
+	"dotnet",
 }
 
 func GetSupportedRuntimes() []string {
 	return supportedRuntimes
 }
 
-func isValidRuntime(runtime string) bool {
+func IsValidRuntime(runtime string) bool {
 	for _, current := range supportedRuntimes {
 		if runtime == current {
 			return true
