@@ -10,7 +10,7 @@ import (
 	"github.com/nucleuscloud/cli/internal/auth"
 	"github.com/nucleuscloud/cli/internal/config"
 	clienv "github.com/nucleuscloud/cli/internal/env"
-	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
+	authv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/auth/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -95,7 +95,7 @@ func NewApiConnectionByEnv(ctx context.Context, envType clienv.NucleusEnv) (*grp
 }
 
 func NewApiConnection(ctx context.Context, cfg *ApiConnectionConfig) (*grpc.ClientConn, error) {
-	authClient, err := auth.NewAuthClient(cfg.AuthBaseUrl, cfg.AuthClientId, cfg.ApiAudience)
+	auth0Client, err := auth.NewAuthClient(cfg.AuthBaseUrl, cfg.AuthClientId, cfg.ApiAudience)
 	if err != nil {
 		return nil, err
 	}
@@ -103,8 +103,8 @@ func NewApiConnection(ctx context.Context, cfg *ApiConnectionConfig) (*grpc.Clie
 	if err != nil {
 		return nil, err
 	}
-	unAuthCliClient := mgmtv1alpha1.NewMgmtServiceClient(unAuthConn)
-	accessToken, err := getValidAccessTokenFromConfig(ctx, authClient, unAuthCliClient, cfg.AuthClientId)
+	authClient := authv1alpha1.NewAuthServiceClient(unAuthConn)
+	accessToken, err := getValidAccessTokenFromConfig(ctx, auth0Client, authClient, cfg.AuthClientId)
 	defer unAuthConn.Close()
 	if err != nil {
 		return nil, err
@@ -120,19 +120,19 @@ func NewApiConnection(ctx context.Context, cfg *ApiConnectionConfig) (*grpc.Clie
 // Retrieves the access token from the config and validates it.
 func getValidAccessTokenFromConfig(
 	ctx context.Context,
-	authClient auth.AuthClientInterface,
-	mgmtClient mgmtv1alpha1.MgmtServiceClient,
+	auth0Client auth.AuthClientInterface,
+	authClient authv1alpha1.AuthServiceClient,
 	clientId string,
 ) (string, error) {
 	cfg, err := config.GetNucleusAuthConfig()
 	if err != nil {
 		return "", err
 	}
-	err = authClient.ValidateToken(ctx, cfg.AccessToken)
+	err = auth0Client.ValidateToken(ctx, cfg.AccessToken)
 	if err != nil {
 		fmt.Println("Access token is no longer valid. Attempting to refresh...")
 		if cfg.RefreshToken != "" {
-			res, err := getRefreshResponse(ctx, mgmtClient, clientId, cfg.RefreshToken)
+			res, err := getRefreshResponse(ctx, authClient, clientId, cfg.RefreshToken)
 			if err != nil {
 				err2 := config.ClearNucleusAuthFile()
 				if err2 != nil {
@@ -156,10 +156,10 @@ func getValidAccessTokenFromConfig(
 				fmt.Println("Successfully refreshed token, but was unable to update nucleus auth file")
 				return "", err
 			}
-			return res.AccessToken, authClient.ValidateToken(ctx, res.AccessToken)
+			return res.AccessToken, auth0Client.ValidateToken(ctx, res.AccessToken)
 		}
 	}
-	return cfg.AccessToken, authClient.ValidateToken(ctx, cfg.AccessToken)
+	return cfg.AccessToken, auth0Client.ValidateToken(ctx, cfg.AccessToken)
 }
 
 type refreshResponse struct {
@@ -170,11 +170,11 @@ type refreshResponse struct {
 
 func getRefreshResponse(
 	ctx context.Context,
-	mgmtClient mgmtv1alpha1.MgmtServiceClient,
+	authClient authv1alpha1.AuthServiceClient,
 	clientId string,
 	refreshToken string,
 ) (*refreshResponse, error) {
-	reply, err := mgmtClient.GetNewAccessToken(ctx, &mgmtv1alpha1.GetNewAccessTokenRequest{
+	reply, err := authClient.GetNewAccessToken(ctx, &authv1alpha1.GetNewAccessTokenRequest{
 		ClientId:     clientId,
 		RefreshToken: refreshToken,
 	})

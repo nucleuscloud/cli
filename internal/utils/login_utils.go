@@ -10,6 +10,7 @@ import (
 	"github.com/nucleuscloud/cli/internal/auth"
 	"github.com/nucleuscloud/cli/internal/config"
 	clienv "github.com/nucleuscloud/cli/internal/env"
+	authv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/auth/v1alpha1"
 	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
 	"github.com/toqueteos/webbrowser"
 )
@@ -226,7 +227,7 @@ func getAccessToken(
 	state string,
 	redirectUri string,
 	envType clienv.NucleusEnv,
-) (*mgmtv1alpha1.GetAccessTokenResponse, error) {
+) (*authv1alpha1.GetAccessTokenResponse, error) {
 	conn, err := NewAnonymousConnection()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "failed to create anonymous connection")
@@ -234,8 +235,8 @@ func getAccessToken(
 	}
 
 	apiCfg := GetApiConnectionConfigByEnv(envType)
-	nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
-	tokenResponse, err := nucleusClient.GetAccessToken(ctx, &mgmtv1alpha1.GetAccessTokenRequest{
+	nucleusAuthClient := authv1alpha1.NewAuthServiceClient(conn)
+	tokenResponse, err := nucleusAuthClient.GetAccessToken(ctx, &authv1alpha1.GetAccessTokenRequest{
 		ClientId:    apiCfg.AuthClientId,
 		Code:        code,
 		RedirectUri: redirectUri,
@@ -278,8 +279,8 @@ func ClientLogin(ctx context.Context, clientId string, clientSecret string) erro
 		return err
 	}
 
-	nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
-	tokenResponse, err := nucleusClient.GetServiceAccountAccessToken(ctx, &mgmtv1alpha1.GetServiceAccountAccessTokenRequest{
+	nucleusAuthClient := authv1alpha1.NewAuthServiceClient(conn)
+	tokenResponse, err := nucleusAuthClient.GetServiceAccountAccessToken(ctx, &authv1alpha1.GetServiceAccountAccessTokenRequest{
 		ClientId:     clientId,
 		ClientSecret: clientSecret,
 	})
@@ -302,8 +303,8 @@ func ClientLogin(ctx context.Context, clientId string, clientSecret string) erro
 	}
 	defer conn.Close()
 
-	nucleusClient = mgmtv1alpha1.NewMgmtServiceClient(conn)
-	_, err = nucleusClient.GetAccountByServiceAccountClientId(ctx, &mgmtv1alpha1.GetAccountByServiceAccountClientIdRequest{})
+	nucleusMgmtClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
+	_, err = nucleusMgmtClient.GetAccountByServiceAccountClientId(ctx, &mgmtv1alpha1.GetAccountByServiceAccountClientIdRequest{})
 	return err
 
 }
