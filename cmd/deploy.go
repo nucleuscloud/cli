@@ -28,6 +28,11 @@ import (
 	"github.com/nucleuscloud/cli/internal/utils"
 )
 
+type ProgressBar struct {
+	abort      bool
+	currentInt int64
+}
+
 // deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
@@ -229,7 +234,10 @@ func deploy(
 		mpb.WithWidth(termWidth),
 	)
 
-	mainBar := getProgressBar(progressContainer, "Deploying your service...", 100)
+	var mainBar *mpb.Bar
+	if progressType != progress.PlainProgress {
+		mainBar = getProgressBar(progressContainer, "Deploying your service...", 100)
+	}
 	printPlainOutput := getPlainOutput()
 
 	for {
@@ -238,12 +246,12 @@ func deploy(
 			if err == io.EOF {
 				return nil
 			}
-			mainBar.Abort(true)
+			handleMainBar(mainBar, progressType, &ProgressBar{abort: true})
 			return err
 		}
 
 		if response.GetServiceUrl() != "" {
-			mainBar.SetCurrent(100)
+			handleMainBar(mainBar, progressType, &ProgressBar{currentInt: 100})
 			progressContainer.Wait()
 			fmt.Printf("\nService is deployed at: %s\n", green(response.GetServiceUrl()))
 			break
@@ -255,7 +263,7 @@ func deploy(
 		}
 
 		if didPipelineFail(deployStatus) {
-			mainBar.Abort(true)
+			handleMainBar(mainBar, progressType, &ProgressBar{abort: true})
 			progressContainer.Wait()
 			printPlainOutput(deployStatus)
 			return fmt.Errorf("pipeline failed with error")
@@ -265,11 +273,23 @@ func deploy(
 			// plain output
 			printPlainOutput(deployStatus)
 		} else {
-			mainBar.SetCurrent(int64(getCompletionPercentage(deployStatus)))
+			handleMainBar(mainBar, progressType, &ProgressBar{currentInt: int64(getCompletionPercentage(deployStatus))})
 		}
 	}
 
 	return nil
+
+}
+
+func handleMainBar(bar *mpb.Bar, progressType progress.ProgressType, barSettings *ProgressBar) {
+	if progressType == progress.PlainProgress {
+		return
+	}
+	if barSettings.abort {
+		bar.Abort(true)
+		return
+	}
+	bar.SetCurrent(barSettings.currentInt)
 }
 
 func didPipelineFail(deployStatus *svcmgmtv1alpha1.DeployStatus) bool {
