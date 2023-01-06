@@ -144,7 +144,7 @@ func OAuthLogin(ctx context.Context) error {
 				ErrorDescription: errorMsg,
 			})
 			if err != nil {
-				errChan <- err
+				fmt.Fprintln(os.Stderr, err)
 				return
 			}
 			errChan <- fmt.Errorf("unabe to finish login flow")
@@ -157,7 +157,7 @@ func OAuthLogin(ctx context.Context) error {
 				ErrorDescription: "Missing required query parameters to finish logging in.",
 			})
 			if err != nil {
-				errChan <- err
+				fmt.Fprintln(os.Stderr, err)
 				return
 			}
 			errChan <- fmt.Errorf("received invalid callback response")
@@ -165,7 +165,7 @@ func OAuthLogin(ctx context.Context) error {
 		}
 		err := RenderLoginSuccessPage(w, LoginPageData{Title: "Success"})
 		if err != nil {
-			errChan <- fmt.Errorf("unable to write to login page")
+			fmt.Fprintln(os.Stderr, err)
 			return
 		}
 		orgCodeChan <- oauthCallbackResponse{resAuthCode, resAuthState}
