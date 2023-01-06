@@ -229,9 +229,43 @@ func deploy(
 		mpb.WithWidth(termWidth),
 	)
 
-	mainBar := getProgressBar(progressContainer, "Deploying your service...", 100)
 	printPlainOutput := getPlainOutput()
+	if progressType == progress.PlainProgress {
 
+		for {
+			response, err := stream.Recv()
+			if err != nil {
+				if err == io.EOF {
+					return nil
+				}
+				return err
+			}
+
+			if response.GetServiceUrl() != "" {
+				progressContainer.Wait()
+				fmt.Printf("\nService is deployed at: %s\n", green(response.GetServiceUrl()))
+				break
+			}
+
+			deployStatus := response.GetDeployStatus()
+			if deployStatus == nil {
+				continue
+			}
+
+			if didPipelineFail(deployStatus) {
+				progressContainer.Wait()
+				printPlainOutput(deployStatus)
+				return fmt.Errorf("pipeline failed with error")
+			}
+
+			printPlainOutput(deployStatus)
+		}
+
+		return nil
+
+	}
+
+	mainBar := getProgressBar(progressContainer, "Deploying your service...", 100)
 	for {
 		response, err := stream.Recv()
 		if err != nil {
@@ -260,13 +294,7 @@ func deploy(
 			printPlainOutput(deployStatus)
 			return fmt.Errorf("pipeline failed with error")
 		}
-
-		if progressType == progress.PlainProgress {
-			// plain output
-			printPlainOutput(deployStatus)
-		} else {
-			mainBar.SetCurrent(int64(getCompletionPercentage(deployStatus)))
-		}
+		mainBar.SetCurrent(int64(getCompletionPercentage(deployStatus)))
 	}
 
 	return nil
