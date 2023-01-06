@@ -314,33 +314,56 @@ func getPercentageComplete(ceilVal float64, floorVal float64, currStep int, numS
 }
 
 func getPlainOutput() func(deployStatus *svcmgmtv1alpha1.DeployStatus) {
+	printedTasks := map[string]int{}
 
 	return func(deployStatus *svcmgmtv1alpha1.DeployStatus) {
-		plainOutput(deployStatus)
+		plainOutput(deployStatus, printedTasks)
 	}
 }
 
-func plainOutput(deployUpdate *svcmgmtv1alpha1.DeployStatus) {
-	fmt.Println("====================")
-	if deployUpdate.Succeeded != nil {
-		fmt.Println("Status Message", deployUpdate.Succeeded.Message)
-	}
+func plainOutput(deployUpdate *svcmgmtv1alpha1.DeployStatus, printedTasks map[string]int) {
 	for _, taskStatus := range deployUpdate.DeployTaskStatus {
-		fmt.Printf("    Task Name: '%s'\n    Start Time: '%s'\n    Complete Time: '%s'\n    Num Steps: '%d'\n", taskStatus.Name, taskStatus.GetStartTime(), taskStatus.GetCompletionTime(), len(taskStatus.Steps))
-		for _, step := range taskStatus.Steps {
-			fmt.Printf("        Task Step: '%s'\n", step.Name)
-			waiting := step.GetWaiting()
-			terminating := step.GetTerminated()
-			running := step.GetRunning()
-			if waiting != nil {
-				fmt.Printf("            Waiting: Reason: '%s' Message: '%s'\n", waiting.Reason, waiting.Message)
-			} else if running != nil {
-				fmt.Printf("            Running: '%s'\n", running.StartedAt)
-			} else if terminating != nil {
-				fmt.Printf("            Terminated: Reason: '%s' Message: '%s' Started At: '%s' Finished At: '%s'\n", terminating.Reason, terminating.Message, terminating.StartedAt, terminating.FinishedAt)
+		if shouldPrint(taskStatus, printedTasks) {
+			fmt.Println("====================")
+			if deployUpdate.Succeeded != nil {
+				fmt.Println("Status Message", deployUpdate.Succeeded.Message)
+			}
+			fmt.Printf("    Task Name: '%s'\n    Start Time: '%s'\n    Complete Time: '%s'\n    Num Steps: '%d'\n", taskStatus.Name, taskStatus.GetStartTime(), taskStatus.GetCompletionTime(), len(taskStatus.Steps))
+			for _, step := range taskStatus.Steps {
+				fmt.Printf("        Task Step: '%s'\n", step.Name)
+				waiting := step.GetWaiting()
+				terminating := step.GetTerminated()
+				running := step.GetRunning()
+				if waiting != nil {
+					fmt.Printf("            Waiting: Reason: '%s' Message: '%s'\n", waiting.Reason, waiting.Message)
+				} else if running != nil {
+					fmt.Printf("            Running: '%s'\n", running.StartedAt)
+				} else if terminating != nil {
+					fmt.Printf("            Terminated: Reason: '%s' Message: '%s' Started At: '%s' Finished At: '%s'\n", terminating.Reason, terminating.Message, terminating.StartedAt, terminating.FinishedAt)
+				}
 			}
 		}
 	}
+}
+
+func shouldPrint(taskStatus *svcmgmtv1alpha1.DeployTaskStatus, printedTasks map[string]int) bool {
+	if taskStatus.GetCompletionTime() != "" {
+		taskName := fmt.Sprintf("%s-complete", taskStatus.Name)
+		if _, ok := printedTasks[taskName]; ok {
+			return false
+		}
+		printedTasks[taskName] = 1
+		return true
+	}
+	if len(taskStatus.Steps) != 0 {
+		taskName := fmt.Sprintf("%s-incomplete", taskStatus.Name)
+		if _, ok := printedTasks[taskName]; ok {
+			return false
+		}
+		printedTasks[taskName] = 1
+		return true
+	}
+	return false
 }
 
 func bundleAndUploadCode(
