@@ -88,29 +88,29 @@ func OAuthLogin(ctx context.Context) error {
 
 		accessTokenRes, err := getAccessToken(ctx, resAuthCode, resAuthState, redirectUri, clienv.GetEnv())
 		if err != nil {
-			errChan <- err
-			err := RenderLoginErrorPage(w, LoginPageErrorData{
+			renderErr := RenderLoginErrorPage(w, LoginPageErrorData{
 				Title:            "Login Failed",
 				ErrorCode:        "Internal",
 				ErrorDescription: "Unable to get access token to continue logging in",
 			})
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+			if renderErr != nil {
+				fmt.Fprintln(os.Stderr, renderErr)
 			}
+			errChan <- err
 			return
 		}
 
 		orgIds, err := getUsersOrganizations(ctx, accessTokenRes.AccessToken)
 		if err != nil {
-			errChan <- err
-			err := RenderLoginErrorPage(w, LoginPageErrorData{
+			renderErr := RenderLoginErrorPage(w, LoginPageErrorData{
 				Title:            "Login Failed",
 				ErrorCode:        "Internal",
 				ErrorDescription: "Unable to retrieve your organizations.",
 			})
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+			if renderErr != nil {
+				fmt.Fprintln(os.Stderr, renderErr)
 			}
+			errChan <- err
 			return
 		}
 		if len(orgIds) > 0 {
@@ -118,7 +118,6 @@ func OAuthLogin(ctx context.Context) error {
 			authorizeUrl := authClient.GetAuthorizeUrl(Scopes, orgState, redirectOrgUri, &orgId)
 			http.Redirect(w, r, authorizeUrl, 301)
 		} else {
-			errChan <- fmt.Errorf("must have an organization in order to login to CLI")
 			err := RenderLoginErrorPage(w, LoginPageErrorData{
 				Title:            "Login Failed",
 				ErrorCode:        "Internal",
@@ -128,6 +127,7 @@ func OAuthLogin(ctx context.Context) error {
 				fmt.Fprintln(os.Stderr, err)
 				return
 			}
+			errChan <- fmt.Errorf("must have an organization in order to login to CLI")
 			return
 		}
 	})
