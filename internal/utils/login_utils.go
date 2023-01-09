@@ -10,6 +10,7 @@ import (
 	"github.com/nucleuscloud/cli/internal/auth"
 	"github.com/nucleuscloud/cli/internal/config"
 	clienv "github.com/nucleuscloud/cli/internal/env"
+	authv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/auth/v1alpha1"
 	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
 	"github.com/toqueteos/webbrowser"
 )
@@ -87,29 +88,29 @@ func OAuthLogin(ctx context.Context) error {
 
 		accessTokenRes, err := getAccessToken(ctx, resAuthCode, resAuthState, redirectUri, clienv.GetEnv())
 		if err != nil {
-			errChan <- err
-			err := RenderLoginErrorPage(w, LoginPageErrorData{
+			renderErr := RenderLoginErrorPage(w, LoginPageErrorData{
 				Title:            "Login Failed",
 				ErrorCode:        "Internal",
 				ErrorDescription: "Unable to get access token to continue logging in",
 			})
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+			if renderErr != nil {
+				fmt.Fprintln(os.Stderr, renderErr)
 			}
+			errChan <- err
 			return
 		}
 
 		orgIds, err := getUsersOrganizations(ctx, accessTokenRes.AccessToken)
 		if err != nil {
-			errChan <- err
-			err := RenderLoginErrorPage(w, LoginPageErrorData{
+			renderErr := RenderLoginErrorPage(w, LoginPageErrorData{
 				Title:            "Login Failed",
 				ErrorCode:        "Internal",
 				ErrorDescription: "Unable to retrieve your organizations.",
 			})
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+			if renderErr != nil {
+				fmt.Fprintln(os.Stderr, renderErr)
 			}
+			errChan <- err
 			return
 		}
 		if len(orgIds) > 0 {
@@ -117,7 +118,6 @@ func OAuthLogin(ctx context.Context) error {
 			authorizeUrl := authClient.GetAuthorizeUrl(Scopes, orgState, redirectOrgUri, &orgId)
 			http.Redirect(w, r, authorizeUrl, 301)
 		} else {
-			errChan <- fmt.Errorf("must have an organization in order to login to CLI")
 			err := RenderLoginErrorPage(w, LoginPageErrorData{
 				Title:            "Login Failed",
 				ErrorCode:        "Internal",
@@ -127,6 +127,7 @@ func OAuthLogin(ctx context.Context) error {
 				fmt.Fprintln(os.Stderr, err)
 				return
 			}
+			errChan <- fmt.Errorf("must have an organization in order to login to CLI")
 			return
 		}
 	})
@@ -143,7 +144,7 @@ func OAuthLogin(ctx context.Context) error {
 				ErrorDescription: errorMsg,
 			})
 			if err != nil {
-				errChan <- err
+				fmt.Fprintln(os.Stderr, err)
 				return
 			}
 			errChan <- fmt.Errorf("unabe to finish login flow")
@@ -156,7 +157,7 @@ func OAuthLogin(ctx context.Context) error {
 				ErrorDescription: "Missing required query parameters to finish logging in.",
 			})
 			if err != nil {
-				errChan <- err
+				fmt.Fprintln(os.Stderr, err)
 				return
 			}
 			errChan <- fmt.Errorf("received invalid callback response")
@@ -164,7 +165,7 @@ func OAuthLogin(ctx context.Context) error {
 		}
 		err := RenderLoginSuccessPage(w, LoginPageData{Title: "Success"})
 		if err != nil {
-			errChan <- fmt.Errorf("unable to write to login page")
+			fmt.Fprintln(os.Stderr, err)
 			return
 		}
 		orgCodeChan <- oauthCallbackResponse{resAuthCode, resAuthState}
@@ -226,7 +227,7 @@ func getAccessToken(
 	state string,
 	redirectUri string,
 	envType clienv.NucleusEnv,
-) (*mgmtv1alpha1.GetAccessTokenResponse, error) {
+) (*authv1alpha1.GetAccessTokenResponse, error) {
 	conn, err := NewAnonymousConnection()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "failed to create anonymous connection")
@@ -234,8 +235,8 @@ func getAccessToken(
 	}
 
 	apiCfg := GetApiConnectionConfigByEnv(envType)
-	nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
-	tokenResponse, err := nucleusClient.GetAccessToken(ctx, &mgmtv1alpha1.GetAccessTokenRequest{
+	nucleusAuthClient := authv1alpha1.NewAuthServiceClient(conn)
+	tokenResponse, err := nucleusAuthClient.GetAccessToken(ctx, &authv1alpha1.GetAccessTokenRequest{
 		ClientId:    apiCfg.AuthClientId,
 		Code:        code,
 		RedirectUri: redirectUri,
@@ -278,8 +279,8 @@ func ClientLogin(ctx context.Context, clientId string, clientSecret string) erro
 		return err
 	}
 
-	nucleusClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
-	tokenResponse, err := nucleusClient.GetServiceAccountAccessToken(ctx, &mgmtv1alpha1.GetServiceAccountAccessTokenRequest{
+	nucleusAuthClient := authv1alpha1.NewAuthServiceClient(conn)
+	tokenResponse, err := nucleusAuthClient.GetServiceAccountAccessToken(ctx, &authv1alpha1.GetServiceAccountAccessTokenRequest{
 		ClientId:     clientId,
 		ClientSecret: clientSecret,
 	})
@@ -302,8 +303,8 @@ func ClientLogin(ctx context.Context, clientId string, clientSecret string) erro
 	}
 	defer conn.Close()
 
-	nucleusClient = mgmtv1alpha1.NewMgmtServiceClient(conn)
-	_, err = nucleusClient.GetAccountByServiceAccountClientId(ctx, &mgmtv1alpha1.GetAccountByServiceAccountClientIdRequest{})
+	nucleusMgmtClient := mgmtv1alpha1.NewMgmtServiceClient(conn)
+	_, err = nucleusMgmtClient.GetAccountByServiceAccountClientId(ctx, &mgmtv1alpha1.GetAccountByServiceAccountClientIdRequest{})
 	return err
 
 }
