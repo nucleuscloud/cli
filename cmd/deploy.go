@@ -266,6 +266,13 @@ func deploy(
 			handleMainBar(mainBar, progressType, &ProgressBar{abort: true})
 			progressContainer.Wait()
 			printPlainOutput(deployStatus)
+			if didPipelineGetCancelled(deployStatus) {
+				return nil
+			}
+			err = streamPodErrorLogs(ctx, svcClient, req.environmentName, req.serviceName, deployStatus)
+			if err != nil {
+				return err
+			}
 			return fmt.Errorf("pipeline failed with error")
 		}
 
@@ -278,7 +285,134 @@ func deploy(
 	}
 
 	return nil
+}
 
+// This doesnt handle the option where a task is gracefully shutdown
+func didPipelineGetCancelled(
+	deployStatus *svcmgmtv1alpha1.DeployStatus,
+) bool {
+	if deployStatus == nil {
+		return false
+	}
+	if deployStatus.Succeeded != nil && deployStatus.Succeeded.Reason == "Cancelled" {
+		return true
+	}
+	for _, taskStatus := range deployStatus.DeployTaskStatus {
+		if taskStatus.CompletionTime == nil {
+			continue
+		}
+		for _, step := range taskStatus.Steps {
+			terminatedState := step.GetTerminated()
+			if terminatedState == nil {
+				continue
+			}
+			if terminatedState.Reason == "TaskRunCancelled" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func streamPodErrorLogs(
+	ctx context.Context,
+	client svcmgmtv1alpha1.ServiceMgmtServiceClient,
+	envName string,
+	serviceName string,
+	deployStatus *svcmgmtv1alpha1.DeployStatus,
+) error {
+	if deployStatus == nil {
+		return fmt.Errorf("deploystatus was nil")
+	}
+
+	logrequest, err := getLogRequestFromDeployStatus(deployStatus)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("====================")
+	fmt.Printf("Printing logs for Task '%s' at Step '%s'\n\n", logrequest.TaskName, logrequest.TaskStep)
+	fmt.Println("====================")
+
+	stream, err := client.GetDeployLogs(ctx, &svcmgmtv1alpha1.GetDeployLogsRequest{
+		EnvironmentName: envName,
+		ServiceName:     serviceName,
+		LogRequest:      logrequest,
+	})
+	if err != nil {
+		return err
+	}
+	for {
+		response, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				fmt.Println("====================")
+				return nil
+			}
+			return err
+		}
+		fmt.Println(response.LogLine)
+	}
+}
+
+func getLogRequestFromDeployStatus(
+	deployStatus *svcmgmtv1alpha1.DeployStatus,
+) (*svcmgmtv1alpha1.PipelineRunLogRequest, error) {
+	if deployStatus == nil {
+		return nil, fmt.Errorf("deploy status was nil")
+	}
+
+	taskStatus := getLastTaskStatus(deployStatus.DeployTaskStatus)
+	if taskStatus == nil {
+		return nil, fmt.Errorf("unable to find task status with error state to print logs for")
+	}
+
+	for _, step := range taskStatus.Steps {
+		terminatedState := step.GetTerminated()
+		if terminatedState == nil {
+			continue
+		}
+		if terminatedState.Reason == "Error" {
+			return &svcmgmtv1alpha1.PipelineRunLogRequest{
+				PipelineRun: deployStatus.PipelineRun,
+				TaskName:    taskStatus.Name,
+				TaskStep:    step.Name,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("unable to find task step with error state to print logs for")
+}
+
+func getLastTaskStatus(statuses []*svcmgmtv1alpha1.DeployTaskStatus) *svcmgmtv1alpha1.DeployTaskStatus {
+	if len(statuses) == 0 {
+		return nil
+	}
+
+	var lastTaskStatus *svcmgmtv1alpha1.DeployTaskStatus
+
+	for _, taskStatus := range statuses {
+		if taskStatus.CompletionTime == nil {
+			continue
+		}
+
+		if lastTaskStatus == nil {
+			lastTaskStatus = taskStatus
+		} else {
+			lastCompletionTime, err := time.Parse(time.RFC3339, *lastTaskStatus.CompletionTime)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			completionTime, err := time.Parse(time.RFC3339, *taskStatus.CompletionTime)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return nil
+			}
+			if completionTime.After(lastCompletionTime) {
+				lastTaskStatus = taskStatus
+			}
+		}
+	}
+	return lastTaskStatus
 }
 
 func handleMainBar(bar *mpb.Bar, progressType progress.ProgressType, barSettings *ProgressBar) {
