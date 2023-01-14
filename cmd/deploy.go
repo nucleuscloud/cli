@@ -346,6 +346,7 @@ func streamPodErrorLogs(
 		response, err := stream.Recv()
 		if err != nil {
 			if err == io.EOF {
+				fmt.Println("====================")
 				return nil
 			}
 			return err
