@@ -13,10 +13,48 @@ const (
   <title>{{ .Title }}</title>
 	<link rel="icon" type="image/png" href="https://assets.nucleuscloud.com/favicon_transparent.ico" />
   <style>
-    body {
-      background-color: #BBC;
-			margin: 8px;
-			display: block;
+   body {
+        background-color: #FBFDF4;
+    }
+
+    .header {
+        background-color: #FBFDF4;
+    }
+
+    .logo {
+        height: 30%;
+        width: 30%;
+        border-radius: 10px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto
+    }
+
+    h1 {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 36px;
+        letter-spacing: -0.4px;
+        word-spacing: 2px;
+        color: #2F48FF;
+        font-weight: normal;
+        text-transform: capitalize;
+        text-align: center;
+    }
+
+    p {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 16px;
+        letter-spacing: -0.4px;
+        word-spacing: 2px;
+        color: #489AFF;
+        font-weight: normal;
+        text-transform: capitalize;
+        text-align: center;
+    }
+
+    .nucleusLogo {
+        height: '40px';
+        width: 40px;
     }
     #content {
     }
@@ -40,21 +78,27 @@ const (
 	`
 
 	loginPageSuccess = `
-<div>
- <h1>Login Success!</h1>
- <div>
-	<p>You've successfully logged in to Nucleus CLI.</p>
-	<p>You may now close this window and return to your terminal.</p>
- </div>
-</div>
+<div><a href="https:nucleuscloud.com"><img class='nucleusLogo' src="https://assets.nucleuscloud.com/favicon_transparent.ico"></a></div>
+    <div class='successText'>
+        <h1>Login Success!</h1>
+        <p>You've successfully logged in to Nucleus CLI.</p>
+	  <p>You may now close this window and return to your terminal.</p>
+    </div>
+        <div>
+  <img class='logo' src="https://assets.nucleuscloud.com/loginPicFinal.jpg">
+    </div>
 	`
 
 	loginPageError = `
-<div>
-<h1>There was a problem logging you in!</h1>
-<p class="error-text">Error Code: {{ .ErrorCode }}</p>
-<p class="error-text">Error Description: {{ .ErrorDescription }}</p>
-</div>
+    <div><a href="https:nucleuscloud.com"><img class='nucleusLogo' src="https://assets.nucleuscloud.com/favicon_transparent.ico"></a></div>
+    <div class='successText'>
+        <h1>There was a problem logging you in!</h1>
+        <p class="error-text">Error Code: {{ .ErrorCode }}</p>
+        <p class="error-text">Error Description: {{ .ErrorDescription }}</p>
+    </div>
+    <div>
+        <img class='logo' src="https://assets.nucleuscloud.com/angryDarth.jpg">
+    </div>
 	`
 )
 
