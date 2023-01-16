@@ -4,7 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v2"
 )
 
@@ -88,25 +91,53 @@ func SetNucleusConfig(config *NucleusConfig) error {
 	return nil
 }
 
-// Get or Creates the Nucleus folder that lives in the homedir and stores persisted settings
-func GetOrCreateNucleusFolder() (string, error) {
-	dirname, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-
-	fullName := dirname + "/" + nucleusFolderName
-
-	_, err = os.Stat(fullName)
+// ensureDirectoryExists checks for directory existence and tries to create it if it does not exist.
+func ensureDirectoryExists(dirName string) error {
+	_, err := os.Stat(dirName)
 	if os.IsNotExist(err) {
-		err = os.Mkdir(fullName, 0755)
+		err = os.Mkdir(dirName, 0755)
 		if err != nil {
 			if os.IsExist(err) {
-				return fullName, nil
+				return nil
 			}
-			return "", err
+			return err
 		}
 	} else if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Get or Creates the Nucleus folder that lives and stores persisted settings.
+//
+// 1. Checks for directory specified by env var NUCLEUS_CONFIG_DIR
+// 2. Checks for existence of XDG_CONFIG_HOME and append "nucleus" to it, if exists
+// 3. Use ~/.nucleus
+func GetOrCreateNucleusFolder() (string, error) {
+	configDir := os.Getenv("NUCLEUS_CONFIG_DIR")  // helpful for tools such as direnv and people who want it somewhere interesting
+	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME") // linux users expect this to be respected
+
+	var fullName string
+	if configDir != "" {
+		if strings.HasPrefix(configDir, "~/") {
+			homeDir, err := homedir.Dir()
+			if err != nil {
+				return "", err
+			}
+			configDir = filepath.Join(homeDir, configDir[2:])
+		}
+		fullName = configDir
+	} else if xdgConfigHome != "" {
+		fullName = filepath.Join(xdgConfigHome, nucleusFolderName)
+	} else {
+		dirname, err := homedir.Dir()
+		if err != nil {
+			return "", err
+		}
+		fullName = filepath.Join(dirname, nucleusFolderName)
+	}
+
+	if err := ensureDirectoryExists(fullName); err != nil {
 		return "", err
 	}
 	return fullName, nil

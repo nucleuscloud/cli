@@ -19,11 +19,14 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+
+	"github.com/mitchellh/go-homedir"
+	"github.com/spf13/cobra"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/nucleuscloud/cli/internal/utils"
 	"github.com/nucleuscloud/cli/internal/version"
-	"github.com/spf13/cobra"
-	"google.golang.org/grpc/metadata"
 
 	"github.com/spf13/viper"
 )
@@ -41,7 +44,7 @@ var rootCmd = &cobra.Command{
 	Use:   "nucleus",
 	Short: "Terminal UI that interfaces with the Nucleus system.",
 	Long:  "Terminal UI that allows authenticated access to the Nucleus system.\nThis CLI allows you to deploy and manage all of the environments and services within your Nucleus account or accounts.",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 		cmd.SilenceErrors = true
 
 		versionInfo := version.Get()
@@ -82,16 +85,19 @@ func initConfig(cfgFilePath string) {
 		viper.SetConfigFile(cfgFilePath)
 	} else {
 		// Find home directory.
-		home, err := os.UserHomeDir()
+		home, err := homedir.Dir()
 		cobra.CheckErr(err)
 
-		fullNucluesSettingsDir := fmt.Sprintf("%s/%s", home, nucleusDirName)
+		fullNucluesSettingsDir := filepath.Join(home, nucleusDirName)
+		nucleusConfigDir := os.Getenv("NUCLEUS_CONFIG_DIR") // helpful for tools such as direnv and people who want it somewhere interesting
+		xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")       // linux users expect this to be respected
 
-		// Search config in home directory with name ".nucleus-cli" (without extension).
-		// Higher priority is first. (which seems like the opposite to me, but that is how it works ¯\_(ツ)_/¯)
 		viper.AddConfigPath(".")
 		viper.AddConfigPath(fullNucluesSettingsDir)
 		viper.AddConfigPath(home)
+		viper.AddConfigPath(nucleusConfigDir)
+		viper.AddConfigPath(xdgConfigHome)
+
 		viper.SetConfigType(cliSettingsFileExt)
 		viper.SetConfigName(cliSettingsFileNameNoExt)
 	}
