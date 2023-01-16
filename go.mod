@@ -17,7 +17,7 @@ require (
 	github.com/toqueteos/webbrowser v1.2.0
 	github.com/vbauerster/mpb/v8 v8.1.4
 	golang.org/x/term v0.4.0
-	google.golang.org/grpc v1.51.0
+	google.golang.org/grpc v1.52.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
