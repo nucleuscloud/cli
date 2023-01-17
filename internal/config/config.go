@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v2"
 )
 
@@ -120,7 +119,7 @@ func GetOrCreateNucleusFolder() (string, error) {
 	var fullName string
 	if configDir != "" {
 		if strings.HasPrefix(configDir, "~/") {
-			homeDir, err := homedir.Dir()
+			homeDir, err := os.UserHomeDir()
 			if err != nil {
 				return "", err
 			}
@@ -130,7 +129,7 @@ func GetOrCreateNucleusFolder() (string, error) {
 	} else if xdgConfigHome != "" {
 		fullName = filepath.Join(xdgConfigHome, nucleusFolderName[1:])
 	} else {
-		dirname, err := homedir.Dir()
+		dirname, err := os.UserHomeDir()
 		if err != nil {
 			return "", err
 		}
