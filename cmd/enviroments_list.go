@@ -19,11 +19,12 @@ import (
 	"context"
 
 	"github.com/fatih/color"
-	clienv "github.com/nucleuscloud/cli/internal/env"
-	"github.com/nucleuscloud/cli/internal/utils"
 	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
+
+	clienv "github.com/nucleuscloud/cli/internal/env"
+	"github.com/nucleuscloud/cli/internal/utils"
 )
 
 type EnvironmentConfig struct {
@@ -71,17 +72,12 @@ func listEnvironments(ctx context.Context) error {
 	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
-	envList, err := cliClient.GetEnvironments(ctx, &svcmgmtv1alpha1.GetEnvironmentsRequest{})
-	if err != nil {
-		return err
-	}
-
 	clusterConfigs, err := cliClient.GetProviderClusterConfigs(ctx, &svcmgmtv1alpha1.GetProviderClusterConfigsRequest{})
 	if err != nil {
 		return err
 	}
 
-	var envConfig []*EnvironmentConfig
+	var envConfigs []*EnvironmentConfig
 
 	for _, configs := range clusterConfigs.ClusterConfigs {
 		envs, err := cliClient.GetEnvironmentsByProviderClusterId(ctx, &svcmgmtv1alpha1.GetEnvironmentsByProviderClusterIdRequest{ProviderClusterConfigId: configs.Id})
@@ -94,7 +90,7 @@ func listEnvironments(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-			envConfig = append(envConfig, &EnvironmentConfig{
+			envConfigs = append(envConfigs, &EnvironmentConfig{
 				EnvironmentId:        envs.EnvironmentId,
 				EnvironmentName:      envs.EnvironmentName,
 				EnvironmentRegion:    configs.ProviderRegionName,
@@ -107,44 +103,16 @@ func listEnvironments(ctx context.Context) error {
 		}
 	}
 
-	for _, env := range envList.Environments {
-
+	for _, config := range envConfigs {
 		tbl.AddRow(
-			env.EnvironmentName,
-			getRegion(env.EnvironmentName, envConfig),
-			getClusterName(env.EnvironmentName, envConfig),
-			filterEnvforServicesCount(env.EnvironmentName, envConfig),
+			config.EnvironmentName,
+			config.EnvironmentRegion,
+			config.EnvironmentCluster,
+			config.ServiceCount,
 		)
 	}
 	tbl.Print()
 	return nil
-}
-
-func getRegion(envName string, config []*EnvironmentConfig) string {
-	for _, envConfig := range config {
-		if envConfig.EnvironmentName == envName {
-			return envConfig.EnvironmentRegion
-		}
-	}
-	return ""
-}
-
-func getClusterName(envName string, config []*EnvironmentConfig) string {
-	for _, envConfig := range config {
-		if envConfig.EnvironmentName == envName {
-			return envConfig.EnvironmentCluster
-		}
-	}
-	return ""
-}
-
-func filterEnvforServicesCount(envName string, config []*EnvironmentConfig) int32 {
-	for _, envConfig := range config {
-		if envConfig.EnvironmentName == envName {
-			return envConfig.ServiceCount
-		}
-	}
-	return 0
 }
 
 func getServicesCount(ctx context.Context, envName string, client svcmgmtv1alpha1.ServiceMgmtServiceClient) (int32, error) {
