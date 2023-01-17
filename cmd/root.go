@@ -21,14 +21,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/nucleuscloud/cli/internal/utils"
 	"github.com/nucleuscloud/cli/internal/version"
-
-	"github.com/spf13/viper"
 )
 
 const (
@@ -85,7 +83,7 @@ func initConfig(cfgFilePath string) {
 		viper.SetConfigFile(cfgFilePath)
 	} else {
 		// Find home directory.
-		home, err := homedir.Dir()
+		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
 		fullNucluesSettingsDir := filepath.Join(home, nucleusDirName)
