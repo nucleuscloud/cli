@@ -128,7 +128,7 @@ func GetOrCreateNucleusFolder() (string, error) {
 		}
 		fullName = configDir
 	} else if xdgConfigHome != "" {
-		fullName = filepath.Join(xdgConfigHome, nucleusFolderName)
+		fullName = filepath.Join(xdgConfigHome, nucleusFolderName[1:])
 	} else {
 		dirname, err := homedir.Dir()
 		if err != nil {
