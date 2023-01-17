@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/spf13/viper"
+
+	"github.com/nucleuscloud/cli/internal/term"
 )
 
 type NucleusEnv string
@@ -37,8 +40,8 @@ func GetEnv() NucleusEnv {
 		panic(fmt.Errorf("%s can only be one of %s", nucleusDebugEnvKey, strings.Join(getAllowedEnvs(), ",")))
 	}
 	if !hasLoggedAboutEnvType {
-		//green := term.GetColoredSprintFunc(color.FgGreen)
-		//fmt.Println(green(nucleusDebugEnvKey, "=", val))
+		green := term.GetColoredSprintFunc(color.FgGreen)
+		fmt.Println(green(nucleusDebugEnvKey, "=", val))
 		hasLoggedAboutEnvType = true
 	}
 	return nucleusEnv
