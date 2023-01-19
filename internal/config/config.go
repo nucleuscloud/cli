@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -126,8 +127,18 @@ func GetOrCreateNucleusFolder() (string, error) {
 			configDir = filepath.Join(homeDir, configDir[2:])
 		}
 		fullName = configDir
-	} else if xdgConfigHome != "" {
-		fullName = filepath.Join(xdgConfigHome, nucleusFolderName[1:])
+	} else if xdgConfigHome != "" || runtime.GOOS == "linux" || strings.Contains(runtime.GOOS, "bsd") {
+		var baseDir string
+		if xdgConfigHome != "" {
+			baseDir = xdgConfigHome
+		} else {
+			homeDir, err := os.UserHomeDir()
+			if err != nil {
+				return "", err
+			}
+			baseDir = filepath.Join(homeDir, ".config")
+		}
+		fullName = filepath.Join(baseDir, nucleusFolderName[1:])
 	} else {
 		dirname, err := os.UserHomeDir()
 		if err != nil {
