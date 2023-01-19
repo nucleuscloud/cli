@@ -46,8 +46,9 @@ type NucleusAuthConfig struct {
 }
 
 const (
-	nucleusConfigPath = "./nucleus.yaml"
+	nucleusConfigPath = "nucleus.yaml"
 	nucleusFolderName = ".nucleus"
+	nucleusAuthName   = "auth.yaml"
 )
 
 var (
@@ -149,7 +150,7 @@ func GetNucleusAuthConfig() (*NucleusAuthConfig, error) {
 		return nil, err
 	}
 
-	fileName := dirPath + "/auth.yaml"
+	fileName := filepath.Join(dirPath, nucleusAuthName)
 
 	file, err := os.ReadFile(fileName)
 	if err != nil {
@@ -176,7 +177,7 @@ func SetNucleusAuthFile(authConfig NucleusAuthConfig) error {
 		return fmt.Errorf("Could not find the correct nucleus dir to store configs")
 	}
 
-	fileName := dirPath + "/auth.yaml"
+	fileName := filepath.Join(dirPath, nucleusAuthName)
 
 	file, err := os.Create(fileName)
 	if err != nil {
@@ -207,7 +208,7 @@ func ClearNucleusAuthFile() error {
 		return fmt.Errorf("Could not find the correct nucleus dir to store configs")
 	}
 
-	fileName := dirPath + "/auth.yaml"
+	fileName := filepath.Join(dirPath, nucleusAuthName)
 
 	err = os.Remove(fileName)
 	if !os.IsNotExist(err) {
