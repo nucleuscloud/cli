@@ -63,15 +63,33 @@ var logsCommand = &cobra.Command{
 			return err
 		}
 
+		podName, err := cmd.Flags().GetString("pod")
+		if err != nil {
+			return err
+		}
+
+		maxLines, err := cmd.Flags().GetInt64("max-lines")
+		if err != nil {
+			return err
+		}
+
 		// Set this after ensuring flags are correct
 		cmd.SilenceUsage = true
 
 		shouldTail := tail || follow
-		return getLogs(ctx, environmentName, serviceName, window, shouldTail)
+		var maxLogLines *int64
+		if maxLines > 0 {
+			maxLogLines = &maxLines
+		}
+		var parsedPodName *string
+		if len(podName) > 0 {
+			parsedPodName = &podName
+		}
+		return getLogs(ctx, environmentName, serviceName, parsedPodName, window, shouldTail, maxLogLines)
 	},
 }
 
-func getLogs(ctx context.Context, envName string, serviceName string, window string, shouldTail bool) error {
+func getLogs(ctx context.Context, envName string, serviceName string, podName *string, window string, shouldTail bool, maxLines *int64) error {
 	conn, err := utils.NewApiConnectionByEnv(ctx, clienv.GetEnv())
 	if err != nil {
 		return err
@@ -84,6 +102,8 @@ func getLogs(ctx context.Context, envName string, serviceName string, window str
 		ServiceName:     serviceName,
 		Window:          getLogWindow(window),
 		ShouldTail:      shouldTail,
+		PodName:         podName,
+		MaxLogLines:     maxLines,
 	})
 	if err != nil {
 		return err
@@ -125,4 +145,6 @@ func init() {
 	logsCommand.Flags().BoolP("follow", "f", false, "live log tail")
 	logsCommand.Flags().StringP("service", "s", "", "service name")
 	logsCommand.Flags().StringP("window", "w", "", "logging window allowed values: [15min, 1h, 1d]")
+	logsCommand.Flags().StringP("pod", "p", "", "specific pod to pull logs from")
+	logsCommand.Flags().Int64("max-lines", 0, "will return only the max number of lines. 0 means all")
 }
