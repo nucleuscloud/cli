@@ -188,8 +188,8 @@ github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39 h1:vBHSysGJm+
 github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39/go.mod h1:15HmXa+Tp2AfAwHc4aR3UPdEzfnMIkshxEYMOXdLS5Y=
 github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyuac5Z2hdY=
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
-github.com/nucleuscloud/mgmt-api v0.0.132-shaw.0.20230131225313-736b3bbc5cac h1:Lp9v0D6F+SF88etlttjZyuPukOMhc1Bj/CTb7jTU7VQ=
-github.com/nucleuscloud/mgmt-api v0.0.132-shaw.0.20230131225313-736b3bbc5cac/go.mod h1:+UWhTFginymo2DIn+C8ia8hf2duwNwgpFgSIHmU0KgE=
+github.com/nucleuscloud/mgmt-api v0.0.133 h1:XxZSR1WBRWEJ8PLbAl5BIm+JZEl1PhM2/nMkJpy1B6U=
+github.com/nucleuscloud/mgmt-api v0.0.133/go.mod h1:MDIKZEBV+QLubKgG4art+hf9Z4gaa8ldQ1EXKS1fQsQ=
 github.com/pelletier/go-toml/v2 v2.0.6 h1:nrzqCb7j9cDFj2coyLNLaZuJTLjWjlaz6nvTvIwycIU=
 github.com/pelletier/go-toml/v2 v2.0.6/go.mod h1:eumQOmlWiOPt5WriQQqoM5y18pDHwha2N+QD+EUNTek=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=

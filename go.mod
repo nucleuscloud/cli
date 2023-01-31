@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.14.1
 	github.com/google/uuid v1.3.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
-	github.com/nucleuscloud/mgmt-api v0.0.132-shaw.0.20230131225313-736b3bbc5cac
+	github.com/nucleuscloud/mgmt-api v0.0.133
 	github.com/rodaine/table v1.1.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
