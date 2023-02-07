@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/vbauerster/mpb/v8"
 	"github.com/vbauerster/mpb/v8/decor"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/nucleuscloud/cli/internal/config"
 	clienv "github.com/nucleuscloud/cli/internal/env"
@@ -86,6 +87,11 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
+		err = validateResources(deployConfig.Spec.Resources)
+		if err != nil {
+			return err
+		}
+
 		directoryName, err := os.Getwd()
 		if err != nil {
 			return err
@@ -114,6 +120,7 @@ var deployCmd = &cobra.Command{
 			isPrivateService: deployConfig.Spec.IsPrivate,
 			envVars:          deployConfig.Spec.Vars,
 			envSecrets:       envSecrets,
+			resources:        deployConfig.Spec.Resources,
 		}
 		err = deploy(ctx, svcClient, req, progressType)
 		if err != nil {
@@ -128,6 +135,58 @@ var deployCmd = &cobra.Command{
 			deployConfig.Spec.DisallowedServices,
 		)
 	},
+}
+
+func validateResources(reqs config.ResourceRequirements) error {
+	if reqs.Minimum.Cpu != "" {
+		_, err := mustParseResource(reqs.Minimum.Cpu)
+		if err != nil {
+			return fmt.Errorf(fmt.Sprintf("minimum cpu is not valid: %s", err.Error()))
+		}
+	}
+	if reqs.Minimum.Memory != "" {
+		_, err := mustParseResource(reqs.Minimum.Memory)
+		if err != nil {
+			return fmt.Errorf(fmt.Sprintf("minimum memory is not valid: %s", err.Error()))
+		}
+	}
+	if reqs.Maximum.Cpu != "" {
+		_, err := mustParseResource(reqs.Maximum.Cpu)
+		if err != nil {
+			return fmt.Errorf(fmt.Sprintf("maximum cpu is not valid: %s", err.Error()))
+		}
+	}
+	if reqs.Maximum.Memory != "" {
+		_, err := mustParseResource(reqs.Maximum.Memory)
+		if err != nil {
+			return fmt.Errorf(fmt.Sprintf("maximum memory is not valid: %s", err.Error()))
+		}
+	}
+
+	if reqs.Minimum.Cpu != "" && reqs.Maximum.Cpu != "" {
+		minCpu, _ := mustParseResource(reqs.Minimum.Cpu)
+		maxCpu, _ := mustParseResource(reqs.Maximum.Cpu)
+
+		if minCpu.Cmp(*maxCpu) == 1 {
+			return fmt.Errorf("min cpu must be less than max cpu")
+		}
+	}
+	if reqs.Minimum.Memory != "" && reqs.Maximum.Memory != "" {
+		minMem, _ := mustParseResource(reqs.Minimum.Memory)
+		maxMem, _ := mustParseResource(reqs.Maximum.Memory)
+		if minMem.Cmp(*maxMem) == 1 {
+			return fmt.Errorf("min memory must be less than max memory")
+		}
+	}
+	return nil
+}
+
+func mustParseResource(val string) (*resource.Quantity, error) {
+	quantity, err := resource.ParseQuantity(val)
+	if err != nil {
+		return nil, err
+	}
+	return &quantity, nil
 }
 
 func setAuthzPolicy(
