@@ -15,7 +15,7 @@ require (
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.1
 	github.com/toqueteos/webbrowser v1.2.0
-	github.com/vbauerster/mpb/v8 v8.1.4
+	github.com/vbauerster/mpb/v8 v8.1.6
 	golang.org/x/term v0.4.0
 	google.golang.org/grpc v1.53.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -44,7 +44,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rivo/uniseg v0.4.3 // indirect
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
