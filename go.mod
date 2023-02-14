@@ -17,7 +17,7 @@ require (
 	github.com/toqueteos/webbrowser v1.2.0
 	github.com/vbauerster/mpb/v8 v8.1.4
 	golang.org/x/term v0.4.0
-	google.golang.org/grpc v1.52.3
+	google.golang.org/grpc v1.53.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/apimachinery v0.25.5
 )
@@ -55,7 +55,7 @@ require (
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/text v0.6.0 // indirect
-	google.golang.org/genproto v0.0.0-20221227171554-f9683d7f8bef // indirect
+	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
 	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
