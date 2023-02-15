@@ -20,9 +20,9 @@ func getApiUrl() string {
 	if clienv.IsDevEnv() {
 		return "localhost:50051"
 	} else if clienv.IsStageEnv() {
-		return "mgmt-api-nucleus.svcs.stage.nucleuscloud.com:443"
+		return "mgmt-api-nucleus.svcs.stage.nucleuscloud.com:50051"
 	}
-	return "mgmt-api-nucleus.svcs.nucleuscloud.com:443"
+	return "mgmt-api-nucleus.svcs.nucleuscloud.com:50051"
 }
 
 func getTransportCreds() (credentials.TransportCredentials, error) {
