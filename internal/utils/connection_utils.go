@@ -7,18 +7,19 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/nucleuscloud/cli/internal/auth"
-	"github.com/nucleuscloud/cli/internal/config"
-	clienv "github.com/nucleuscloud/cli/internal/env"
 	authv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/auth/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/nucleuscloud/cli/internal/auth"
+	"github.com/nucleuscloud/cli/internal/config"
+	clienv "github.com/nucleuscloud/cli/internal/env"
 )
 
 func getApiUrl() string {
 	if clienv.IsDevEnv() {
-		return "localhost:50051"
+		return "mgmt-api-nucleus.svcs.nucleuscloud.dev:50051"
 	} else if clienv.IsStageEnv() {
 		return "mgmt-api-nucleus.svcs.stage.nucleuscloud.com:50051"
 	}

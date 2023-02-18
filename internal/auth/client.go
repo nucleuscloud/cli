@@ -14,6 +14,9 @@ import (
 )
 
 const (
+	Auth0DevClientId = "N53szkXwrMZmWiMQ96bJVCSuafn6myMR"
+	Auth0DevBaseUrl  = "https://auth.nucleuscloud.dev"
+
 	Auth0StageClientId = "IHJD9fSlrH4p9WhPYp6uJe0yFNr26ZLy"
 	Auth0StageBaseUrl  = "https://auth.stage.nucleuscloud.com"
 
@@ -63,8 +66,10 @@ func NewAuthClientByEnv(envType clienv.NucleusEnv) (AuthClientInterface, error) 
 	switch envType {
 	case "prod", "":
 		return NewAuthClient(Auth0ProdBaseUrl, Auth0ProdClientId, ApiAudience)
-	case "dev", "stage":
+	case "stage":
 		return NewAuthClient(Auth0StageBaseUrl, Auth0StageClientId, ApiAudience)
+	case "dev":
+		return NewAuthClient(Auth0DevBaseUrl, Auth0DevClientId, ApiAudience)
 	}
 	return nil, fmt.Errorf("must provide valid env type")
 }
