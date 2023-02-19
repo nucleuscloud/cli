@@ -77,7 +77,13 @@ func GetApiConnectionConfigByEnv(envType clienv.NucleusEnv) *ApiConnectionConfig
 			AuthClientId: auth.Auth0ProdClientId,
 			ApiAudience:  auth.ApiAudience,
 		}
-	case clienv.StageEnv, clienv.DevEnv:
+	case clienv.DevEnv:
+		return &ApiConnectionConfig{
+			AuthBaseUrl:  auth.Auth0DevBaseUrl,
+			AuthClientId: auth.Auth0DevClientId,
+			ApiAudience:  auth.ApiAudience,
+		}
+	case clienv.StageEnv:
 		return &ApiConnectionConfig{
 			AuthBaseUrl:  auth.Auth0StageBaseUrl,
 			AuthClientId: auth.Auth0StageClientId,
