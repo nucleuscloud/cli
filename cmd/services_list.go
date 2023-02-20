@@ -130,9 +130,6 @@ func getVisibilityLabel(isPrivate bool) string {
 }
 
 func getUrlLabel(isPrivate bool, url *string) string {
-	if isPrivate {
-		return ""
-	}
 	if url == nil {
 		return ""
 	}
