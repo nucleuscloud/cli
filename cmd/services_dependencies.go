@@ -105,8 +105,8 @@ func listRawServices(ctx context.Context, environmentName string) ([]string, err
 
 	var simpleServiceList []string //just the service names
 
-	for _, k := range serviceList.Services {
-		simpleServiceList = append(simpleServiceList, k.ServiceCustomerConfig.ServiceName)
+	for _, v := range serviceList.Services {
+		simpleServiceList = append(simpleServiceList, v.ServiceCustomerConfig.ServiceName)
 	}
 
 	sort.Slice(simpleServiceList, func(i, j int) bool {
@@ -125,6 +125,12 @@ func storeServiceDependency(val string) error {
 	var allowedServices []string
 
 	allowedServices = nucleusConfig.Spec.AllowedServices
+
+	for _, v := range allowedServices {
+		if val == v {
+			return fmt.Errorf("This service is already in the Allowed Services list")
+		}
+	}
 
 	allowedServices = append(allowedServices, val)
 
