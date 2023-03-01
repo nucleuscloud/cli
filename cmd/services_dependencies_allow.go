@@ -127,8 +127,8 @@ func storeServiceDependency(val string) error {
 		return err
 	}
 
-	for _, v := range nucleusConfig.Spec.AllowedServices {
-		if val == v {
+	for _, allowedSvc := range nucleusConfig.Spec.AllowedServices {
+		if allowedSvc == val {
 			fmt.Println("This service is already in the allowed services list")
 			return nil
 		}
