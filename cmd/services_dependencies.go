@@ -16,16 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"context"
-	"fmt"
-	"sort"
-	"strings"
-
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/nucleuscloud/cli/internal/config"
-	clienv "github.com/nucleuscloud/cli/internal/env"
-	"github.com/nucleuscloud/cli/internal/utils"
-	svcmgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/servicemgmt/v1alpha1"
 	"github.com/spf13/cobra"
 )
 
@@ -34,112 +24,13 @@ var servicesDependenciesCmd = &cobra.Command{
 	Aliases: []string{
 		"deps",
 	},
-	Short: "Add a service dependency.",
-	Long:  "Call this command to add a service dependency to this service in order to authorize inter-service communication",
+	Short: "Parent command for service dependencies.",
+	Long:  "This command must include a relevant sub command to invoke an action related to service dependencies",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
-		environmentName, err := cmd.Flags().GetString("env")
-		if err != nil {
-			return err
-		}
-
-		if environmentName == "" {
-			return fmt.Errorf("must provide environment name")
-		}
-
-		// Set this after ensuring flags are correct
-		cmd.SilenceUsage = true
-
-		servList, err := listRawServices(ctx, environmentName)
-		if err != nil {
-			return err
-		}
-
-		serviceQuestions := []*survey.Question{
-			{
-				Name: "serviceType",
-				Prompt: &survey.Select{
-					Message: "Select the service dependency: ",
-					Options: servList,
-				},
-				Validate: survey.Required,
-			},
-		}
-
-		// ask the question
-		var serviceDeps string
-		err = survey.Ask(serviceQuestions, &serviceDeps, surveyIcons)
-		if err != nil {
-			return err
-		}
-
-		err = storeServiceDependency(serviceDeps)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return cmd.Help()
 	},
 }
 
 func init() {
 	servicesCmd.AddCommand(servicesDependenciesCmd)
-
-	servicesDependenciesCmd.Flags().StringP("env", "e", "", "set the nucleus environment")
-}
-
-func listRawServices(ctx context.Context, environmentName string) ([]string, error) {
-	conn, err := utils.NewApiConnectionByEnv(ctx, clienv.GetEnv())
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-
-	cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
-	serviceList, err := cliClient.GetServices(ctx, &svcmgmtv1alpha1.GetServicesRequest{
-		EnvironmentName: strings.TrimSpace(environmentName),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var simpleServiceList []string //just the service names
-
-	for _, v := range serviceList.Services {
-		simpleServiceList = append(simpleServiceList, v.ServiceCustomerConfig.ServiceName)
-	}
-
-	sort.Slice(simpleServiceList, func(i, j int) bool {
-		return simpleServiceList[i] < simpleServiceList[j]
-	})
-
-	return simpleServiceList, nil
-}
-
-func storeServiceDependency(val string) error {
-	nucleusConfig, err := config.GetNucleusConfig()
-	if err != nil {
-		return err
-	}
-
-	var allowedServices []string
-
-	allowedServices = nucleusConfig.Spec.AllowedServices
-
-	for _, v := range allowedServices {
-		if val == v {
-			return fmt.Errorf("This service is already in the Allowed Services list")
-		}
-	}
-
-	allowedServices = append(allowedServices, val)
-
-	nucleusConfig.Spec.AllowedServices = allowedServices
-
-	err = config.SetNucleusConfig(nucleusConfig)
-
-	if err != nil {
-		return err
-	}
-	return nil
 }
