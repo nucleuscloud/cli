@@ -50,9 +50,20 @@ var servicesDependenciesCmd = &cobra.Command{
 		// Set this after ensuring flags are correct
 		cmd.SilenceUsage = true
 
-		servList, err := listRawServices(ctx, environmentName)
+		servList, err := getServiceNamesByEnvironment(ctx, environmentName)
 		if err != nil {
 			return err
+		}
+		nucleusConfig, err := config.GetNucleusConfig()
+		if err != nil {
+			return err
+		}
+
+		filteredServices := []string{}
+		for _, svc := range servList {
+			if svc != nucleusConfig.Spec.ServiceName {
+				filteredServices = append(filteredServices, svc)
+			}
 		}
 
 		serviceQuestions := []*survey.Question{
@@ -60,7 +71,7 @@ var servicesDependenciesCmd = &cobra.Command{
 				Name: "serviceType",
 				Prompt: &survey.Select{
 					Message: "Select the service dependency: ",
-					Options: servList,
+					Options: filteredServices,
 				},
 				Validate: survey.Required,
 			},
@@ -88,7 +99,7 @@ func init() {
 	servicesDependenciesCmd.Flags().StringP("env", "e", "", "set the nucleus environment")
 }
 
-func listRawServices(ctx context.Context, environmentName string) ([]string, error) {
+func getServiceNamesByEnvironment(ctx context.Context, environmentName string) ([]string, error) {
 	conn, err := utils.NewApiConnectionByEnv(ctx, clienv.GetEnv())
 	if err != nil {
 		return nil, err
@@ -96,24 +107,23 @@ func listRawServices(ctx context.Context, environmentName string) ([]string, err
 	defer conn.Close()
 
 	cliClient := svcmgmtv1alpha1.NewServiceMgmtServiceClient(conn)
-	serviceList, err := cliClient.GetServices(ctx, &svcmgmtv1alpha1.GetServicesRequest{
+	servicesResp, err := cliClient.GetServices(ctx, &svcmgmtv1alpha1.GetServicesRequest{
 		EnvironmentName: strings.TrimSpace(environmentName),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	var simpleServiceList []string //just the service names
-
-	for _, v := range serviceList.Services {
-		simpleServiceList = append(simpleServiceList, v.ServiceCustomerConfig.ServiceName)
+	serviceNames := []string{}
+	for _, v := range servicesResp.Services {
+		serviceNames = append(serviceNames, v.ServiceCustomerConfig.ServiceName)
 	}
 
-	sort.Slice(simpleServiceList, func(i, j int) bool {
-		return simpleServiceList[i] < simpleServiceList[j]
+	sort.Slice(serviceNames, func(i, j int) bool {
+		return serviceNames[i] < serviceNames[j]
 	})
 
-	return simpleServiceList, nil
+	return serviceNames, nil
 }
 
 func storeServiceDependency(val string) error {
@@ -122,24 +132,14 @@ func storeServiceDependency(val string) error {
 		return err
 	}
 
-	var allowedServices []string
-
-	allowedServices = nucleusConfig.Spec.AllowedServices
-
-	for _, v := range allowedServices {
+	for _, v := range nucleusConfig.Spec.AllowedServices {
 		if val == v {
-			return fmt.Errorf("This service is already in the Allowed Services list")
+			fmt.Println("This service is already in the allowed services list")
+			return nil
 		}
 	}
 
-	allowedServices = append(allowedServices, val)
+	nucleusConfig.Spec.AllowedServices = append(nucleusConfig.Spec.AllowedServices, val)
 
-	nucleusConfig.Spec.AllowedServices = allowedServices
-
-	err = config.SetNucleusConfig(nucleusConfig)
-
-	if err != nil {
-		return err
-	}
-	return nil
+	return config.SetNucleusConfig(nucleusConfig)
 }
