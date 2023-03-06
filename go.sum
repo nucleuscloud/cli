@@ -48,8 +48,8 @@ github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpH
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
 github.com/auth0/go-jwt-middleware/v2 v2.1.0 h1:VU4LsC3aFPoqXVyEp8EixU6FNM+ZNIjECszRTvtGQI8=
 github.com/auth0/go-jwt-middleware/v2 v2.1.0/go.mod h1:CpzcJoleayAACpv+vt0AP8/aYn5TDngsqzLapV1nM4c=
-github.com/briandowns/spinner v1.22.0 h1:fJ/7tyeM2q9ebM57kGfjnUSrgPJBsULk+/s61UpMGrw=
-github.com/briandowns/spinner v1.22.0/go.mod h1:rPG4gmXeN3wQV/TsAY4w8lPdIM6RX3yqeBQJSrbXjuE=
+github.com/briandowns/spinner v1.23.0 h1:alDF2guRWqa/FOZZYWjlMIx2L6H0wyewPxo/CH4Pt2A=
+github.com/briandowns/spinner v1.23.0/go.mod h1:rPG4gmXeN3wQV/TsAY4w8lPdIM6RX3yqeBQJSrbXjuE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=

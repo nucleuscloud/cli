@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/auth0/go-jwt-middleware/v2 v2.1.0
-	github.com/briandowns/spinner v1.22.0
+	github.com/briandowns/spinner v1.23.0
 	github.com/fatih/color v1.14.1
 	github.com/google/uuid v1.3.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
