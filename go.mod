@@ -15,7 +15,7 @@ require (
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
 	github.com/toqueteos/webbrowser v1.2.0
-	github.com/vbauerster/mpb/v8 v8.2.1
+	github.com/vbauerster/mpb/v8 v8.3.0
 	golang.org/x/term v0.5.0
 	google.golang.org/grpc v1.53.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -53,7 +53,7 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
 	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8 // indirect
