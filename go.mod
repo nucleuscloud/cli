@@ -6,7 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/auth0/go-jwt-middleware/v2 v2.1.0
 	github.com/briandowns/spinner v1.22.0
-	github.com/fatih/color v1.14.1
+	github.com/fatih/color v1.15.0
 	github.com/google/uuid v1.3.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
 	github.com/nucleuscloud/mgmt-api v0.0.209
@@ -53,7 +53,7 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
 	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8 // indirect
