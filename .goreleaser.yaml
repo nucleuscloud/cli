@@ -45,6 +45,8 @@ signs:
         '${artifact}',
       ]
 archives:
-  format_overrides:
+  -
+    id: default
+    format_overrides:
       - goos: windows
         format: zip
