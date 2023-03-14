@@ -179,9 +179,10 @@ func OAuthLogin(ctx context.Context) error {
 	}()
 
 	authorizeUrl := authClient.GetAuthorizeUrl(Scopes, state, redirectUri, nil)
+
 	err = webbrowser.Open(authorizeUrl)
 	if err != nil {
-		return err
+		fmt.Println("There was an issue opening the web browser, proceed to the following url to finish logging in to Nucleus", authorizeUrl)
 	}
 
 	select {
