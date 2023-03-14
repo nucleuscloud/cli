@@ -18,7 +18,7 @@ checksum:
 snapshot:
   name_template: '{{ incpatch .Version }}-next'
 changelog:
-  sort: asc
+  sort: desc
   filters:
     exclude:
       - '^docs:'
@@ -44,3 +44,7 @@ signs:
         '--detach-sign',
         '${artifact}',
       ]
+archives:
+  format_overrides:
+      - goos: windows
+        format: zip
