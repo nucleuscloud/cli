@@ -1,17 +1,13 @@
 version: 2
 updates:
   # Enable version updates for go
-  - package-ecosystem: "gomod"
-    # Look for `package.json` and `lock` files in the `root` directory
-    directory: "/"
-    # Check the go mod registry for updates every week
+  - package-ecosystem: 'gomod'
+    directory: '/'
     schedule:
-      interval: "weekly"
-    registries:
-      - github
-registries:
-  github:
-    type: git
-    url: https://github.com
-    username: x-access-token
-    password: ${{secrets.REPO_PAT}}
+      interval: 'daily'
+
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'daily'
