@@ -25,14 +25,14 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-brews:
-  - tap:
-      owner: nucleuscloud
-      name: homebrew-tap
-    folder: Formula
-    homepage: https://nucleuscloud.com
-    description: CLI for interfacing with Nucleus
-    license: MIT
+# brews:
+#   - tap:
+#       owner: nucleuscloud
+#       name: homebrew-tap
+#     folder: Formula
+#     homepage: https://nucleuscloud.com
+#     description: CLI for interfacing with Nucleus
+#     license: MIT
 signs:
   - artifacts: checksum
     # Used by GH Action to sign with a specific fingerprint
