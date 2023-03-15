@@ -1,7 +1,7 @@
 project_name: nucleus
 before:
   hooks:
-    - go mod tidy
+    - go mod tidy # https://goreleaser.com/customization/builds/#go-modules
 builds:
   - env:
       - CGO_ENABLED=0
@@ -9,6 +9,8 @@ builds:
       - linux
       - windows
       - darwin
+
+    binary: bin/nucleus
 
     ldflags:
       - -s -w -X 'github.com/nucleuscloud/cli/internal/version.buildDate={{.Date}}' -X 'github.com/nucleuscloud/cli/internal/version.gitCommit={{.Commit}}' -X 'github.com/nucleuscloud/cli/internal/version.gitVersion={{.Version}}'
@@ -50,3 +52,6 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+dockers:
+  - image_templates:
+    - nucleuscloud/cli
