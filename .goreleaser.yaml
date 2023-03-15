@@ -60,9 +60,3 @@ dockers:
     dockerfile: Dockerfile.goreleaser
     build_flag_templates:
       - "--platform=linux/amd64,linux/arm64"
-docker_manifests:
-  - name_template: "ghcr.io/nucleuscloud/cli:{{ .Tag }}"
-  - image_templates:
-    - "ghcr.io/nucleuscloud/cli:latest"
-    - "ghcr.io/nucleuscloud/cli:{{ .Tag }}"
-    - "ghcr.io/nucleuscloud/cli:v{{ .Major }}"
