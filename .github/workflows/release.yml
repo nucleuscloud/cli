@@ -3,9 +3,8 @@ name: Go Releaser
 on:
   push:
     # branches: [main]
-    pull_request:
-    # tags:
-    #   - '*'
+    tags:
+      - '*'
 
 permissions:
   contents: write
