@@ -10,8 +10,6 @@ builds:
       - windows
       - darwin
 
-    binary: bin/nucleus
-
     ldflags:
       - -s -w -X 'github.com/nucleuscloud/cli/internal/version.buildDate={{.Date}}' -X 'github.com/nucleuscloud/cli/internal/version.gitCommit={{.Commit}}' -X 'github.com/nucleuscloud/cli/internal/version.gitVersion={{.Version}}'
 
@@ -52,6 +50,19 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+
 dockers:
   - image_templates:
-    - nucleuscloud/cli
+      - "ghcr.io/nucleuscloud/cli:latest"
+      - "ghcr.io/nucleuscloud/cli:{{ .Tag }}"
+      - "ghcr.io/nucleuscloud/cli:v{{ .Major }}"
+    use: buildx
+    dockerfile: Dockerfile.goreleaser
+    build_flag_templates:
+      - "--platform=linux/amd64,linux/arm64"
+docker_manifests:
+  - name_template: "ghcr.io/nucleuscloud/cli:{{ .Tag }}"
+  - image_templates:
+    - "ghcr.io/nucleuscloud/cli:latest"
+    - "ghcr.io/nucleuscloud/cli:{{ .Tag }}"
+    - "ghcr.io/nucleuscloud/cli:v{{ .Major }}"

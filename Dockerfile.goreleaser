@@ -1,0 +1,3 @@
+FROM scratch
+ENTRYPOINT ["/usr/bin/nucleus"]
+COPY nucleus /usr/bin/nucleus
