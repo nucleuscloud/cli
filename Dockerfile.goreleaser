@@ -1,4 +1,4 @@
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static:latest
 
 ENV LOGIN_HOST=0.0.0.0
 EXPOSE 4242
