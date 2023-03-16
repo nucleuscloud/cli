@@ -1,5 +1,7 @@
 FROM scratch
 
-ENV LOGIN_REDIRECT_HOST=0.0.0.0
+ENV LOGIN_HOST=0.0.0.0
+EXPOSE 4242
+
 ENTRYPOINT ["/usr/bin/nucleus"]
 COPY nucleus /usr/bin/nucleus
