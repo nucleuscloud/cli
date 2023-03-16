@@ -214,7 +214,7 @@ func OAuthLogin(ctx context.Context) error {
 
 	err = webbrowser.Open(authorizeUrl)
 	if err != nil {
-		fmt.Println("There was an issue opening the web browser, proceed to the following url to finish logging in to Nucleus", authorizeUrl)
+		fmt.Println("There was an issue opening the web browser, proceed to the following url to finish logging in to Nucleus:\n", authorizeUrl)
 	}
 
 	select {

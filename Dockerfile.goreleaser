@@ -1,7 +1,8 @@
-FROM scratch
+FROM gcr.io/distroless/static:nonroot
 
 ENV LOGIN_HOST=0.0.0.0
 EXPOSE 4242
 
-ENTRYPOINT ["/usr/bin/nucleus"]
 COPY nucleus /usr/bin/nucleus
+
+ENTRYPOINT ["/usr/bin/nucleus"]
