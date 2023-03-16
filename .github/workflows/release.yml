@@ -13,14 +13,18 @@ jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.20'
-
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Granting private modules access
+        run: |
+          git config --global url."https://${{ secrets.REPO_PAT }}:x-oauth-basic@github.com/nucleuscloud".insteadOf "https://github.com/nucleuscloud"
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -36,10 +40,6 @@ jobs:
           registry: ghcr.io
           username: nickzelei
           password: ${{ secrets.REPO_PAT }}
-
-      - name: Granting private modules access
-        run: |
-          git config --global url."https://${{ secrets.REPO_PAT }}:x-oauth-basic@github.com/nucleuscloud".insteadOf "https://github.com/nucleuscloud"
 
       - name: Fetch all tags
         run: git fetch --force --tags
