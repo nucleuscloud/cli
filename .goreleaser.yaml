@@ -13,20 +13,20 @@ builds:
     ldflags:
       - -s -w -X 'github.com/nucleuscloud/cli/internal/version.buildDate={{.Date}}' -X 'github.com/nucleuscloud/cli/internal/version.gitCommit={{.Commit}}' -X 'github.com/nucleuscloud/cli/internal/version.gitVersion={{.Version}}'
 
-# checksum:
-#   name_template: 'checksums.txt'
-# signs:
-#   - artifacts: checksum
-#     # Used by GH Action to sign with a specific fingerprint
-#     args:
-#       [
-#         '--batch',
-#         '-u',
-#         '{{ .Env.GPG_FINGERPRINT }}',
-#         '--output',
-#         '${signature}',
-#         '--detach-sign',
-#         '${artifact}',
+checksum:
+  name_template: 'checksums.txt'
+signs:
+  - artifacts: checksum
+    # Used by GH Action to sign with a specific fingerprint
+    args:
+      [
+        '--batch',
+        '-u',
+        '{{ .Env.GPG_FINGERPRINT }}',
+        '--output',
+        '${signature}',
+        '--detach-sign',
+        '${artifact}',
 snapshot:
   name_template: '{{ incpatch .Version }}-next'
 changelog:
@@ -35,14 +35,14 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-# brews:
-#   - tap:
-#       owner: nucleuscloud
-#       name: homebrew-tap
-#     folder: Formula
-#     homepage: https://nucleuscloud.com
-#     description: CLI for interfacing with Nucleus
-#     license: MITww
+brews:
+  - tap:
+      owner: nucleuscloud
+      name: homebrew-tap
+    folder: Formula
+    homepage: https://nucleuscloud.com
+    description: CLI for interfacing with Nucleus
+    license: MIT
 archives:
   -
     id: default
