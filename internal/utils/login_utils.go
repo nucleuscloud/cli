@@ -12,6 +12,7 @@ import (
 	clienv "github.com/nucleuscloud/cli/internal/env"
 	authv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/auth/v1alpha1"
 	mgmtv1alpha1 "github.com/nucleuscloud/mgmt-api/gen/proto/go/mgmt/v1alpha1"
+	"github.com/spf13/viper"
 	"github.com/toqueteos/webbrowser"
 )
 
@@ -20,15 +21,46 @@ type oauthCallbackResponse struct {
 	state string
 }
 
+func getHttpSrvHost() string {
+	host := viper.GetString("LOGIN_HOST")
+	if host == "" {
+		return "127.0.0.1"
+	}
+	return host
+}
+
+func getHttpRedirectHost() string {
+	host := viper.GetString("LOGIN_REDIRECT_HOST")
+	if host == "" {
+		return "127.0.0.1"
+	}
+	return host
+}
+
+func getHttpSrvPort() uint32 {
+	port := viper.GetUint32("LOGIN_PORT")
+	if port == 0 {
+		return 4242
+	}
+	return port
+}
+
+func getRedirectUriBaseUrl() string {
+	return fmt.Sprintf("%s:%d", getHttpRedirectHost(), getHttpSrvPort())
+}
+
+func getHttpSrvBaseUrl() string {
+	return fmt.Sprintf("%s:%d", getHttpSrvHost(), getHttpSrvPort())
+}
+
 const (
-	httpSrvBaseUrl  = "localhost:4242"
 	callbackPath    = "/api/auth/callback"
 	orgCallbackPath = "/api/auth/org/callback"
 )
 
 var (
-	redirectUri    = fmt.Sprintf("http://%s%s", httpSrvBaseUrl, callbackPath)
-	redirectOrgUri = fmt.Sprintf("http://%s%s", httpSrvBaseUrl, orgCallbackPath)
+	redirectUri    = fmt.Sprintf("http://%s%s", getRedirectUriBaseUrl(), callbackPath)
+	redirectOrgUri = fmt.Sprintf("http://%s%s", getRedirectUriBaseUrl(), orgCallbackPath)
 )
 
 func OAuthLogin(ctx context.Context) error {
@@ -172,7 +204,7 @@ func OAuthLogin(ctx context.Context) error {
 	})
 
 	go func() {
-		httpErr := http.ListenAndServe(httpSrvBaseUrl, nil)
+		httpErr := http.ListenAndServe(getHttpSrvBaseUrl(), nil)
 		if httpErr != nil {
 			errChan <- httpErr
 		}
