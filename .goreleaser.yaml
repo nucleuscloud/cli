@@ -27,6 +27,7 @@ signs:
         '${signature}',
         '--detach-sign',
         '${artifact}',
+      ]
 snapshot:
   name_template: '{{ incpatch .Version }}-next'
 changelog:
