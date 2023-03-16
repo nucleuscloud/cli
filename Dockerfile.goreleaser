@@ -1,0 +1,8 @@
+FROM gcr.io/distroless/static:latest
+
+ENV LOGIN_HOST=0.0.0.0
+EXPOSE 4242
+
+COPY nucleus /usr/bin/nucleus
+
+ENTRYPOINT ["/usr/bin/nucleus"]

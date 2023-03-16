@@ -1,7 +1,7 @@
 project_name: nucleus
 before:
   hooks:
-    - go mod tidy
+    - go mod tidy # https://goreleaser.com/customization/builds/#go-modules
 builds:
   - env:
       - CGO_ENABLED=0
@@ -15,6 +15,18 @@ builds:
 
 checksum:
   name_template: 'checksums.txt'
+signs:
+  - artifacts: checksum
+    # Used by GH Action to sign with a specific fingerprint
+    args:
+      [
+        '--batch',
+        '-u',
+        '{{ .Env.GPG_FINGERPRINT }}',
+        '--output',
+        '${signature}',
+        '--detach-sign',
+        '${artifact}',
 snapshot:
   name_template: '{{ incpatch .Version }}-next'
 changelog:
@@ -31,22 +43,59 @@ brews:
     homepage: https://nucleuscloud.com
     description: CLI for interfacing with Nucleus
     license: MIT
-signs:
-  - artifacts: checksum
-    # Used by GH Action to sign with a specific fingerprint
-    args:
-      [
-        '--batch',
-        '-u',
-        '{{ .Env.GPG_FINGERPRINT }}',
-        '--output',
-        '${signature}',
-        '--detach-sign',
-        '${artifact}',
-      ]
 archives:
   -
     id: default
     format_overrides:
       - goos: windows
         format: zip
+
+dockers:
+  - image_templates:
+      - "ghcr.io/nucleuscloud/cli:{{ .Version }}-amd64"
+    use: buildx
+    dockerfile: Dockerfile.goreleaser
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.description={{ .ProjectName }}
+      - --label=org.opencontainers.image.url=https://github.com/nucleuscloud/cli
+      - --label=org.opencontainers.image.source=https://github.com/nucleuscloud/cli
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+  - image_templates:
+      - "ghcr.io/nucleuscloud/cli:{{ .Version }}-arm64"
+    use: buildx
+    dockerfile: Dockerfile.goreleaser
+    build_flag_templates:
+      - --platform=linux/arm64
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.description={{ .ProjectName }}
+      - --label=org.opencontainers.image.url=https://github.com/nucleuscloud/cli
+      - --label=org.opencontainers.image.source=https://github.com/nucleuscloud/cli
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{ time "2006-01-02T15:04:05Z07:00" }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+
+docker_manifests:
+- name_template: ghcr.io/nucleuscloud/cli:{{ .Version }}
+  image_templates:
+    - ghcr.io/nucleuscloud/cli:{{ .Version }}-amd64
+    - ghcr.io/nucleuscloud/cli:{{ .Version }}-arm64
+- name_template: ghcr.io/nucleuscloud/cli:latest
+  image_templates:
+    - ghcr.io/nucleuscloud/cli:{{ .Version }}-amd64
+    - ghcr.io/nucleuscloud/cli:{{ .Version }}-arm64
+- name_template: ghcr.io/nucleuscloud/cli:{{ .Tag }}
+  image_templates:
+    - ghcr.io/nucleuscloud/cli:{{ .Version }}-amd64
+    - ghcr.io/nucleuscloud/cli:{{ .Version }}-arm64
+- name_template: ghcr.io/nucleuscloud/cli:v{{ .Major }}
+  image_templates:
+    - ghcr.io/nucleuscloud/cli:{{ .Version }}-amd64
+    - ghcr.io/nucleuscloud/cli:{{ .Version }}-arm64
+- name_template: ghcr.io/nucleuscloud/cli:v{{ .Major }}.{{ .Minor }}
+  image_templates:
+    - ghcr.io/nucleuscloud/cli:{{ .Version }}-amd64
+    - ghcr.io/nucleuscloud/cli:{{ .Version }}-arm64

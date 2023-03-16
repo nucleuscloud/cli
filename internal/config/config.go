@@ -138,6 +138,9 @@ func GetOrCreateNucleusFolder() (string, error) {
 				return "", err
 			}
 			baseDir = filepath.Join(homeDir, ".config")
+			if err := ensureDirectoryExists(baseDir); err != nil {
+				return "", err
+			}
 		}
 		fullName = filepath.Join(baseDir, nucleusFolderName[1:])
 	} else {
