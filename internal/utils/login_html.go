@@ -10,64 +10,76 @@ const (
 	header = `
 <!DOCTYPE html>
 <head>
-  <title>{{ .Title }}</title>
-	<link rel="icon" type="image/png" href="https://assets.nucleuscloud.com/favicon_transparent.ico" />
-  <style>
-   body {
-        background-color: #FBFDF4;
-    }
+    <title>{{ .Title }}</title>
+    <link rel="icon" type="image/png" href="https://assets.nucleuscloud.com/favicon_transparent.ico" />
+    <style>
+        body {
+            background-color: #101010;
+        }
 
-    .header {
-        background-color: #FBFDF4;
-    }
+        .header {
+            background-color: #FBFDF4;
+        }
 
-    .logo {
-        height: 30%;
-        width: 30%;
-        border-radius: 10px;
-        display: block;
-        margin-left: auto;
-        margin-right: auto
-    }
+        .logo {
+            width: 40%;
+            padding-top: 20px;
+            display: block;
+            brightness:0.75;
+            margin-left: auto;
+            margin-right: auto
+        }
 
-    h1 {
-        font-family: "Courier New", Courier, monospace;
-        font-size: 36px;
-        letter-spacing: -0.4px;
-        word-spacing: 2px;
-        color: #2F48FF;
-        font-weight: normal;
-        text-transform: capitalize;
-        text-align: center;
-    }
+        h1 {
+            font-family:'Inter', sans-serif;
+            font-size: 36px;
+            letter-spacing: 1px;
+            word-spacing: 2px;
+            color: #EBECFA;
+            font-weight: normal;
+            text-transform: capitalize;
+            text-align: center;
+                  padding-top: 20px;
+        }
 
-    p {
-        font-family: "Courier New", Courier, monospace;
-        font-size: 16px;
-        letter-spacing: -0.4px;
-        word-spacing: 2px;
-        color: #489AFF;
-        font-weight: normal;
-        text-transform: capitalize;
-        text-align: center;
-    }
+        p {
+            font-family:'Inter', sans-serif;
+            font-size: 16px;
+            letter-spacing: 1px;
+            word-spacing: 2px;
+                     color: #EBECFA;
+            font-weight: normal;
+            text-transform: normal;
+            text-align: center;
+        }
 
-    .nucleusLogo {
-        height: '40px';
-        width: 40px;
-    }
-    #content {
-    }
-    #footer {
-      font-size: 0.8em;
-    }
-		.error-text {
-			font-weight: bold;
-		}
-  </style>
+        .nucleusLogo {
+            height: '40px';
+            width: 40px;
+        }
+
+        .nav {
+            border: 2px solid rgba(117, 117, 117, 1);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        #content {
+            padding:10px
+        }
+
+        #footer {
+            font-size: 0.8em;
+        }
+
+        .error-text {
+            font-weight: bold;
+        }
+    </style>
 </head>
+
 <body>
-  <div id="content">
+    <div id="content">
 	`
 
 	footer = `
@@ -78,15 +90,15 @@ const (
 	`
 
 	loginPageSuccess = `
-<div><a href="https:nucleuscloud.com"><img class='nucleusLogo' src="https://assets.nucleuscloud.com/favicon_transparent.ico"></a></div>
-    <div class='successText'>
-        <h1>Login Success!</h1>
-        <p>You've successfully logged in to Nucleus CLI.</p>
-	  <p>You may now close this window and return to your terminal.</p>
-    </div>
-        <div>
-  <img class='logo' src="https://assets.nucleuscloud.com/loginPicFinal.jpg">
-    </div>
+  <div class='nav'><a href="https:nucleuscloud.com"><img class='nucleusLogo' src="https://assets.nucleuscloud.com/Nucleus_logo_transparent.svg"></a></div>
+  <div class='successText'>
+      <h1>Login Success!</h1>
+      <p>You've successfully logged in to Nucleus CLI.</p>
+      <p>You may now close this window and return to your terminal.</p>
+  </div>
+  <div>
+      <img class='logo' src="https://assets.nucleuscloud.com/cliImage.png">
+  </div>
 	`
 
 	loginPageError = `
