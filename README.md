@@ -48,6 +48,15 @@ brew install nucleuscloud/tap/nucleus
 2. Download the tarball for your operating system: `tar xzf <path-to-tar.gz> nucleus`
 5. Put the binary somewhere on your `PATH`. E.g., on linux and mac: `mv nucleus /usr/local/bin/nucleus`.
 
+### Using the AUR
+The Nucleus CLI can be found at `nucleus-bin` on the AUR. This can be installed with an AUR helper or by running:
+```sh
+sudo pacman -S base-devel git
+git clone https://aur.archlinux.org/nucleus-bin.git
+cd nucleus-bin
+makepkg -si
+```
+
 ### Install via a package manager
 Ensure you have `go` installed.
 This is only possible today for Nucleus devs as the CLI depends on types that live in the private organization
