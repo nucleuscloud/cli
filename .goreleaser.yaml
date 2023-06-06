@@ -51,6 +51,26 @@ archives:
       - goos: windows
         format: zip
 
+aurs:
+  -
+    homepage: https://nucleuscloud.com
+    description: CLI for interfacing with Nucleus
+    maintainers:
+      - Devops <devops@nucleuscloud.com>
+    license: Apache-2.0
+    git_url: ssh://aur@aur.archlinux.org/nucleus-bin.git
+    package: |-
+      # bin
+      install -Dm755 "./nucleus" "${pkgdir}/usr/bin/nucleus"
+
+      # license
+      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/nucleus/LICENSE"
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    private_key: '{{ .Env.AUR_KEY }}'
+
+
 dockers:
   - image_templates:
       - "ghcr.io/nucleuscloud/cli:{{ .Version }}-amd64"
