@@ -66,8 +66,8 @@ aurs:
       # license
       install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/nucleus/LICENSE"
     commit_author:
-      name: goreleaserbot
-      email: bot@goreleaser.com
+      name: nucleusbot
+      email: devops@nucleuscloud.com
     private_key: '{{ .Env.AUR_KEY }}'
 
 
