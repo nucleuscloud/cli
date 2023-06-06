@@ -70,7 +70,6 @@ aurs:
       email: devops@nucleuscloud.com
     private_key: '{{ .Env.AUR_KEY }}'
 
-
 dockers:
   - image_templates:
       - "ghcr.io/nucleuscloud/cli:{{ .Version }}-amd64"
