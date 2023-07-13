@@ -9,15 +9,15 @@ require (
 	github.com/fatih/color v1.15.0
 	github.com/google/uuid v1.3.0
 	github.com/mhelmich/go-archiver v0.0.0-20220110024759-0bc40b00af39
-	github.com/nucleuscloud/mgmt-api v0.0.342-0.20230713174128-144e44d3f073
+	github.com/nucleuscloud/mgmt-api v0.0.342
 	github.com/pelletier/go-toml/v2 v2.0.6
 	github.com/rodaine/table v1.1.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	github.com/toqueteos/webbrowser v1.2.0
 	github.com/vbauerster/mpb/v8 v8.3.0
-	golang.org/x/term v0.8.0
+	golang.org/x/term v0.10.0
 	google.golang.org/grpc v1.55.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/apimachinery v0.26.3
@@ -53,7 +53,7 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
