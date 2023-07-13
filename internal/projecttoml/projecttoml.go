@@ -24,11 +24,11 @@ type Build struct {
 }
 
 const (
-	projectTomlPath = "./project.toml"
+	ProjectTomlPath = "./project.toml"
 )
 
-func DoesProjectFileExist() bool {
-	_, err := os.Stat(projectTomlPath)
+func DoesProjectFileExist(filePath string) bool {
+	_, err := os.Stat(filePath)
 	return !errors.Is(err, os.ErrNotExist)
 }
 
@@ -65,8 +65,8 @@ func GetBuildEnvVars(project *ProjectToml) (map[string]string, error) {
 	return buildEvs, nil
 }
 
-func GetProjectFile() (*ProjectToml, error) {
-	file, err := os.ReadFile(projectTomlPath)
+func GetProjectFile(filePath string) (*ProjectToml, error) {
+	file, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}

@@ -104,8 +104,8 @@ var deployCmd = &cobra.Command{
 		}
 
 		var buildTimeEnvVars map[string]string
-		if ok := projecttoml.DoesProjectFileExist(); ok {
-			projectFile, err := projecttoml.GetProjectFile()
+		if ok := projecttoml.DoesProjectFileExist(projecttoml.ProjectTomlPath); ok {
+			projectFile, err := projecttoml.GetProjectFile(projecttoml.ProjectTomlPath)
 			if err != nil {
 				return err
 			}
