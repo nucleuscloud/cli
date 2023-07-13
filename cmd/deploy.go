@@ -25,6 +25,7 @@ import (
 	"github.com/nucleuscloud/cli/internal/config"
 	clienv "github.com/nucleuscloud/cli/internal/env"
 	"github.com/nucleuscloud/cli/internal/progress"
+	"github.com/nucleuscloud/cli/internal/projecttoml"
 	"github.com/nucleuscloud/cli/internal/secrets"
 	"github.com/nucleuscloud/cli/internal/utils"
 )
@@ -102,6 +103,19 @@ var deployCmd = &cobra.Command{
 			return err
 		}
 
+		var buildTimeEnvVars map[string]string
+		if ok := projecttoml.DoesProjectFileExist(); ok {
+			projectFile, err := projecttoml.GetProjectFile()
+			if err != nil {
+				return err
+			}
+			buildEvs, err := projecttoml.GetBuildEnvVars(projectFile)
+			if err != nil {
+				return err
+			}
+			buildTimeEnvVars = buildEvs
+		}
+
 		conn, err := utils.NewApiConnectionByEnv(ctx, clienv.GetEnv())
 		if err != nil {
 			return err
@@ -121,6 +135,7 @@ var deployCmd = &cobra.Command{
 			envVars:          deployConfig.Spec.Vars,
 			envSecrets:       envSecrets,
 			resources:        deployConfig.Spec.Resources,
+			buildTimeEnvVars: buildTimeEnvVars,
 		}
 		err = deploy(ctx, svcClient, req, progressType)
 		if err != nil {
@@ -220,6 +235,7 @@ type deployRequest struct {
 	envVars          map[string]string
 	envSecrets       map[string]string
 	resources        config.ResourceRequirements
+	buildTimeEnvVars map[string]string
 }
 
 func deploy(
@@ -253,6 +269,7 @@ func deploy(
 				Memory: req.resources.Maximum.Memory,
 			},
 		},
+		BuildtimeEnvVars: req.buildTimeEnvVars,
 	}
 
 	if req.serviceType == "docker" {
